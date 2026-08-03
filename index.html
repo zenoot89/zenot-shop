@@ -1,0 +1,1190 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ZENOT — Men's Knitwear</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,wght@0,300;0,400;0,600;1,400&family=Inter:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #f5f4f2;
+      --surface: #ffffff;
+      --border: #e0ddd8;
+      --separator: #b5a898;
+      --text-primary: #1a1a1a;
+      --text-secondary: #6b6560;
+      --text-muted: #9e9890;
+      --accent: #1a1a1a;
+      --accent-hover: #333;
+      --price: #1a1a1a;
+      --price-original: #9e9890;
+      --discount-bg: #1a1a1a;
+      --discount-text: #f5f4f2;
+      --tag-bg: #f0ede8;
+      --radius: 12px;
+      --radius-sm: 8px;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text-primary);
+      min-height: 100vh;
+    }
+
+    /* HEADER */
+    header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .header-inner {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 20px;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .logo {
+      font-family: 'Source Serif 4', serif;
+      font-size: 22px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      color: var(--text-primary);
+      text-decoration: none;
+    }
+    .logo span {
+      font-weight: 300;
+      font-style: italic;
+    }
+    .cart-btn {
+      position: relative;
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 8px;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+    .cart-btn svg { width: 22px; height: 22px; }
+    .cart-count {
+      background: var(--accent);
+      color: #fff;
+      border-radius: 50%;
+      width: 18px;
+      height: 18px;
+      font-size: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'IBM Plex Mono', monospace;
+      position: absolute;
+      top: 2px;
+      right: 2px;
+    }
+    .cart-count.hidden { display: none; }
+
+    /* HERO */
+    .hero {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 48px 20px 32px;
+    }
+    .hero-eyebrow {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 0.2em;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+    .hero-title {
+      font-family: 'Source Serif 4', serif;
+      font-size: clamp(36px, 6vw, 56px);
+      font-weight: 300;
+      line-height: 1.1;
+      color: var(--text-primary);
+      margin-bottom: 8px;
+    }
+    .hero-title em {
+      font-style: italic;
+      font-weight: 400;
+    }
+    .hero-sub {
+      font-size: 14px;
+      color: var(--text-secondary);
+      margin-bottom: 32px;
+    }
+
+    /* SEARCH + FILTER */
+    .controls {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 20px 28px;
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .search-wrap {
+      flex: 1;
+      min-width: 200px;
+      position: relative;
+    }
+    .search-wrap svg {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 16px;
+      height: 16px;
+      color: var(--text-muted);
+    }
+    .search-input {
+      width: 100%;
+      padding: 11px 16px 11px 40px;
+      border: 1px solid var(--border);
+      border-radius: 50px;
+      background: var(--surface);
+      font-family: 'Inter', sans-serif;
+      font-size: 14px;
+      color: var(--text-primary);
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .search-input::placeholder { color: var(--text-muted); }
+    .search-input:focus { border-color: var(--separator); }
+
+    .filter-tabs {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .filter-tab {
+      padding: 9px 16px;
+      border: 1px solid var(--border);
+      border-radius: 50px;
+      background: var(--surface);
+      font-family: 'Inter', sans-serif;
+      font-size: 13px;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+    .filter-tab:hover { border-color: var(--separator); color: var(--text-primary); }
+    .filter-tab.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+
+    /* PRODUCT GRID */
+    .catalog {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 20px 60px;
+    }
+    .product-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 20px;
+    }
+    .product-card {
+      background: var(--surface);
+      border-radius: var(--radius);
+      overflow: hidden;
+      border: 1px solid var(--border);
+      transition: transform 0.2s, box-shadow 0.2s;
+      cursor: pointer;
+    }
+    .product-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+    }
+    .card-img {
+      position: relative;
+      aspect-ratio: 4/3;
+      background: var(--tag-bg);
+      overflow: hidden;
+    }
+    .card-img img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .card-img-placeholder {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Source Serif 4', serif;
+      font-size: 13px;
+      color: var(--text-muted);
+      font-style: italic;
+    }
+    .badge-discount {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      background: var(--discount-bg);
+      color: var(--discount-text);
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 11px;
+      font-weight: 500;
+      padding: 3px 8px;
+      border-radius: 4px;
+      letter-spacing: 0.05em;
+    }
+    .badge-varian {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: rgba(255,255,255,0.92);
+      color: var(--text-secondary);
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 10px;
+      padding: 3px 8px;
+      border-radius: 4px;
+      backdrop-filter: blur(4px);
+    }
+    .card-body {
+      padding: 14px 16px 16px;
+    }
+    .card-category {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.12em;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      margin-bottom: 5px;
+    }
+    .card-name {
+      font-family: 'Source Serif 4', serif;
+      font-size: 17px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 10px;
+      line-height: 1.3;
+    }
+    .card-price-row {
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+    .price-final {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 16px;
+      font-weight: 500;
+      color: var(--price);
+    }
+    .price-original {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 13px;
+      color: var(--price-original);
+      text-decoration: line-through;
+    }
+    .card-colors {
+      display: flex;
+      gap: 5px;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+    }
+    .color-dot {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      border: 1.5px solid var(--border);
+      cursor: pointer;
+      transition: transform 0.15s;
+      position: relative;
+    }
+    .color-dot:hover { transform: scale(1.2); }
+    .color-dot.selected { border-color: var(--text-primary); border-width: 2px; }
+    .btn-pilih {
+      width: 100%;
+      padding: 11px;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-family: 'Inter', sans-serif;
+      font-size: 13px;
+      font-weight: 500;
+      letter-spacing: 0.06em;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .btn-pilih:hover { background: var(--accent-hover); }
+
+    /* EMPTY STATE */
+    .empty-state {
+      text-align: center;
+      padding: 80px 20px;
+      grid-column: 1 / -1;
+    }
+    .empty-state p {
+      font-family: 'Source Serif 4', serif;
+      font-size: 18px;
+      font-style: italic;
+      color: var(--text-muted);
+    }
+
+    /* MODAL */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 200;
+      align-items: flex-end;
+      justify-content: center;
+    }
+    .modal-overlay.open {
+      display: flex;
+    }
+    @media (min-width: 600px) {
+      .modal-overlay { align-items: center; }
+    }
+    .modal {
+      background: var(--surface);
+      border-radius: var(--radius) var(--radius) 0 0;
+      padding: 28px 24px 32px;
+      width: 100%;
+      max-width: 480px;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+    @media (min-width: 600px) {
+      .modal { border-radius: var(--radius); }
+    }
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 20px;
+    }
+    .modal-title {
+      font-family: 'Source Serif 4', serif;
+      font-size: 22px;
+      font-weight: 600;
+      line-height: 1.2;
+    }
+    .modal-close {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--text-muted);
+      padding: 4px;
+      font-size: 20px;
+      line-height: 1;
+    }
+    .modal-img {
+      aspect-ratio: 4/3;
+      background: var(--tag-bg);
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+      margin-bottom: 20px;
+    }
+    .modal-img img { width: 100%; height: 100%; object-fit: cover; }
+    .modal-img-placeholder {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Source Serif 4', serif;
+      font-size: 13px;
+      color: var(--text-muted);
+      font-style: italic;
+    }
+    .modal-price-row {
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+      margin-bottom: 6px;
+    }
+    .modal-price-final {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 22px;
+      font-weight: 500;
+    }
+    .modal-price-original {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 15px;
+      color: var(--price-original);
+      text-decoration: line-through;
+    }
+    .modal-discount-label {
+      display: inline-block;
+      background: var(--discount-bg);
+      color: var(--discount-text);
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 11px;
+      padding: 2px 7px;
+      border-radius: 4px;
+      margin-bottom: 16px;
+    }
+    .modal-section-label {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 10px;
+    }
+    .modal-colors {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+    }
+    .modal-color-btn {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      padding: 7px 12px;
+      border: 1.5px solid var(--border);
+      border-radius: 50px;
+      background: none;
+      font-family: 'Inter', sans-serif;
+      font-size: 13px;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .modal-color-btn .dot {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      border: 1px solid var(--border);
+    }
+    .modal-color-btn.active {
+      border-color: var(--text-primary);
+      color: var(--text-primary);
+      font-weight: 500;
+    }
+    .modal-sizes {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+    }
+    .modal-size-btn {
+      min-width: 48px;
+      padding: 8px 14px;
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: none;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 13px;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .modal-size-btn.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+    .modal-qty {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    .qty-btn {
+      width: 36px;
+      height: 36px;
+      border: 1px solid var(--border);
+      border-radius: 50%;
+      background: none;
+      font-size: 18px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-primary);
+      transition: background 0.15s;
+    }
+    .qty-btn:hover { background: var(--tag-bg); }
+    .qty-value {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 16px;
+      min-width: 24px;
+      text-align: center;
+    }
+    .btn-add-cart {
+      width: 100%;
+      padding: 14px;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-family: 'Inter', sans-serif;
+      font-size: 14px;
+      font-weight: 500;
+      letter-spacing: 0.06em;
+      cursor: pointer;
+      transition: background 0.2s;
+      margin-bottom: 10px;
+    }
+    .btn-add-cart:hover { background: var(--accent-hover); }
+    .btn-add-cart:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    /* CART DRAWER */
+    .cart-drawer {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 300;
+    }
+    .cart-drawer.open { display: block; }
+    .cart-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+    }
+    .cart-panel {
+      position: absolute;
+      right: 0;
+      top: 0;
+      bottom: 0;
+      width: min(380px, 100%);
+      background: var(--surface);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .cart-panel-header {
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .cart-panel-title {
+      font-family: 'Source Serif 4', serif;
+      font-size: 20px;
+      font-weight: 600;
+    }
+    .cart-close {
+      background: none;
+      border: none;
+      font-size: 22px;
+      cursor: pointer;
+      color: var(--text-muted);
+      padding: 4px;
+    }
+    .cart-items {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px 24px;
+    }
+    .cart-item {
+      display: flex;
+      gap: 12px;
+      padding: 14px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .cart-item-img {
+      width: 60px;
+      height: 60px;
+      border-radius: var(--radius-sm);
+      background: var(--tag-bg);
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+    .cart-item-img img { width: 100%; height: 100%; object-fit: cover; }
+    .cart-item-info { flex: 1; }
+    .cart-item-name {
+      font-family: 'Source Serif 4', serif;
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 3px;
+    }
+    .cart-item-variant {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+    }
+    .cart-item-bottom {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .cart-item-price {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 13px;
+      font-weight: 500;
+    }
+    .cart-item-qty {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .cart-qty-btn {
+      width: 28px;
+      height: 28px;
+      border: 1px solid var(--border);
+      border-radius: 50%;
+      background: none;
+      font-size: 16px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-primary);
+    }
+    .cart-qty-val {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 13px;
+      min-width: 20px;
+      text-align: center;
+    }
+    .cart-footer {
+      padding: 20px 24px;
+      border-top: 1px solid var(--separator);
+    }
+    .cart-total-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 16px;
+    }
+    .cart-total-label {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 12px;
+      letter-spacing: 0.1em;
+      color: var(--text-muted);
+      text-transform: uppercase;
+    }
+    .cart-total-value {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 20px;
+      font-weight: 500;
+    }
+    .btn-checkout {
+      width: 100%;
+      padding: 15px;
+      background: #25D366;
+      color: #fff;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-family: 'Inter', sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: background 0.2s;
+    }
+    .btn-checkout:hover { background: #1ebe5d; }
+    .btn-checkout svg { width: 18px; height: 18px; }
+    .cart-empty {
+      text-align: center;
+      padding: 60px 20px;
+    }
+    .cart-empty p {
+      font-family: 'Source Serif 4', serif;
+      font-size: 16px;
+      font-style: italic;
+      color: var(--text-muted);
+    }
+
+    /* TOAST */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      background: var(--accent);
+      color: #fff;
+      font-family: 'Inter', sans-serif;
+      font-size: 13px;
+      padding: 10px 20px;
+      border-radius: 50px;
+      z-index: 500;
+      transition: transform 0.3s ease;
+      white-space: nowrap;
+    }
+    .toast.show { transform: translateX(-50%) translateY(0); }
+
+    /* SEPARATOR */
+    .separator {
+      max-width: 1100px;
+      margin: 0 auto 24px;
+      padding: 0 20px;
+    }
+    .separator hr {
+      border: none;
+      border-top: 1px solid var(--separator);
+    }
+
+    @media (max-width: 480px) {
+      .product-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+      .hero { padding: 28px 16px 20px; }
+      .controls { padding: 0 16px 20px; }
+      .catalog { padding: 0 16px 60px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <div class="header-inner">
+    <a href="#" class="logo">ZEN<span>ot</span></a>
+    <button class="cart-btn" onclick="openCart()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+        <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/>
+        <line x1="3" y1="6" x2="21" y2="6"/>
+        <path d="M16 10a4 4 0 01-8 0"/>
+      </svg>
+      <span id="cart-label">Keranjang</span>
+      <span class="cart-count hidden" id="cart-count">0</span>
+    </button>
+  </div>
+</header>
+
+<!-- HERO -->
+<section class="hero">
+  <p class="hero-eyebrow">Men's Knitwear</p>
+  <h1 class="hero-title">Koleksi<br><em>ZENOT</em></h1>
+  <p class="hero-sub">Pilih varian favoritmu, checkout langsung via WhatsApp.</p>
+</section>
+
+<!-- CONTROLS -->
+<div class="controls">
+  <div class="search-wrap">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>
+    </svg>
+    <input class="search-input" type="text" placeholder="Cari produk..." id="search-input" oninput="filterProducts()" />
+  </div>
+  <div class="filter-tabs" id="filter-tabs">
+    <button class="filter-tab active" onclick="setFilter('all', this)">Semua</button>
+    <button class="filter-tab" onclick="setFilter('Cardigan', this)">Cardigan</button>
+    <button class="filter-tab" onclick="setFilter('Sweater', this)">Sweater</button>
+    <button class="filter-tab" onclick="setFilter('Polo Knit', this)">Polo Knit</button>
+    <button class="filter-tab" onclick="setFilter('Vest', this)">Vest</button>
+  </div>
+</div>
+
+<div class="separator"><hr /></div>
+
+<!-- CATALOG -->
+<main class="catalog">
+  <div class="product-grid" id="product-grid"></div>
+</main>
+
+<!-- PRODUCT MODAL -->
+<div class="modal-overlay" id="product-modal" onclick="closeModal(event)">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 class="modal-title" id="modal-name">Nama Produk</h2>
+      <button class="modal-close" onclick="closeProductModal()">✕</button>
+    </div>
+    <div class="modal-img" id="modal-img-wrap">
+      <div class="modal-img-placeholder">Foto produk</div>
+    </div>
+    <div class="modal-price-row">
+      <span class="modal-price-final" id="modal-price-final">Rp 0</span>
+      <span class="modal-price-original" id="modal-price-original"></span>
+    </div>
+    <div id="modal-discount-label"></div>
+
+    <p class="modal-section-label">Warna</p>
+    <div class="modal-colors" id="modal-colors"></div>
+
+    <p class="modal-section-label">Ukuran</p>
+    <div class="modal-sizes" id="modal-sizes"></div>
+
+    <p class="modal-section-label">Jumlah</p>
+    <div class="modal-qty">
+      <button class="qty-btn" onclick="changeQty(-1)">−</button>
+      <span class="qty-value" id="qty-value">1</span>
+      <button class="qty-btn" onclick="changeQty(1)">+</button>
+    </div>
+
+    <button class="btn-add-cart" id="btn-add-cart" onclick="addToCart()">Tambah ke Keranjang</button>
+  </div>
+</div>
+
+<!-- CART DRAWER -->
+<div class="cart-drawer" id="cart-drawer">
+  <div class="cart-overlay" onclick="closeCart()"></div>
+  <div class="cart-panel">
+    <div class="cart-panel-header">
+      <span class="cart-panel-title">Keranjang</span>
+      <button class="cart-close" onclick="closeCart()">✕</button>
+    </div>
+    <div class="cart-items" id="cart-items-list"></div>
+    <div class="cart-footer" id="cart-footer">
+      <div class="cart-total-row">
+        <span class="cart-total-label">Total</span>
+        <span class="cart-total-value" id="cart-total">Rp 0</span>
+      </div>
+      <button class="btn-checkout" onclick="checkoutWA()">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+        Checkout via WhatsApp
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ===================== DATA PRODUK =====================
+// Ganti / tambah produk di sini. Format:
+// { id, name, category, price, originalPrice (opsional), colors: [{name, hex}], sizes, image (opsional url) }
+const products = [
+  {
+    id: 1,
+    name: "Stripe Collar Knit",
+    category: "Polo Knit",
+    price: 120000,
+    originalPrice: 155000,
+    colors: [
+      { name: "Navy", hex: "#2C3E6B" },
+      { name: "Olive", hex: "#6B7C4A" },
+      { name: "Maroon", hex: "#7C2C2C" },
+      { name: "Cream", hex: "#E8E0D0" },
+      { name: "Charcoal", hex: "#3D3D3D" },
+      { name: "Black", hex: "#1A1A1A" },
+    ],
+    sizes: ["S", "M", "L", "XL"],
+    image: null
+  },
+  {
+    id: 2,
+    name: "Cable Texture Cardigan",
+    category: "Cardigan",
+    price: 145000,
+    originalPrice: 180000,
+    colors: [
+      { name: "Off White", hex: "#F0EDE6" },
+      { name: "Camel", hex: "#C4956A" },
+      { name: "Grey", hex: "#9E9E9E" },
+      { name: "Black", hex: "#1A1A1A" },
+    ],
+    sizes: ["M", "L", "XL"],
+    image: null
+  },
+  {
+    id: 3,
+    name: "Minimal Crew Sweater",
+    category: "Sweater",
+    price: 135000,
+    originalPrice: null,
+    colors: [
+      { name: "Ecru", hex: "#F2EEE3" },
+      { name: "Slate", hex: "#6B7A8D" },
+      { name: "Rust", hex: "#A04A2A" },
+      { name: "Forest", hex: "#3A5A40" },
+      { name: "Black", hex: "#1A1A1A" },
+    ],
+    sizes: ["S", "M", "L", "XL", "XXL"],
+    image: null
+  },
+  {
+    id: 4,
+    name: "Ribbed V-Neck Vest",
+    category: "Vest",
+    price: 98000,
+    originalPrice: 125000,
+    colors: [
+      { name: "Cream", hex: "#E8E0D0" },
+      { name: "Brown", hex: "#8B6914" },
+      { name: "Dark Navy", hex: "#1A2340" },
+      { name: "Black", hex: "#1A1A1A" },
+    ],
+    sizes: ["S", "M", "L"],
+    image: null
+  },
+  {
+    id: 5,
+    name: "Oversized Knit Cardigan",
+    category: "Cardigan",
+    price: 165000,
+    originalPrice: 200000,
+    colors: [
+      { name: "Oat", hex: "#D4C9B0" },
+      { name: "Charcoal", hex: "#3D3D3D" },
+      { name: "Mauve", hex: "#9E7D8A" },
+    ],
+    sizes: ["M", "L", "XL"],
+    image: null
+  },
+  {
+    id: 6,
+    name: "Fine Knit Turtleneck",
+    category: "Sweater",
+    price: 150000,
+    originalPrice: null,
+    colors: [
+      { name: "Ivory", hex: "#F7F3EC" },
+      { name: "Slate Blue", hex: "#5C7A9E" },
+      { name: "Taupe", hex: "#9E8E7A" },
+      { name: "Black", hex: "#1A1A1A" },
+    ],
+    sizes: ["S", "M", "L", "XL"],
+    image: null
+  },
+];
+
+// ===================== CONFIG =====================
+const WA_NUMBER = "6281234567890"; // GANTI dengan nomor WA ZENOT
+
+// ===================== STATE =====================
+let cart = [];
+let activeFilter = "all";
+let activeProduct = null;
+let selectedColor = null;
+let selectedSize = null;
+let qty = 1;
+
+// ===================== FORMAT =====================
+function formatRp(n) {
+  return "Rp " + n.toLocaleString("id-ID");
+}
+function discountPct(orig, final) {
+  return Math.round((1 - final / orig) * 100);
+}
+
+// ===================== RENDER =====================
+function renderProducts() {
+  const q = document.getElementById("search-input").value.toLowerCase();
+  const grid = document.getElementById("product-grid");
+  const filtered = products.filter(p => {
+    const matchFilter = activeFilter === "all" || p.category === activeFilter;
+    const matchSearch = p.name.toLowerCase().includes(q) || p.category.toLowerCase().includes(q);
+    return matchFilter && matchSearch;
+  });
+
+  if (!filtered.length) {
+    grid.innerHTML = `<div class="empty-state"><p>Produk tidak ditemukan.</p></div>`;
+    return;
+  }
+
+  grid.innerHTML = filtered.map(p => {
+    const disc = p.originalPrice ? discountPct(p.originalPrice, p.price) : null;
+    const colorDots = p.colors.slice(0, 6).map(c =>
+      `<span class="color-dot" style="background:${c.hex}" title="${c.name}"></span>`
+    ).join("");
+    return `
+    <div class="product-card" onclick="openProduct(${p.id})">
+      <div class="card-img">
+        ${p.image ? `<img src="${p.image}" alt="${p.name}" loading="lazy" />` : `<div class="card-img-placeholder"><em>${p.name}</em></div>`}
+        ${disc ? `<span class="badge-discount">-${disc}%</span>` : ""}
+        <span class="badge-varian">${p.colors.length} warna</span>
+      </div>
+      <div class="card-body">
+        <p class="card-category">${p.category}</p>
+        <h3 class="card-name">${p.name}</h3>
+        <div class="card-price-row">
+          <span class="price-final">${formatRp(p.price)}</span>
+          ${p.originalPrice ? `<span class="price-original">${formatRp(p.originalPrice)}</span>` : ""}
+        </div>
+        <div class="card-colors">${colorDots}</div>
+        <button class="btn-pilih" onclick="event.stopPropagation(); openProduct(${p.id})">Pilih Varian</button>
+      </div>
+    </div>`;
+  }).join("");
+}
+
+// ===================== FILTER =====================
+function setFilter(val, el) {
+  activeFilter = val;
+  document.querySelectorAll(".filter-tab").forEach(t => t.classList.remove("active"));
+  el.classList.add("active");
+  renderProducts();
+}
+function filterProducts() { renderProducts(); }
+
+// ===================== MODAL =====================
+function openProduct(id) {
+  activeProduct = products.find(p => p.id === id);
+  selectedColor = activeProduct.colors[0];
+  selectedSize = null;
+  qty = 1;
+
+  document.getElementById("modal-name").textContent = activeProduct.name;
+  document.getElementById("modal-price-final").textContent = formatRp(activeProduct.price);
+
+  const origEl = document.getElementById("modal-price-original");
+  const discEl = document.getElementById("modal-discount-label");
+  if (activeProduct.originalPrice) {
+    origEl.textContent = formatRp(activeProduct.originalPrice);
+    discEl.innerHTML = `<span class="modal-discount-label">Hemat ${discountPct(activeProduct.originalPrice, activeProduct.price)}%</span>`;
+  } else {
+    origEl.textContent = "";
+    discEl.innerHTML = "";
+  }
+
+  // Image
+  const imgWrap = document.getElementById("modal-img-wrap");
+  imgWrap.innerHTML = activeProduct.image
+    ? `<img src="${activeProduct.image}" alt="${activeProduct.name}" />`
+    : `<div class="modal-img-placeholder"><em>${activeProduct.name}</em></div>`;
+
+  // Colors
+  const colorsEl = document.getElementById("modal-colors");
+  colorsEl.innerHTML = activeProduct.colors.map((c, i) => `
+    <button class="modal-color-btn ${i === 0 ? 'active' : ''}" onclick="selectColor(this, '${c.name}', '${c.hex}')">
+      <span class="dot" style="background:${c.hex}"></span>${c.name}
+    </button>`).join("");
+
+  // Sizes
+  const sizesEl = document.getElementById("modal-sizes");
+  sizesEl.innerHTML = activeProduct.sizes.map(s => `
+    <button class="modal-size-btn" onclick="selectSize(this, '${s}')">${s}</button>`).join("");
+
+  document.getElementById("qty-value").textContent = 1;
+  document.getElementById("btn-add-cart").disabled = true;
+  document.getElementById("product-modal").classList.add("open");
+  document.body.style.overflow = "hidden";
+}
+
+function selectColor(el, name, hex) {
+  selectedColor = { name, hex };
+  document.querySelectorAll(".modal-color-btn").forEach(b => b.classList.remove("active"));
+  el.classList.add("active");
+}
+function selectSize(el, size) {
+  selectedSize = size;
+  document.querySelectorAll(".modal-size-btn").forEach(b => b.classList.remove("active"));
+  el.classList.add("active");
+  document.getElementById("btn-add-cart").disabled = false;
+}
+function changeQty(delta) {
+  qty = Math.max(1, qty + delta);
+  document.getElementById("qty-value").textContent = qty;
+}
+function closeModal(e) {
+  if (e.target === document.getElementById("product-modal")) closeProductModal();
+}
+function closeProductModal() {
+  document.getElementById("product-modal").classList.remove("open");
+  document.body.style.overflow = "";
+}
+
+// ===================== CART =====================
+function addToCart() {
+  if (!selectedSize) return;
+  const key = `${activeProduct.id}-${selectedColor.name}-${selectedSize}`;
+  const existing = cart.find(i => i.key === key);
+  if (existing) {
+    existing.qty += qty;
+  } else {
+    cart.push({
+      key,
+      id: activeProduct.id,
+      name: activeProduct.name,
+      price: activeProduct.price,
+      color: selectedColor,
+      size: selectedSize,
+      qty,
+      image: activeProduct.image,
+    });
+  }
+  updateCartUI();
+  closeProductModal();
+  showToast(`${activeProduct.name} ditambahkan ✓`);
+}
+
+function updateCartUI() {
+  const total = cart.reduce((s, i) => s + i.price * i.qty, 0);
+  const count = cart.reduce((s, i) => s + i.qty, 0);
+  document.getElementById("cart-count").textContent = count;
+  document.getElementById("cart-count").classList.toggle("hidden", count === 0);
+  document.getElementById("cart-total").textContent = formatRp(total);
+
+  const list = document.getElementById("cart-items-list");
+  if (!cart.length) {
+    list.innerHTML = `<div class="cart-empty"><p>Keranjangmu masih kosong.</p></div>`;
+    return;
+  }
+  list.innerHTML = cart.map(item => `
+    <div class="cart-item">
+      <div class="cart-item-img">
+        ${item.image ? `<img src="${item.image}" alt="${item.name}" />` : `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;"><span style="width:28px;height:28px;border-radius:50%;background:${item.color.hex};border:1px solid #e0ddd8"></span></div>`}
+      </div>
+      <div class="cart-item-info">
+        <p class="cart-item-name">${item.name}</p>
+        <p class="cart-item-variant">${item.color.name} · ${item.size}</p>
+        <div class="cart-item-bottom">
+          <span class="cart-item-price">${formatRp(item.price * item.qty)}</span>
+          <div class="cart-item-qty">
+            <button class="cart-qty-btn" onclick="updateQty('${item.key}', -1)">−</button>
+            <span class="cart-qty-val">${item.qty}</span>
+            <button class="cart-qty-btn" onclick="updateQty('${item.key}', 1)">+</button>
+          </div>
+        </div>
+      </div>
+    </div>`).join("");
+}
+
+function updateQty(key, delta) {
+  const idx = cart.findIndex(i => i.key === key);
+  if (idx === -1) return;
+  cart[idx].qty += delta;
+  if (cart[idx].qty <= 0) cart.splice(idx, 1);
+  updateCartUI();
+}
+
+function openCart() {
+  updateCartUI();
+  document.getElementById("cart-drawer").classList.add("open");
+  document.body.style.overflow = "hidden";
+}
+function closeCart() {
+  document.getElementById("cart-drawer").classList.remove("open");
+  document.body.style.overflow = "";
+}
+
+// ===================== CHECKOUT WA =====================
+function checkoutWA() {
+  if (!cart.length) return;
+  const lines = cart.map(i =>
+    `• ${i.name} (${i.color.name}, ${i.size}) x${i.qty} — ${formatRp(i.price * i.qty)}`
+  );
+  const total = cart.reduce((s, i) => s + i.price * i.qty, 0);
+  const msg = encodeURIComponent(
+    `Halo ZENOT, saya mau order:\n\n${lines.join("\n")}\n\nTotal: ${formatRp(total)}\n\nMohon konfirmasi ketersediaan. Terima kasih!`
+  );
+  window.open(`https://wa.me/${WA_NUMBER}?text=${msg}`, "_blank");
+}
+
+// ===================== TOAST =====================
+function showToast(msg) {
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  setTimeout(() => t.classList.remove("show"), 2500);
+}
+
+// ===================== INIT =====================
+renderProducts();
+</script>
+</body>
+</html>
