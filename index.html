@@ -497,7 +497,7 @@ const discPct = (o,f) => Math.round((1-f/o)*100);
 
 // ===================== LOAD PRODUCTS =====================
 async function loadProducts() {
-  const { data, error } = await sb.from('products').select('*, variants(*)').eq('is_active', true);
+  const { data, error } = await sb.from('products').select('*, variants(*)').eq('is_active', true).order('created_at', {ascending: false});
   if (error) { console.error(error); return; }
   products = data || [];
   renderProducts();
@@ -659,7 +659,7 @@ function closeProductModal() {
 
 // ===================== REVIEWS =====================
 async function loadReviews(productId) {
-  const { data } = await sb.from('reviews').select('*').eq('product_id', productId).order('created_at',{ascending:false});
+  const { data } = await sb.from('reviews').select('*').eq('product_id', productId);
   const reviews = data || [];
   const avg = reviews.length ? (reviews.reduce((s,r)=>s+r.rating,0)/reviews.length).toFixed(1) : null;
   
@@ -926,7 +926,7 @@ async function saveProduct() {
 }
 
 async function loadAdminProducts() {
-  const { data } = await sb.from('products').select('*,variants(*)').order('created_at',{ascending:false});
+  const { data } = await sb.from('products').select('*,variants(*)');
   const el = document.getElementById('admin-products-render');
   if (!data||!data.length) { el.innerHTML='<p style="color:var(--muted);font-size:13px">Belum ada produk.</p>'; return; }
   el.innerHTML = data.map(p=>`
@@ -966,7 +966,7 @@ async function saveVoucher() {
 }
 
 async function loadAdminVouchers() {
-  const { data } = await sb.from('vouchers').select('*').order('created_at',{ascending:false});
+  const { data } = await sb.from('vouchers').select('*');
   const el = document.getElementById('voucher-list');
   if (!data||!data.length) { el.innerHTML='<p style="color:var(--muted);font-size:13px">Belum ada voucher.</p>'; return; }
   el.innerHTML = `<table style="width:100%;border-collapse:collapse;font-size:13px">
@@ -991,7 +991,7 @@ async function deleteVoucher(id) {
 
 // ===================== REVIEWS ADMIN =====================
 async function loadAdminReviews() {
-  const { data } = await sb.from('reviews').select('*,products(name)').order('created_at',{ascending:false});
+  const { data } = await sb.from('reviews').select('*,products(name)');
   const el = document.getElementById('all-reviews-render');
   if (!data||!data.length) { el.innerHTML='<p style="color:var(--muted);font-size:13px">Belum ada ulasan.</p>'; return; }
   el.innerHTML = data.map(r=>`
