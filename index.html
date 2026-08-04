@@ -166,18 +166,36 @@
     .cart-empty{text-align:center;padding:60px 20px}
     .cart-empty p{font-family:'Source Serif 4',serif;font-size:16px;font-style:italic;color:var(--muted)}
 
-    /* ===== ADMIN ===== */
-    .admin-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:400;align-items:center;justify-content:center}
-    .admin-overlay.open{display:flex}
-    .admin-panel{background:var(--surface);border-radius:var(--radius);width:min(600px,95vw);max-height:90vh;overflow-y:auto;padding:32px}
-    .admin-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px}
-    .admin-title{font-family:'Source Serif 4',serif;font-size:24px;font-weight:600}
-    .admin-close{background:none;border:none;font-size:24px;cursor:pointer;color:var(--muted)}
-    .admin-tabs{display:flex;gap:0;border-bottom:1px solid var(--border);margin-bottom:24px}
-    .admin-tab{padding:10px 20px;background:none;border:none;border-bottom:2px solid transparent;font-size:13px;cursor:pointer;color:var(--sec);margin-bottom:-1px}
-    .admin-tab.active{border-bottom-color:var(--text);color:var(--text);font-weight:500}
+    /* ===== ADMIN (Seller-Center style, sidebar layout) ===== */
+    .admin-page{display:none;position:fixed;inset:0;background:var(--bg);z-index:400}
+    .admin-page.open{display:flex}
+    .admin-sidebar{width:240px;flex-shrink:0;background:#1a1a1a;color:#f5f4f2;display:flex;flex-direction:column;height:100%}
+    .admin-sidebar-brand{padding:22px 22px 18px;border-bottom:1px solid rgba(255,255,255,.08)}
+    .admin-sidebar-brand .logo{color:#fff;font-size:19px}
+    .admin-sidebar-brand p{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.4);margin-top:4px}
+    .admin-nav{flex:1;padding:14px 12px;overflow-y:auto}
+    .admin-nav-group-label{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.35);padding:10px 12px 6px}
+    .admin-nav-item{display:flex;align-items:center;gap:11px;width:100%;padding:11px 12px;border-radius:var(--radius-sm);background:none;border:none;color:rgba(255,255,255,.62);font-family:'Inter',sans-serif;font-size:13.5px;cursor:pointer;text-align:left;margin-bottom:2px;transition:background .15s,color .15s}
+    .admin-nav-item svg{width:17px;height:17px;flex-shrink:0}
+    .admin-nav-item:hover{background:rgba(255,255,255,.06);color:#fff}
+    .admin-nav-item.active{background:#fff;color:#1a1a1a;font-weight:500}
+    .admin-sidebar-footer{padding:12px;border-top:1px solid rgba(255,255,255,.08)}
+    .admin-user-chip{display:flex;align-items:center;gap:10px;padding:8px 10px;margin-bottom:4px}
+    .admin-user-avatar{width:28px;height:28px;border-radius:50%;background:var(--sep);color:#1a1a1a;font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+    .admin-user-email{font-size:11px;color:rgba(255,255,255,.5);font-family:'IBM Plex Mono',monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+    .admin-main{flex:1;display:flex;flex-direction:column;height:100%;overflow:hidden}
+    .admin-topbar{height:60px;flex-shrink:0;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 28px}
+    .admin-topbar-title{font-family:'Source Serif 4',serif;font-size:19px;font-weight:600}
+    .admin-topbar-actions{display:flex;align-items:center;gap:10px}
+    .admin-mobile-toggle{display:none;background:none;border:1px solid var(--border);border-radius:var(--radius-sm);width:36px;height:36px;cursor:pointer;align-items:center;justify-content:center}
+    .admin-content{flex:1;overflow-y:auto;padding:28px}
+    .admin-content-inner{max-width:760px;margin:0 auto}
     .admin-section{display:none}
     .admin-section.active{display:block}
+    .admin-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:24px;margin-bottom:20px}
+    .admin-card-title{font-family:'Source Serif 4',serif;font-size:17px;font-weight:600;margin-bottom:18px}
+
     .form-group{margin-bottom:16px}
     .form-label{display:block;font-size:12px;font-family:'IBM Plex Mono',monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--sec);margin-bottom:6px}
     .form-input{width:100%;padding:10px 14px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:14px;font-family:'Inter',sans-serif;outline:none}
@@ -202,6 +220,14 @@
     .upload-area:hover{border-color:var(--sep)}
     .upload-preview{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
     .upload-preview img{width:80px;height:80px;object-fit:cover;border-radius:var(--radius-sm)}
+
+    @media(max-width:860px){
+      .admin-sidebar{position:fixed;top:0;bottom:0;left:0;width:220px;transform:translateX(-100%);transition:transform .2s;z-index:30}
+      .admin-sidebar.open{transform:translateX(0)}
+      .admin-mobile-toggle{display:flex}
+      .admin-sidebar-scrim{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:20}
+      .admin-sidebar-scrim.open{display:block}
+    }
 
     /* ===== LOGIN ===== */
     .login-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:500;align-items:center;justify-content:center}
@@ -352,113 +378,164 @@
   </div>
 </div>
 
-<!-- ADMIN PANEL -->
-<div class="admin-overlay" id="admin-overlay">
-  <div class="admin-panel">
-    <div class="admin-header">
-      <h2 class="admin-title">Admin Panel</h2>
-      <button class="admin-close" onclick="closeAdmin()">✕</button>
+<!-- ADMIN PAGE (Seller Center style) -->
+<div class="admin-page" id="admin-overlay">
+  <div class="admin-sidebar-scrim" id="admin-scrim" onclick="toggleSidebar(false)"></div>
+  <aside class="admin-sidebar" id="admin-sidebar">
+    <div class="admin-sidebar-brand">
+      <a href="#" class="logo">ZEN<em>ot</em></a>
+      <p>Seller Center</p>
     </div>
-    <div class="admin-tabs">
-      <button class="admin-tab active" onclick="switchTab('products',this)">Produk</button>
-      <button class="admin-tab" onclick="switchTab('vouchers',this)">Voucher</button>
-      <button class="admin-tab" onclick="switchTab('reviews',this)">Ulasan</button>
-      <button class="admin-tab" onclick="doLogout()" style="margin-left:auto;color:#c0392b">Logout</button>
+    <nav class="admin-nav">
+      <p class="admin-nav-group-label">Kelola</p>
+      <button class="admin-nav-item active" data-tab="products" onclick="switchTab('products',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 8l-9-5-9 5 9 5 9-5z"/><path d="M3 8v8l9 5 9-5V8"/><path d="M12 13v8"/></svg>
+        Produk
+      </button>
+      <button class="admin-nav-item" data-tab="vouchers" onclick="switchTab('vouchers',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20.59 13.41L11 3.83A2 2 0 009.59 3.24H4a1 1 0 00-1 1v5.59a2 2 0 00.59 1.41l9.58 9.59a2 2 0 002.83 0l4.59-4.59a2 2 0 000-2.83z"/><circle cx="7.5" cy="7.5" r="1.2"/></svg>
+        Voucher
+      </button>
+      <button class="admin-nav-item" data-tab="reviews" onclick="switchTab('reviews',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+        Ulasan
+      </button>
+      <p class="admin-nav-group-label">Lainnya</p>
+      <button class="admin-nav-item" onclick="closeAdmin()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>
+        Kembali ke Toko
+      </button>
+    </nav>
+    <div class="admin-sidebar-footer">
+      <div class="admin-user-chip">
+        <div class="admin-user-avatar" id="admin-avatar">Z</div>
+        <span class="admin-user-email" id="admin-email-chip">admin</span>
+      </div>
+      <button class="admin-nav-item" style="color:#e08a80" onclick="doLogout()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>
+        Logout
+      </button>
+    </div>
+  </aside>
+
+  <div class="admin-main">
+    <div class="admin-topbar">
+      <div style="display:flex;align-items:center;gap:12px">
+        <button class="admin-mobile-toggle" onclick="toggleSidebar(true)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="18" height="18"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        </button>
+        <span class="admin-topbar-title" id="admin-topbar-title">Produk</span>
+      </div>
     </div>
 
-    <!-- TAB: PRODUK -->
-    <div class="admin-section active" id="tab-products">
-      <h3 style="font-family:'Source Serif 4',serif;font-size:18px;margin-bottom:16px">Tambah Produk</h3>
-      <div class="form-group">
-        <label class="form-label">Nama Produk</label>
-        <input class="form-input" id="p-name" placeholder="Stripe Collar Knit"/>
-      </div>
-      <div class="form-row">
-        <div class="form-group">
-          <label class="form-label">Kategori</label>
-          <select class="form-input" id="p-cat">
-            <option>Cardigan</option><option>Sweater</option><option>Polo Knit</option><option>Vest</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Deskripsi</label>
-          <input class="form-input" id="p-desc" placeholder="Opsional"/>
-        </div>
-      </div>
-      <div class="form-group">
-        <label class="form-label">Foto Produk</label>
-        <div class="upload-area" onclick="document.getElementById('p-photos').click()">
-          <p style="font-size:13px;color:var(--muted)">Klik untuk upload foto</p>
-          <input type="file" id="p-photos" multiple accept="image/*" style="display:none" onchange="previewPhotos(this)"/>
-        </div>
-        <div class="upload-preview" id="upload-preview"></div>
-      </div>
-      <div class="form-group">
-        <label class="form-label">Varian (Warna · Ukuran · Harga · Harga Asli · Stok)</label>
-        <div id="variants-container">
-          <div class="variant-row">
-            <input placeholder="Nama warna" class="v-color-name"/>
-            <input placeholder="#1a1a1a" class="v-color-hex" style="width:70px"/>
-            <input placeholder="Ukuran" class="v-size"/>
-            <input placeholder="Harga" class="v-price" type="number"/>
-            <input placeholder="H.Asli" class="v-orig" type="number"/>
-            <input placeholder="Stok" class="v-stock" type="number" style="width:60px"/>
+    <div class="admin-content">
+      <div class="admin-content-inner">
+
+        <!-- TAB: PRODUK -->
+        <div class="admin-section active" id="tab-products">
+          <div class="admin-card">
+            <h3 class="admin-card-title">Tambah Produk</h3>
+            <div class="form-group">
+              <label class="form-label">Nama Produk</label>
+              <input class="form-input" id="p-name" placeholder="Stripe Collar Knit"/>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Kategori</label>
+                <select class="form-input" id="p-cat">
+                  <option>Cardigan</option><option>Sweater</option><option>Polo Knit</option><option>Vest</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Deskripsi</label>
+                <input class="form-input" id="p-desc" placeholder="Opsional"/>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Foto Produk</label>
+              <div class="upload-area" onclick="document.getElementById('p-photos').click()">
+                <p style="font-size:13px;color:var(--muted)">Klik untuk upload foto</p>
+                <input type="file" id="p-photos" multiple accept="image/*" style="display:none" onchange="previewPhotos(this)"/>
+              </div>
+              <div class="upload-preview" id="upload-preview"></div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Varian (Warna · Ukuran · Harga · Harga Asli · Stok)</label>
+              <div id="variants-container">
+                <div class="variant-row">
+                  <input placeholder="Nama warna" class="v-color-name"/>
+                  <input placeholder="#1a1a1a" class="v-color-hex" style="width:70px"/>
+                  <input placeholder="Ukuran" class="v-size"/>
+                  <input placeholder="Harga" class="v-price" type="number"/>
+                  <input placeholder="H.Asli" class="v-orig" type="number"/>
+                  <input placeholder="Stok" class="v-stock" type="number" style="width:60px"/>
+                </div>
+              </div>
+              <button class="btn-add-variant" onclick="addVariantRow()">+ Tambah Varian</button>
+            </div>
+            <button class="btn-primary" onclick="saveProduct()">Simpan Produk</button>
+          </div>
+
+          <div class="admin-card admin-product-list">
+            <h3 class="admin-card-title">Daftar Produk</h3>
+            <div id="admin-products-render"></div>
           </div>
         </div>
-        <button class="btn-add-variant" onclick="addVariantRow()">+ Tambah Varian</button>
-      </div>
-      <button class="btn-primary" onclick="saveProduct()">Simpan Produk</button>
 
-      <div class="admin-product-list" id="admin-product-list">
-        <h3 style="font-family:'Source Serif 4',serif;font-size:18px;margin:24px 0 16px">Daftar Produk</h3>
-        <div id="admin-products-render"></div>
-      </div>
-    </div>
+        <!-- TAB: VOUCHER -->
+        <div class="admin-section" id="tab-vouchers">
+          <div class="admin-card">
+            <h3 class="admin-card-title">Buat Voucher</h3>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Kode</label>
+                <input class="form-input" id="v-code" placeholder="ZENOT10" style="text-transform:uppercase"/>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Tipe</label>
+                <select class="form-input" id="v-type">
+                  <option value="percent">Persen (%)</option>
+                  <option value="fixed">Nominal (Rp)</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Nilai Diskon</label>
+                <input class="form-input" id="v-value" type="number" placeholder="10"/>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Min. Order (Rp)</label>
+                <input class="form-input" id="v-min" type="number" placeholder="0"/>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Max. Pakai</label>
+                <input class="form-input" id="v-maxuse" type="number" placeholder="100"/>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Berlaku Sampai</label>
+                <input class="form-input" id="v-expires" type="date"/>
+              </div>
+            </div>
+            <button class="btn-primary" onclick="saveVoucher()">Simpan Voucher</button>
+          </div>
+          <div class="admin-card">
+            <h3 class="admin-card-title">Daftar Voucher</h3>
+            <div id="voucher-list"></div>
+          </div>
+        </div>
 
-    <!-- TAB: VOUCHER -->
-    <div class="admin-section" id="tab-vouchers">
-      <h3 style="font-family:'Source Serif 4',serif;font-size:18px;margin-bottom:16px">Buat Voucher</h3>
-      <div class="form-row">
-        <div class="form-group">
-          <label class="form-label">Kode</label>
-          <input class="form-input" id="v-code" placeholder="ZENOT10" style="text-transform:uppercase"/>
+        <!-- TAB: ULASAN -->
+        <div class="admin-section" id="tab-reviews">
+          <div class="admin-card">
+            <h3 class="admin-card-title">Ulasan Masuk</h3>
+            <div id="all-reviews-render"></div>
+          </div>
         </div>
-        <div class="form-group">
-          <label class="form-label">Tipe</label>
-          <select class="form-input" id="v-type">
-            <option value="percent">Persen (%)</option>
-            <option value="fixed">Nominal (Rp)</option>
-          </select>
-        </div>
-      </div>
-      <div class="form-row">
-        <div class="form-group">
-          <label class="form-label">Nilai Diskon</label>
-          <input class="form-input" id="v-value" type="number" placeholder="10"/>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Min. Order (Rp)</label>
-          <input class="form-input" id="v-min" type="number" placeholder="0"/>
-        </div>
-      </div>
-      <div class="form-row">
-        <div class="form-group">
-          <label class="form-label">Max. Pakai</label>
-          <input class="form-input" id="v-maxuse" type="number" placeholder="100"/>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Berlaku Sampai</label>
-          <input class="form-input" id="v-expires" type="date"/>
-        </div>
-      </div>
-      <button class="btn-primary" onclick="saveVoucher()">Simpan Voucher</button>
-      <div id="voucher-list" style="margin-top:20px"></div>
-    </div>
 
-    <!-- TAB: ULASAN -->
-    <div class="admin-section" id="tab-reviews">
-      <h3 style="font-family:'Source Serif 4',serif;font-size:18px;margin-bottom:16px">Ulasan Masuk</h3>
-      <div id="all-reviews-render"></div>
+      </div>
     </div>
   </div>
 </div>
@@ -834,17 +911,33 @@ async function doLogout() {
 // ===================== ADMIN =====================
 function openAdmin() {
   document.getElementById('admin-overlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+  const email = adminUser?.email || 'admin';
+  document.getElementById('admin-email-chip').textContent = email;
+  document.getElementById('admin-avatar').textContent = email[0].toUpperCase();
   loadAdminProducts();
   loadAdminVouchers();
   loadAdminReviews();
 }
-function closeAdmin() { document.getElementById('admin-overlay').classList.remove('open'); }
+function closeAdmin() {
+  document.getElementById('admin-overlay').classList.remove('open');
+  document.body.style.overflow = '';
+  toggleSidebar(false);
+}
 
+function toggleSidebar(open) {
+  document.getElementById('admin-sidebar').classList.toggle('open', open);
+  document.getElementById('admin-scrim').classList.toggle('open', open);
+}
+
+const TAB_TITLES = { products: 'Produk', vouchers: 'Voucher', reviews: 'Ulasan' };
 function switchTab(tab, el) {
-  document.querySelectorAll('.admin-tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.admin-nav-item[data-tab]').forEach(t=>t.classList.remove('active'));
   document.querySelectorAll('.admin-section').forEach(s=>s.classList.remove('active'));
   el.classList.add('active');
   document.getElementById(`tab-${tab}`).classList.add('active');
+  document.getElementById('admin-topbar-title').textContent = TAB_TITLES[tab] || '';
+  toggleSidebar(false);
 }
 
 function addVariantRow() {
