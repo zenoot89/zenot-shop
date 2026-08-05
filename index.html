@@ -54,13 +54,9 @@
     .filter-tab.active{background:var(--accent);border-color:var(--accent);color:#fff}
 
     /* ===== VOUCHER BAR ===== */
-    .voucher-bar{max-width:1100px;margin:0 auto;padding:0 20px 20px;display:flex;gap:10px}
-    .voucher-input{flex:1;max-width:280px;padding:9px 14px;border:1px solid var(--border);border-radius:50px;font-size:13px;font-family:'IBM Plex Mono',monospace;text-transform:uppercase;outline:none}
-    .voucher-input:focus{border-color:var(--sep)}
-    .voucher-btn{padding:9px 18px;background:var(--accent);color:#fff;border:none;border-radius:50px;font-size:13px;cursor:pointer}
-    .voucher-msg{font-size:12px;color:var(--sec);align-self:center;font-family:'IBM Plex Mono',monospace}
-    .voucher-msg.ok{color:#2a7a2a}
-    .voucher-msg.err{color:#c0392b}
+    .promo-section{max-width:1100px;margin:0 auto;padding:0 20px 24px}
+    .promo-section-list{display:flex;gap:12px;overflow-x:auto;padding-bottom:4px}
+    .promo-section .promo-card{flex-shrink:0;width:260px;margin-bottom:0}
 
     /* ===== VOUCHER PROMO POPUP ===== */
     .promo-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:250;align-items:center;justify-content:center;padding:20px}
@@ -75,9 +71,8 @@
     .promo-card-name{font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:13px;letter-spacing:.04em}
     .promo-card-desc{font-size:12px;color:var(--sec);margin-top:2px}
     .promo-card-exp{font-size:11px;color:var(--muted);margin-top:2px}
-    .promo-banner-inner{max-width:1100px;margin:0 auto 16px;padding:12px 20px;background:#1a1a1a;color:#fff;border-radius:50px;font-size:13px;text-align:center}
-    .promo-banner-inner strong{font-family:'IBM Plex Mono',monospace}
-    @media(max-width:480px){.promo-banner-inner{margin-left:16px;margin-right:16px;border-radius:var(--radius-sm);font-size:12px}}
+    .promo-claim-btn{background:var(--accent);color:#fff;border:none;border-radius:50px;padding:8px 16px;font-size:12px;font-weight:500;cursor:pointer;flex-shrink:0}
+    .promo-claim-btn.claimed{background:#e8e5e0;color:var(--muted);cursor:default}
 
     /* ===== GRID ===== */
     .catalog{max-width:1100px;margin:0 auto;padding:0 20px 60px}
@@ -267,7 +262,7 @@
     @media(max-width:480px){
       .product-grid{grid-template-columns:repeat(2,1fr);gap:12px}
       .hero{padding:28px 16px 20px}
-      .controls,.voucher-bar,.catalog{padding-left:16px;padding-right:16px}
+      .controls,.promo-section,.catalog{padding-left:16px;padding-right:16px}
     }
   </style>
 </head>
@@ -311,13 +306,9 @@
 </div>
 
 <!-- VOUCHER BAR -->
-<div class="voucher-bar">
-  <input class="voucher-input" type="text" id="voucher-input" name="voucher-code" autocomplete="off" placeholder="KODE VOUCHER"/>
-  <button class="voucher-btn" onclick="applyVoucher()">Pakai</button>
-  <span class="voucher-msg" id="voucher-msg"></span>
-</div>
-
-<div id="promo-banner"></div>
+<section class="promo-section">
+  <div class="promo-section-list" id="promo-section-list"></div>
+</section>
 
 <!-- CATALOG -->
 <main class="catalog">
@@ -602,7 +593,7 @@ let selectedVariant = null;
 let qty = 1;
 let cart = [];
 let voucher = null;
-let voucherAutoMode = true;
+let claimedCodes = JSON.parse(localStorage.getItem('zenot_claimed_vouchers') || '[]');
 let allVouchers = [];
 let adminUser = null;
 let reviewRating = 0;
@@ -899,24 +890,11 @@ function discAmountFor(v, subtotal) {
   return v.discount_type === 'percent' ? Math.round(subtotal * v.discount_value / 100) : v.discount_value;
 }
 
-function getBestPromoVoucher() {
-  if (!allVouchers.length) return null;
-  let best = null, bestAmt = -1;
-  allVouchers.forEach(v => {
-    const amt = v.discount_type === 'percent' ? Math.round(v.min_order * v.discount_value / 100) : v.discount_value;
-    if (amt > bestAmt) { bestAmt = amt; best = v; }
-  });
-  return best;
-}
-
-function renderVoucherPopupList() {
-  const el = document.getElementById('promo-list');
-  if (!el) return;
-  const v = getBestPromoVoucher();
-  if (!v) { el.innerHTML = '<p style="font-size:13px;color:var(--muted)">Belum ada voucher aktif saat ini.</p>'; renderPromoBanner(); return; }
+function voucherCardHTML(v) {
+  const claimed = claimedCodes.includes(v.code);
   const badge = v.discount_type === 'percent' ? `${v.discount_value}%` : `${Math.round(v.discount_value/1000)}rb`;
   const expText = v.expires_at ? `Berlaku sampai ${new Date(v.expires_at).toLocaleDateString('id-ID')}` : 'Tanpa batas waktu';
-  el.innerHTML = `
+  return `
     <div class="promo-card">
       <div class="promo-card-badge">${badge}</div>
       <div class="promo-card-info">
@@ -924,20 +902,31 @@ function renderVoucherPopupList() {
         <p class="promo-card-desc">Min. belanja ${fRp(v.min_order)}</p>
         <p class="promo-card-exp">${expText}</p>
       </div>
+      <button class="promo-claim-btn ${claimed?'claimed':''}" ${claimed?'disabled':''} onclick="claimVoucher('${v.code}')">${claimed?'✓ Diklaim':'Klaim'}</button>
     </div>`;
-  renderPromoBanner();
 }
 
-function renderPromoBanner() {
-  const el = document.getElementById('promo-banner');
-  if (!el) return;
-  const v = getBestPromoVoucher();
-  if (!v) { el.innerHTML = ''; return; }
-  const discText = v.discount_type === 'percent' ? `${v.discount_value}%` : fRp(v.discount_value);
-  el.innerHTML = `
-    <div class="promo-banner-inner">
-      🎉 Diskon <strong>${discText}</strong> pakai kode <strong>${v.code}</strong> · Min. belanja ${fRp(v.min_order)}
-    </div>`;
+function renderVoucherPopupList() {
+  const el = document.getElementById('promo-list');
+  const sectionEl = document.getElementById('promo-section-list');
+  if (!allVouchers.length) {
+    if (el) el.innerHTML = '<p style="font-size:13px;color:var(--muted)">Belum ada voucher aktif saat ini.</p>';
+    if (sectionEl) sectionEl.innerHTML = '';
+    return;
+  }
+  const html = allVouchers.map(voucherCardHTML).join('');
+  if (el) el.innerHTML = html;
+  if (sectionEl) sectionEl.innerHTML = html;
+}
+
+function claimVoucher(code) {
+  if (!claimedCodes.includes(code)) {
+    claimedCodes.push(code);
+    localStorage.setItem('zenot_claimed_vouchers', JSON.stringify(claimedCodes));
+    showToast(`Voucher ${code} diklaim ✓`);
+  }
+  renderVoucherPopupList();
+  updateCartUI();
 }
 
 function showVoucherPopup() {
@@ -949,11 +938,7 @@ function closeVoucherPopup() {
 }
 
 function autoApplyBestVoucher(subtotal) {
-  if (!voucherAutoMode) {
-    if (voucher && subtotal < voucher.min_order) { voucher = null; voucherAutoMode = true; }
-    else return;
-  }
-  const eligible = allVouchers.filter(v => subtotal >= v.min_order);
+  const eligible = allVouchers.filter(v => claimedCodes.includes(v.code) && subtotal >= v.min_order);
   if (!eligible.length) { voucher = null; return; }
   let best = null, bestDisc = -1;
   eligible.forEach(v => {
@@ -961,25 +946,6 @@ function autoApplyBestVoucher(subtotal) {
     if (d > bestDisc) { bestDisc = d; best = v; }
   });
   voucher = best;
-}
-
-// ===================== VOUCHER =====================
-async function applyVoucher() {
-  const code = document.getElementById('voucher-input').value.trim().toUpperCase();
-  const msg = document.getElementById('voucher-msg');
-  if (!code) return;
-  const { data } = await sb.from('vouchers').select('*').eq('code',code).eq('is_active',true).single();
-  if (!data) { msg.textContent='Kode tidak valid'; msg.className='voucher-msg err'; voucher=null; return; }
-  if (data.expires_at && new Date(data.expires_at)<new Date()) { msg.textContent='Voucher sudah kedaluwarsa'; msg.className='voucher-msg err'; voucher=null; return; }
-  if (data.used_count>=data.max_uses) { msg.textContent='Voucher sudah habis'; msg.className='voucher-msg err'; voucher=null; return; }
-  const subtotal = cart.reduce((s,i)=>s+i.price*i.qty,0);
-  if (subtotal < data.min_order) { msg.textContent=`Min. order ${fRp(data.min_order)}`; msg.className='voucher-msg err'; voucher=null; return; }
-  voucher = data;
-  voucherAutoMode = false;
-  const discText = data.discount_type==='percent'?`${data.discount_value}%`:`Rp ${data.discount_value.toLocaleString('id-ID')}`;
-  msg.textContent = `✓ Hemat ${discText}!`;
-  msg.className = 'voucher-msg ok';
-  updateCartUI();
 }
 
 // ===================== CHECKOUT WA =====================
