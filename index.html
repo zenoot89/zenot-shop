@@ -116,6 +116,10 @@
     .modal-img{aspect-ratio:1/1;background:#f0ede8;border-radius:var(--radius-sm);overflow:hidden;margin-bottom:20px}
     .modal-img img{width:100%;height:100%;object-fit:cover}
     .modal-img-ph{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-family:'Source Serif 4',serif;font-size:13px;color:var(--muted);font-style:italic}
+    .modal-gallery{display:flex;gap:8px;margin-bottom:20px;overflow-x:auto}
+    .modal-gallery-thumb{width:56px;height:56px;border-radius:6px;overflow:hidden;flex-shrink:0;border:2px solid transparent;cursor:pointer;opacity:.65}
+    .modal-gallery-thumb.active{border-color:var(--text);opacity:1}
+    .modal-gallery-thumb img{width:100%;height:100%;object-fit:cover}
     .modal-price-row{display:flex;align-items:baseline;gap:10px;margin-bottom:6px}
     .modal-price-final{font-family:'IBM Plex Mono',monospace;font-size:22px;font-weight:500}
     .modal-price-orig{font-family:'IBM Plex Mono',monospace;font-size:15px;color:var(--muted);text-decoration:line-through}
@@ -243,6 +247,10 @@
     .upload-area:hover{border-color:var(--sep)}
     .upload-preview{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
     .upload-preview img{width:80px;height:80px;object-fit:cover;border-radius:var(--radius-sm)}
+    .upload-thumb{position:relative;width:80px;height:80px}
+    .upload-thumb img{width:100%;height:100%;object-fit:cover;border-radius:var(--radius-sm)}
+    .upload-thumb-remove{position:absolute;top:-6px;right:-6px;width:20px;height:20px;border-radius:50%;background:#1a1a1a;color:#fff;border:2px solid var(--surface);font-size:11px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center}
+    .upload-thumb-cover{position:absolute;bottom:2px;left:2px;background:rgba(0,0,0,.7);color:#fff;font-size:9px;padding:1px 5px;border-radius:3px;font-family:'IBM Plex Mono',monospace}
 
     @media(max-width:860px){
       .admin-sidebar{position:fixed;top:0;bottom:0;left:0;width:220px;transform:translateX(-100%);transition:transform .2s;z-index:30}
@@ -334,6 +342,7 @@
       <button class="modal-close" onclick="closeProductModal()">✕</button>
     </div>
     <div class="modal-img" id="modal-img-wrap"></div>
+    <div class="modal-gallery" id="modal-gallery"></div>
     <div class="modal-price-row">
       <span class="modal-price-final" id="modal-price-final"></span>
       <span class="modal-price-orig" id="modal-price-orig"></span>
@@ -501,9 +510,9 @@
               </div>
             </div>
             <div class="form-group">
-              <label class="form-label">Foto Produk</label>
+              <label class="form-label">Foto Produk (maks. 9)</label>
               <div class="upload-area" onclick="document.getElementById('p-photos').click()">
-                <p style="font-size:13px;color:var(--muted)">Klik untuk upload foto</p>
+                <p style="font-size:13px;color:var(--muted)">Klik untuk upload foto (bisa pilih beberapa sekaligus)</p>
                 <input type="file" id="p-photos" multiple accept="image/*" style="display:none" onchange="previewPhotos(this)"/>
               </div>
               <div class="upload-preview" id="upload-preview"></div>
@@ -716,6 +725,7 @@ async function openProduct(id) {
   const firstColor = colors[0]?.[0];
   renderSizes(firstColor);
   updateModalImage(firstColor);
+  renderModalGallery();
 
   // Price
   const firstVar = activeVariants.find(v=>v.color_name===firstColor);
@@ -726,6 +736,22 @@ async function openProduct(id) {
 
   document.getElementById('product-modal').classList.add('open');
   document.body.style.overflow = 'hidden';
+}
+
+function renderModalGallery() {
+  const el = document.getElementById('modal-gallery');
+  const urls = (activeProduct.image_urls && activeProduct.image_urls.length) ? activeProduct.image_urls : (activeProduct.image_url ? [activeProduct.image_url] : []);
+  if (urls.length <= 1) { el.innerHTML = ''; return; }
+  el.innerHTML = urls.map((u,i) => `
+    <div class="modal-gallery-thumb ${i===0?'active':''}" onclick="setModalMainImage('${u}', this)">
+      <img src="${u}"/>
+    </div>`).join('');
+}
+
+function setModalMainImage(url, el) {
+  document.getElementById('modal-img-wrap').innerHTML = `<img src="${url}" alt="${activeProduct.name}"/>`;
+  document.querySelectorAll('.modal-gallery-thumb').forEach(t=>t.classList.remove('active'));
+  if (el) el.classList.add('active');
 }
 
 function updateModalImage(colorName) {
@@ -1106,13 +1132,31 @@ function compressImage(file, maxDim = 1200, quality = 0.82) {
 }
 
 let uploadedFiles = [];
-function previewPhotos(input) {
-  uploadedFiles = Array.from(input.files);
+let existingPhotoUrls = [];
+
+function renderUploadPreview() {
   const prev = document.getElementById('upload-preview');
-  prev.innerHTML = uploadedFiles.map((f,i)=>{
-    const url = URL.createObjectURL(f);
-    return `<img src="${url}" alt="preview ${i}"/>`;
-  }).join('');
+  let html = '';
+  existingPhotoUrls.forEach((url, i) => {
+    html += `<div class="upload-thumb">${i===0?'<span class="upload-thumb-cover">Cover</span>':''}<img src="${url}"/><button type="button" class="upload-thumb-remove" onclick="removeExistingPhoto(${i})">✕</button></div>`;
+  });
+  uploadedFiles.forEach((f, i) => {
+    const idx = existingPhotoUrls.length + i;
+    html += `<div class="upload-thumb">${idx===0?'<span class="upload-thumb-cover">Cover</span>':''}<img src="${URL.createObjectURL(f)}"/><button type="button" class="upload-thumb-remove" onclick="removeNewPhoto(${i})">✕</button></div>`;
+  });
+  prev.innerHTML = html;
+}
+
+function removeExistingPhoto(i) { existingPhotoUrls.splice(i,1); renderUploadPreview(); }
+function removeNewPhoto(i) { uploadedFiles.splice(i,1); renderUploadPreview(); }
+
+function previewPhotos(input) {
+  const remaining = 9 - existingPhotoUrls.length - uploadedFiles.length;
+  if (remaining <= 0) { showToast('Maksimal 9 foto per produk'); input.value=''; return; }
+  const newFiles = Array.from(input.files).slice(0, remaining);
+  uploadedFiles = uploadedFiles.concat(newFiles);
+  input.value = '';
+  renderUploadPreview();
 }
 
 let editingProductId = null;
@@ -1124,28 +1168,30 @@ async function saveProduct() {
   const description = document.getElementById('p-desc').value.trim();
   if (!name) { showToast('Nama produk wajib diisi'); return; }
 
-  // Upload foto (dikompres dulu biar hemat storage)
-  let image_url = editingProductId ? undefined : null; // undefined = jangan ubah field ini saat edit kalau gak ada foto baru
-  if (uploadedFiles.length) {
-    const compressed = await compressImage(uploadedFiles[0]);
-    const path = `${Date.now()}.jpg`;
+  // Upload foto produk (dikompres dulu, gabung sama foto lama yang dipertahankan)
+  let newUrls = [];
+  for (const file of uploadedFiles) {
+    const compressed = await compressImage(file);
+    const path = `${Date.now()}-${Math.random().toString(36).slice(2,7)}.jpg`;
     const { error: upErr } = await sb.storage.from('product-photos').upload(path, compressed, { contentType: 'image/jpeg' });
     if (!upErr) {
       const { data: urlData } = sb.storage.from('product-photos').getPublicUrl(path);
-      image_url = urlData.publicUrl;
+      newUrls.push(urlData.publicUrl);
     }
   }
+  const finalUrls = existingPhotoUrls.concat(newUrls);
+  const image_urls = finalUrls.length ? finalUrls : null;
+  const image_url = finalUrls.length ? finalUrls[0] : null;
 
   let prod;
   if (editingProductId) {
-    const payload = {name,category,description};
-    if (image_url !== undefined) payload.image_url = image_url;
+    const payload = {name,category,description,image_url,image_urls};
     const { data, error } = await sb.from('products').update(payload).eq('id',editingProductId).select().single();
     if (error) { showToast('Gagal update produk'); return; }
     prod = data;
     await sb.from('variants').delete().eq('product_id', prod.id);
   } else {
-    const { data, error } = await sb.from('products').insert({name,category,description,image_url}).select().single();
+    const { data, error } = await sb.from('products').insert({name,category,description,image_url,image_urls}).select().single();
     if (error) { showToast('Gagal simpan produk'); return; }
     prod = data;
   }
@@ -1204,6 +1250,7 @@ function resetProductForm() {
       </div>
     </div>`;
   uploadedFiles=[];
+  existingPhotoUrls=[];
   document.getElementById('upload-preview').innerHTML='';
 }
 
@@ -1233,7 +1280,8 @@ function editProduct(id) {
   document.getElementById('p-cat').value = p.category;
   document.getElementById('p-desc').value = p.description || '';
   uploadedFiles = [];
-  document.getElementById('upload-preview').innerHTML = p.image_url ? `<img src="${p.image_url}" alt="foto saat ini"/>` : '';
+  existingPhotoUrls = (p.image_urls && p.image_urls.length) ? [...p.image_urls] : (p.image_url ? [p.image_url] : []);
+  renderUploadPreview();
   const vars = p.variants || [];
   document.getElementById('variants-container').innerHTML = (vars.length ? vars : [{}]).map(v => `
     <div class="variant-row-card">
