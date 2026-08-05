@@ -83,7 +83,7 @@
     .product-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:20px}
     .product-card{background:var(--surface);border-radius:var(--radius);overflow:hidden;border:1px solid var(--border);transition:transform .2s,box-shadow .2s;cursor:pointer}
     .product-card:hover{transform:translateY(-3px);box-shadow:0 8px 24px rgba(0,0,0,.08)}
-    .card-img{position:relative;aspect-ratio:4/3;background:#f0ede8;overflow:hidden}
+    .card-img{position:relative;aspect-ratio:1/1;background:#f0ede8;overflow:hidden}
     .card-img img{width:100%;height:100%;object-fit:cover}
     .card-img-ph{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-family:'Source Serif 4',serif;font-size:13px;color:var(--muted);font-style:italic}
     .badge-disc{position:absolute;top:10px;left:10px;background:var(--accent);color:#fff;font-family:'IBM Plex Mono',monospace;font-size:11px;padding:3px 8px;border-radius:4px}
@@ -113,7 +113,7 @@
     .modal-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px}
     .modal-title{font-family:'Source Serif 4',serif;font-size:22px;font-weight:600;line-height:1.2}
     .modal-close{background:none;border:none;cursor:pointer;color:var(--muted);padding:4px;font-size:20px}
-    .modal-img{aspect-ratio:4/3;background:#f0ede8;border-radius:var(--radius-sm);overflow:hidden;margin-bottom:20px}
+    .modal-img{aspect-ratio:1/1;background:#f0ede8;border-radius:var(--radius-sm);overflow:hidden;margin-bottom:20px}
     .modal-img img{width:100%;height:100%;object-fit:cover}
     .modal-img-ph{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-family:'Source Serif 4',serif;font-size:13px;color:var(--muted);font-style:italic}
     .modal-price-row{display:flex;align-items:baseline;gap:10px;margin-bottom:6px}
@@ -231,8 +231,12 @@
     .admin-product-name{font-weight:600;font-size:14px}
     .admin-product-meta{font-size:12px;color:var(--muted);font-family:'IBM Plex Mono',monospace}
     .admin-product-actions{display:flex;gap:6px}
+    .variant-row-card{border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px;margin-bottom:10px}
     .variant-row{display:grid;grid-template-columns:1fr 80px 80px 80px 80px auto;gap:8px;align-items:center;margin-bottom:8px}
     .variant-row input{padding:8px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:12px;width:100%}
+    .variant-photo-row{display:flex;align-items:center;gap:10px}
+    .variant-photo-preview{width:36px;height:36px;border-radius:6px;background:#f0ede8;background-size:cover;background-position:center;flex-shrink:0}
+    .variant-photo-btn{background:none;border:1px dashed var(--border);border-radius:var(--radius-sm);padding:6px 12px;font-size:11px;color:var(--sec);cursor:pointer}
     .btn-add-variant{background:none;border:1px dashed var(--border);border-radius:var(--radius-sm);padding:8px;width:100%;font-size:13px;color:var(--sec);cursor:pointer;margin-top:8px}
     .btn-add-variant:hover{border-color:var(--sep)}
     .upload-area{border:2px dashed var(--border);border-radius:var(--radius-sm);padding:24px;text-align:center;cursor:pointer;transition:border-color .2s}
@@ -507,13 +511,20 @@
             <div class="form-group">
               <label class="form-label">Varian (Warna · Ukuran · Harga · Harga Asli · Stok)</label>
               <div id="variants-container">
-                <div class="variant-row">
-                  <input placeholder="Nama warna" class="v-color-name"/>
-                  <input placeholder="#1a1a1a" class="v-color-hex" style="width:70px"/>
-                  <input placeholder="Ukuran" class="v-size"/>
-                  <input placeholder="Harga" class="v-price" type="number"/>
-                  <input placeholder="H.Asli" class="v-orig" type="number"/>
-                  <input placeholder="Stok" class="v-stock" type="number" style="width:60px"/>
+                <div class="variant-row-card">
+                  <div class="variant-row">
+                    <input placeholder="Nama warna" class="v-color-name"/>
+                    <input placeholder="#1a1a1a" class="v-color-hex" style="width:70px"/>
+                    <input placeholder="Ukuran" class="v-size"/>
+                    <input placeholder="Harga" class="v-price" type="number"/>
+                    <input placeholder="H.Asli" class="v-orig" type="number"/>
+                    <input placeholder="Stok" class="v-stock" type="number" style="width:60px"/>
+                  </div>
+                  <div class="variant-photo-row">
+                    <div class="variant-photo-preview"></div>
+                    <input type="file" class="v-photo" accept="image/*" style="display:none" onchange="previewVariantPhoto(this)"/>
+                    <button type="button" class="variant-photo-btn" onclick="this.previousElementSibling.click()">📷 Foto Varian</button>
+                  </div>
                 </div>
               </div>
               <button class="btn-add-variant" onclick="addVariantRow()">+ Tambah Varian</button>
@@ -694,11 +705,6 @@ async function openProduct(id) {
   document.getElementById('btn-add-cart').disabled = true;
   document.getElementById('stok-label').textContent = 'Stok: pilih varian dulu';
 
-  const img = activeProduct.image_url;
-  document.getElementById('modal-img-wrap').innerHTML = img
-    ? `<img src="${img}" alt="${activeProduct.name}"/>`
-    : `<div class="modal-img-ph"><em>${activeProduct.name}</em></div>`;
-
   // Colors
   const colors = [...new Map(activeVariants.map(v=>[v.color_name,v.color_hex])).entries()];
   document.getElementById('modal-colors').innerHTML = colors.map(([n,h],i)=>`
@@ -709,6 +715,7 @@ async function openProduct(id) {
   // Trigger first color
   const firstColor = colors[0]?.[0];
   renderSizes(firstColor);
+  updateModalImage(firstColor);
 
   // Price
   const firstVar = activeVariants.find(v=>v.color_name===firstColor);
@@ -721,12 +728,21 @@ async function openProduct(id) {
   document.body.style.overflow = 'hidden';
 }
 
+function updateModalImage(colorName) {
+  const variantWithPhoto = activeVariants.find(v => v.color_name === colorName && v.image_url);
+  const img = variantWithPhoto ? variantWithPhoto.image_url : activeProduct.image_url;
+  document.getElementById('modal-img-wrap').innerHTML = img
+    ? `<img src="${img}" alt="${activeProduct.name}"/>`
+    : `<div class="modal-img-ph"><em>${activeProduct.name}</em></div>`;
+}
+
 function selectColor(el, colorName) {
   document.querySelectorAll('.modal-color-btn').forEach(b=>b.classList.remove('active'));
   el.classList.add('active');
   selectedVariant = null;
   document.getElementById('btn-add-cart').disabled = true;
   renderSizes(colorName);
+  updateModalImage(colorName);
   const firstVar = activeVariants.find(v=>v.color_name===colorName);
   updateModalPrice(firstVar);
 }
@@ -1042,16 +1058,31 @@ function switchTab(tab, el) {
 
 function addVariantRow() {
   const c = document.getElementById('variants-container');
-  const row = document.createElement('div');
-  row.className = 'variant-row';
-  row.innerHTML = `
-    <input placeholder="Nama warna" class="v-color-name"/>
-    <input placeholder="#1a1a1a" class="v-color-hex" style="width:70px"/>
-    <input placeholder="Ukuran" class="v-size"/>
-    <input placeholder="Harga" class="v-price" type="number"/>
-    <input placeholder="H.Asli" class="v-orig" type="number"/>
-    <input placeholder="Stok" class="v-stock" type="number" style="width:60px"/>`;
-  c.appendChild(row);
+  const card = document.createElement('div');
+  card.className = 'variant-row-card';
+  card.innerHTML = `
+    <div class="variant-row">
+      <input placeholder="Nama warna" class="v-color-name"/>
+      <input placeholder="#1a1a1a" class="v-color-hex" style="width:70px"/>
+      <input placeholder="Ukuran" class="v-size"/>
+      <input placeholder="Harga" class="v-price" type="number"/>
+      <input placeholder="H.Asli" class="v-orig" type="number"/>
+      <input placeholder="Stok" class="v-stock" type="number" style="width:60px"/>
+    </div>
+    <div class="variant-photo-row">
+      <div class="variant-photo-preview"></div>
+      <input type="file" class="v-photo" accept="image/*" style="display:none" onchange="previewVariantPhoto(this)"/>
+      <button type="button" class="variant-photo-btn" onclick="this.previousElementSibling.click()">📷 Foto Varian</button>
+    </div>`;
+  c.appendChild(card);
+}
+
+function previewVariantPhoto(input) {
+  const preview = input.previousElementSibling;
+  if (input.files && input.files[0]) {
+    preview.style.backgroundImage = `url(${URL.createObjectURL(input.files[0])})`;
+    preview.removeAttribute('data-existing');
+  }
 }
 
 function compressImage(file, maxDim = 1200, quality = 0.82) {
@@ -1120,17 +1151,30 @@ async function saveProduct() {
   }
 
   // Variants
-  const rows = document.querySelectorAll('.variant-row');
+  const rows = document.querySelectorAll('.variant-row-card');
   const variants = [];
-  rows.forEach(row => {
+  for (const row of rows) {
     const cn = row.querySelector('.v-color-name').value.trim();
     const ch = row.querySelector('.v-color-hex').value.trim();
     const size = row.querySelector('.v-size').value.trim();
     const price = parseInt(row.querySelector('.v-price').value)||0;
     const orig = parseInt(row.querySelector('.v-orig').value)||null;
     const stock = parseInt(row.querySelector('.v-stock').value)||0;
-    if (cn && size && price) variants.push({product_id:prod.id,color_name:cn,color_hex:ch||'#1a1a1a',size,price,original_price:orig,stock});
-  });
+    if (!(cn && size && price)) continue;
+
+    let variantImageUrl = row.querySelector('.variant-photo-preview').dataset.existing || null;
+    const photoInput = row.querySelector('.v-photo');
+    if (photoInput.files && photoInput.files[0]) {
+      const compressed = await compressImage(photoInput.files[0]);
+      const path = `variant-${Date.now()}-${Math.random().toString(36).slice(2,7)}.jpg`;
+      const { error: upErr } = await sb.storage.from('product-photos').upload(path, compressed, { contentType: 'image/jpeg' });
+      if (!upErr) {
+        const { data: urlData } = sb.storage.from('product-photos').getPublicUrl(path);
+        variantImageUrl = urlData.publicUrl;
+      }
+    }
+    variants.push({product_id:prod.id,color_name:cn,color_hex:ch||'#1a1a1a',size,price,original_price:orig,stock,image_url:variantImageUrl});
+  }
   if (variants.length) await sb.from('variants').insert(variants);
 
   showToast(editingProductId ? 'Produk berhasil diupdate ✓' : 'Produk berhasil disimpan ✓');
@@ -1144,13 +1188,20 @@ function resetProductForm() {
   document.getElementById('p-desc').value='';
   document.getElementById('p-cat').value='Cardigan';
   document.getElementById('variants-container').innerHTML=`
-    <div class="variant-row">
-      <input placeholder="Nama warna" class="v-color-name"/>
-      <input placeholder="#1a1a1a" class="v-color-hex" style="width:70px"/>
-      <input placeholder="Ukuran" class="v-size"/>
-      <input placeholder="Harga" class="v-price" type="number"/>
-      <input placeholder="H.Asli" class="v-orig" type="number"/>
-      <input placeholder="Stok" class="v-stock" type="number" style="width:60px"/>
+    <div class="variant-row-card">
+      <div class="variant-row">
+        <input placeholder="Nama warna" class="v-color-name"/>
+        <input placeholder="#1a1a1a" class="v-color-hex" style="width:70px"/>
+        <input placeholder="Ukuran" class="v-size"/>
+        <input placeholder="Harga" class="v-price" type="number"/>
+        <input placeholder="H.Asli" class="v-orig" type="number"/>
+        <input placeholder="Stok" class="v-stock" type="number" style="width:60px"/>
+      </div>
+      <div class="variant-photo-row">
+        <div class="variant-photo-preview"></div>
+        <input type="file" class="v-photo" accept="image/*" style="display:none" onchange="previewVariantPhoto(this)"/>
+        <button type="button" class="variant-photo-btn" onclick="this.previousElementSibling.click()">📷 Foto Varian</button>
+      </div>
     </div>`;
   uploadedFiles=[];
   document.getElementById('upload-preview').innerHTML='';
@@ -1185,13 +1236,20 @@ function editProduct(id) {
   document.getElementById('upload-preview').innerHTML = p.image_url ? `<img src="${p.image_url}" alt="foto saat ini"/>` : '';
   const vars = p.variants || [];
   document.getElementById('variants-container').innerHTML = (vars.length ? vars : [{}]).map(v => `
-    <div class="variant-row">
-      <input placeholder="Nama warna" class="v-color-name" value="${v.color_name||''}"/>
-      <input placeholder="#1a1a1a" class="v-color-hex" style="width:70px" value="${v.color_hex||''}"/>
-      <input placeholder="Ukuran" class="v-size" value="${v.size||''}"/>
-      <input placeholder="Harga" class="v-price" type="number" value="${v.price||''}"/>
-      <input placeholder="H.Asli" class="v-orig" type="number" value="${v.original_price||''}"/>
-      <input placeholder="Stok" class="v-stock" type="number" style="width:60px" value="${v.stock||''}"/>
+    <div class="variant-row-card">
+      <div class="variant-row">
+        <input placeholder="Nama warna" class="v-color-name" value="${v.color_name||''}"/>
+        <input placeholder="#1a1a1a" class="v-color-hex" style="width:70px" value="${v.color_hex||''}"/>
+        <input placeholder="Ukuran" class="v-size" value="${v.size||''}"/>
+        <input placeholder="Harga" class="v-price" type="number" value="${v.price||''}"/>
+        <input placeholder="H.Asli" class="v-orig" type="number" value="${v.original_price||''}"/>
+        <input placeholder="Stok" class="v-stock" type="number" style="width:60px" value="${v.stock||''}"/>
+      </div>
+      <div class="variant-photo-row">
+        <div class="variant-photo-preview" ${v.image_url?`style="background-image:url('${v.image_url}')" data-existing="${v.image_url}"`:''}></div>
+        <input type="file" class="v-photo" accept="image/*" style="display:none" onchange="previewVariantPhoto(this)"/>
+        <button type="button" class="variant-photo-btn" onclick="this.previousElementSibling.click()">📷 ${v.image_url?'Ganti':''} Foto Varian</button>
+      </div>
     </div>`).join('');
   document.getElementById('form-mode-title').textContent = `Edit Produk: ${p.name}`;
   document.getElementById('save-product-btn').textContent = 'Update Produk';
