@@ -65,14 +65,18 @@
     .promo-close{position:absolute;top:14px;right:14px;background:none;border:none;font-size:20px;cursor:pointer;color:var(--muted)}
     .promo-title{font-family:'Source Serif 4',serif;font-size:20px;font-weight:600;margin-bottom:4px}
     .promo-sub{font-size:13px;color:var(--sec);margin-bottom:20px}
-    .promo-card{display:flex;align-items:center;gap:14px;border:1.5px dashed var(--sep);border-radius:var(--radius-sm);padding:14px 16px;margin-bottom:12px;position:relative;overflow:hidden}
-    .promo-card-badge{background:var(--accent);color:#fff;font-family:'Source Serif 4',serif;font-size:22px;font-weight:600;width:56px;height:56px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;text-align:center;line-height:1.05}
-    .promo-card-info{flex:1}
-    .promo-card-name{font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:13px;letter-spacing:.04em}
-    .promo-card-desc{font-size:12px;color:var(--sec);margin-top:2px}
-    .promo-card-exp{font-size:11px;color:var(--muted);margin-top:2px}
-    .promo-claim-btn{background:var(--accent);color:#fff;border:none;border-radius:50px;padding:8px 16px;font-size:12px;font-weight:500;cursor:pointer;flex-shrink:0}
+    .promo-card{position:relative;display:flex;align-items:stretch;background:var(--surface);border-radius:10px;border:1px solid var(--border);overflow:visible;min-height:84px;width:100%;margin-bottom:16px}
+    .promo-card::before,.promo-card::after{content:'';position:absolute;left:76px;transform:translateX(-50%);width:16px;height:16px;background:var(--bg);border-radius:50%;z-index:2}
+    .promo-card::before{top:-8px}
+    .promo-card::after{bottom:-8px}
+    .promo-card-badge{width:76px;flex-shrink:0;background:linear-gradient(160deg,#ff7a45,#ff3d5f);color:#fff;display:flex;align-items:center;justify-content:center;border-radius:10px 0 0 10px;font-family:'Source Serif 4',serif;font-size:19px;font-weight:600;text-align:center;line-height:1.1;padding:8px}
+    .promo-card-info{flex:1;padding:12px 14px;border-left:1.5px dashed var(--border);display:flex;flex-direction:column;justify-content:center;gap:2px}
+    .promo-card-name{font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:13px;letter-spacing:.04em;color:#e0472e}
+    .promo-card-desc{font-size:12px;color:var(--sec)}
+    .promo-card-exp{font-size:11px;color:var(--muted)}
+    .promo-claim-btn{position:absolute;right:12px;bottom:10px;background:linear-gradient(160deg,#ff7a45,#ff3d5f);color:#fff;border:none;border-radius:50px;padding:7px 16px;font-size:12px;font-weight:600;cursor:pointer;flex-shrink:0}
     .promo-claim-btn.claimed{background:#e8e5e0;color:var(--muted);cursor:default}
+    .promo-section .promo-card{width:280px}
 
     /* ===== GRID ===== */
     .catalog{max-width:1100px;margin:0 auto;padding:0 20px 60px}
@@ -462,7 +466,7 @@
         <!-- TAB: PRODUK -->
         <div class="admin-section active" id="tab-products">
           <div class="admin-card">
-            <h3 class="admin-card-title">Tambah Produk</h3>
+            <h3 class="admin-card-title" id="form-mode-title">Tambah Produk</h3>
             <div class="form-group">
               <label class="form-label">Nama Produk</label>
               <input class="form-input" id="p-name" placeholder="Stripe Collar Knit"/>
@@ -501,7 +505,8 @@
               </div>
               <button class="btn-add-variant" onclick="addVariantRow()">+ Tambah Varian</button>
             </div>
-            <button class="btn-primary" onclick="saveProduct()">Simpan Produk</button>
+            <button class="btn-primary" id="save-product-btn" onclick="saveProduct()">Simpan Produk</button>
+            <button class="btn-edit hidden" id="cancel-edit-btn" style="width:100%;margin-top:8px" onclick="cancelEdit()">Batal Edit</button>
           </div>
 
           <div class="admin-card admin-product-list">
@@ -896,8 +901,8 @@ function voucherCardHTML(v) {
   const expText = v.expires_at ? `Berlaku sampai ${new Date(v.expires_at).toLocaleDateString('id-ID')}` : 'Tanpa batas waktu';
   return `
     <div class="promo-card">
-      <div class="promo-card-badge">${badge}</div>
-      <div class="promo-card-info">
+      <div class="promo-card-badge">${badge}<br><span style="font-size:10px;font-weight:400;opacity:.85">OFF</span></div>
+      <div class="promo-card-info" style="padding-right:70px">
         <p class="promo-card-name">Diskon ${badge}</p>
         <p class="promo-card-desc">Min. belanja ${fRp(v.min_order)}</p>
         <p class="promo-card-exp">${expText}</p>
@@ -1042,6 +1047,26 @@ function addVariantRow() {
   c.appendChild(row);
 }
 
+function compressImage(file, maxDim = 1200, quality = 0.82) {
+  return new Promise((resolve) => {
+    const img = new Image();
+    const reader = new FileReader();
+    reader.onload = (e) => { img.src = e.target.result; };
+    img.onload = () => {
+      let { width, height } = img;
+      if (width > maxDim || height > maxDim) {
+        if (width > height) { height = Math.round(height * maxDim / width); width = maxDim; }
+        else { width = Math.round(width * maxDim / height); height = maxDim; }
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width = width; canvas.height = height;
+      canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+      canvas.toBlob((blob) => resolve(blob || file), 'image/jpeg', quality);
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
 let uploadedFiles = [];
 function previewPhotos(input) {
   uploadedFiles = Array.from(input.files);
@@ -1052,27 +1077,40 @@ function previewPhotos(input) {
   }).join('');
 }
 
+let editingProductId = null;
+let adminProductsData = [];
+
 async function saveProduct() {
   const name = document.getElementById('p-name').value.trim();
   const category = document.getElementById('p-cat').value;
   const description = document.getElementById('p-desc').value.trim();
   if (!name) { showToast('Nama produk wajib diisi'); return; }
 
-  // Upload foto
-  let image_url = null;
+  // Upload foto (dikompres dulu biar hemat storage)
+  let image_url = editingProductId ? undefined : null; // undefined = jangan ubah field ini saat edit kalau gak ada foto baru
   if (uploadedFiles.length) {
-    const file = uploadedFiles[0];
-    const ext = file.name.split('.').pop();
-    const path = `${Date.now()}.${ext}`;
-    const { error: upErr } = await sb.storage.from('product-photos').upload(path, file);
+    const compressed = await compressImage(uploadedFiles[0]);
+    const path = `${Date.now()}.jpg`;
+    const { error: upErr } = await sb.storage.from('product-photos').upload(path, compressed, { contentType: 'image/jpeg' });
     if (!upErr) {
       const { data: urlData } = sb.storage.from('product-photos').getPublicUrl(path);
       image_url = urlData.publicUrl;
     }
   }
 
-  const { data: prod, error } = await sb.from('products').insert({name,category,description,image_url}).select().single();
-  if (error) { showToast('Gagal simpan produk'); return; }
+  let prod;
+  if (editingProductId) {
+    const payload = {name,category,description};
+    if (image_url !== undefined) payload.image_url = image_url;
+    const { data, error } = await sb.from('products').update(payload).eq('id',editingProductId).select().single();
+    if (error) { showToast('Gagal update produk'); return; }
+    prod = data;
+    await sb.from('variants').delete().eq('product_id', prod.id);
+  } else {
+    const { data, error } = await sb.from('products').insert({name,category,description,image_url}).select().single();
+    if (error) { showToast('Gagal simpan produk'); return; }
+    prod = data;
+  }
 
   // Variants
   const rows = document.querySelectorAll('.variant-row');
@@ -1088,9 +1126,16 @@ async function saveProduct() {
   });
   if (variants.length) await sb.from('variants').insert(variants);
 
-  showToast('Produk berhasil disimpan ✓');
+  showToast(editingProductId ? 'Produk berhasil diupdate ✓' : 'Produk berhasil disimpan ✓');
+  cancelEdit();
+  await loadProducts();
+  loadAdminProducts();
+}
+
+function resetProductForm() {
   document.getElementById('p-name').value='';
   document.getElementById('p-desc').value='';
+  document.getElementById('p-cat').value='Cardigan';
   document.getElementById('variants-container').innerHTML=`
     <div class="variant-row">
       <input placeholder="Nama warna" class="v-color-name"/>
@@ -1102,12 +1147,44 @@ async function saveProduct() {
     </div>`;
   uploadedFiles=[];
   document.getElementById('upload-preview').innerHTML='';
-  await loadProducts();
-  loadAdminProducts();
+}
+
+function cancelEdit() {
+  editingProductId = null;
+  resetProductForm();
+  document.getElementById('form-mode-title').textContent = 'Tambah Produk';
+  document.getElementById('save-product-btn').textContent = 'Simpan Produk';
+  document.getElementById('cancel-edit-btn').classList.add('hidden');
+}
+
+function editProduct(id) {
+  const p = adminProductsData.find(x=>x.id===id);
+  if (!p) return;
+  editingProductId = id;
+  document.getElementById('p-name').value = p.name;
+  document.getElementById('p-cat').value = p.category;
+  document.getElementById('p-desc').value = p.description || '';
+  uploadedFiles = [];
+  document.getElementById('upload-preview').innerHTML = p.image_url ? `<img src="${p.image_url}" alt="foto saat ini"/>` : '';
+  const vars = p.variants || [];
+  document.getElementById('variants-container').innerHTML = (vars.length ? vars : [{}]).map(v => `
+    <div class="variant-row">
+      <input placeholder="Nama warna" class="v-color-name" value="${v.color_name||''}"/>
+      <input placeholder="#1a1a1a" class="v-color-hex" style="width:70px" value="${v.color_hex||''}"/>
+      <input placeholder="Ukuran" class="v-size" value="${v.size||''}"/>
+      <input placeholder="Harga" class="v-price" type="number" value="${v.price||''}"/>
+      <input placeholder="H.Asli" class="v-orig" type="number" value="${v.original_price||''}"/>
+      <input placeholder="Stok" class="v-stock" type="number" style="width:60px" value="${v.stock||''}"/>
+    </div>`).join('');
+  document.getElementById('form-mode-title').textContent = `Edit Produk: ${p.name}`;
+  document.getElementById('save-product-btn').textContent = 'Update Produk';
+  document.getElementById('cancel-edit-btn').classList.remove('hidden');
+  document.getElementById('tab-products').scrollIntoView({behavior:'smooth'});
 }
 
 async function loadAdminProducts() {
   const { data } = await sb.from('products').select('*,variants(*)');
+  adminProductsData = data || [];
   const el = document.getElementById('admin-products-render');
   if (!data||!data.length) { el.innerHTML='<p style="color:var(--muted);font-size:13px">Belum ada produk.</p>'; return; }
   el.innerHTML = data.map(p=>`
@@ -1118,6 +1195,7 @@ async function loadAdminProducts() {
         <p class="admin-product-meta">${p.category} · ${(p.variants||[]).length} varian · ${p.is_active?'Aktif':'Nonaktif'}</p>
       </div>
       <div class="admin-product-actions">
+        <button class="btn-edit" onclick="editProduct('${p.id}')">Edit</button>
         <button class="btn-danger" onclick="deleteProduct('${p.id}')">Hapus</button>
       </div>
     </div>`).join('');
