@@ -357,6 +357,8 @@
       <button class="qty-btn" onclick="changeQty(1)">+</button>
     </div>
     <button class="btn-add-cart" id="btn-add-cart" onclick="addToCart()" disabled>Tambah ke Keranjang</button>
+    <!-- Deskripsi Produk -->
+    <div id="modal-description" style="margin-top:20px;padding-top:20px;border-top:1px solid var(--border)"></div>
     <!-- Reviews -->
     <div class="modal-reviews" id="modal-reviews"></div>
   </div>
@@ -502,8 +504,8 @@
                 </select>
               </div>
               <div class="form-group">
-                <label class="form-label">Deskripsi</label>
-                <input class="form-input" id="p-desc" placeholder="Opsional"/>
+                <label class="form-label">Deskripsi Produk</label>
+                <textarea class="form-input" id="p-desc" placeholder="Jelaskan produkmu: bahan, ukuran, keunggulan, cara pakai, dll." rows="8" style="resize:vertical;min-height:160px;line-height:1.6"></textarea>
               </div>
             </div>
             <div class="form-group">
@@ -574,7 +576,10 @@
                 </div>
               </div>
             </div>
-            <button class="btn-primary" id="save-product-btn" onclick="saveProduct()">Simpan Produk</button>
+            <div style="display:flex;gap:10px;margin-top:4px">
+              <button class="btn-primary" id="save-product-btn" onclick="saveProduct()" style="flex:1">Simpan Produk</button>
+              <button class="btn-edit" id="cancel-product-btn" onclick="closeProductForm()" style="padding:12px 24px;font-size:14px">Batal</button>
+            </div>
           </div>
         </div>
 
@@ -749,6 +754,16 @@ async function openProduct(id) {
   document.getElementById('qty-val').textContent = 1;
   document.getElementById('btn-add-cart').disabled = true;
   document.getElementById('stok-label').textContent = 'Stok: pilih varian dulu';
+
+  // Deskripsi
+  const descEl = document.getElementById('modal-description');
+  if (activeProduct.description) {
+    descEl.innerHTML = `
+      <p style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:10px">Deskripsi</p>
+      <p style="font-size:13px;color:var(--sec);line-height:1.7;white-space:pre-line">${activeProduct.description}</p>`;
+  } else {
+    descEl.innerHTML = '';
+  }
 
   // Colors
   const colors = [...new Map(activeVariants.map(v=>[v.color_name,v.color_hex])).entries()];
@@ -1410,6 +1425,7 @@ function cancelEdit() {
   resetProductForm();
   document.getElementById('form-mode-title').textContent = 'Tambah Produk';
   document.getElementById('save-product-btn').textContent = 'Simpan Produk';
+  document.getElementById('cancel-product-btn').textContent = 'Batal';
 }
 
 function openProductForm() {
@@ -1454,6 +1470,7 @@ function editProduct(id) {
   renderSizeTags();
   document.getElementById('form-mode-title').textContent = `Edit Produk: ${p.name}`;
   document.getElementById('save-product-btn').textContent = 'Update Produk';
+  document.getElementById('cancel-product-btn').textContent = 'Batal Perubahan';
   document.getElementById('product-form-card').classList.remove('hidden');
   document.getElementById('product-form-card').scrollIntoView({behavior:'smooth', block:'start'});
 }
