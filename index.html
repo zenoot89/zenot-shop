@@ -235,12 +235,9 @@
     .admin-product-name{font-weight:600;font-size:14px}
     .admin-product-meta{font-size:12px;color:var(--muted);font-family:'IBM Plex Mono',monospace}
     .admin-product-actions{display:flex;gap:6px}
-    .variant-row-card{border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px;margin-bottom:10px}
-    .variant-row{display:grid;grid-template-columns:1fr 80px 80px 80px 80px auto;gap:8px;align-items:center;margin-bottom:8px}
-    .variant-row input{padding:8px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:12px;width:100%}
-    .variant-photo-row{display:flex;align-items:center;gap:10px}
-    .variant-photo-preview{width:36px;height:36px;border-radius:6px;background:#f0ede8;background-size:cover;background-position:center;flex-shrink:0}
-    .variant-photo-btn{background:none;border:1px dashed var(--border);border-radius:var(--radius-sm);padding:6px 12px;font-size:11px;color:var(--sec);cursor:pointer}
+    .var-tag{display:flex;align-items:center;gap:6px;padding:6px 12px;background:#f0ede8;border-radius:50px;font-size:12px;font-family:'IBM Plex Mono',monospace}
+    .var-tag-dot{width:12px;height:12px;border-radius:50%;flex-shrink:0}
+    .var-tag-remove{background:none;border:none;cursor:pointer;color:var(--muted);font-size:14px;line-height:1;padding:0 0 0 2px}
     .btn-add-variant{background:none;border:1px dashed var(--border);border-radius:var(--radius-sm);padding:8px;width:100%;font-size:13px;color:var(--sec);cursor:pointer;margin-top:8px}
     .btn-add-variant:hover{border-color:var(--sep)}
     .upload-area{border:2px dashed var(--border);border-radius:var(--radius-sm);padding:24px;text-align:center;cursor:pointer;transition:border-color .2s}
@@ -518,25 +515,64 @@
               <div class="upload-preview" id="upload-preview"></div>
             </div>
             <div class="form-group">
-              <label class="form-label">Varian (Warna · Ukuran · Harga · Harga Asli · Stok)</label>
-              <div id="variants-container">
-                <div class="variant-row-card">
-                  <div class="variant-row">
-                    <input placeholder="Nama warna" class="v-color-name"/>
-                    <input placeholder="#1a1a1a" class="v-color-hex" style="width:70px"/>
-                    <input placeholder="Ukuran" class="v-size"/>
-                    <input placeholder="Harga" class="v-price" type="number"/>
-                    <input placeholder="H.Asli" class="v-orig" type="number"/>
-                    <input placeholder="Stok" class="v-stock" type="number" style="width:60px"/>
-                  </div>
-                  <div class="variant-photo-row">
-                    <div class="variant-photo-preview"></div>
-                    <input type="file" class="v-photo" accept="image/*" style="display:none" onchange="previewVariantPhoto(this)"/>
-                    <button type="button" class="variant-photo-btn" onclick="this.previousElementSibling.click()">📷 Foto Varian</button>
-                  </div>
+              <label class="form-label">Variasi</label>
+
+              <!-- Variasi 1: Warna -->
+              <div class="var-section" style="border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px;margin-bottom:10px">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+                  <span style="font-size:13px;font-weight:600">Variasi 1 — Warna</span>
+                </div>
+                <div class="var-tag-row" id="v1-tags" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px"></div>
+                <div style="display:flex;gap:8px">
+                  <input class="form-input" id="v1-input" placeholder="Tambah warna (Enter)" style="flex:1" onkeydown="addColorTag(event)"/>
+                  <input type="color" id="v1-color-picker" value="#1a1a1a" style="width:40px;height:40px;border:1px solid var(--border);border-radius:var(--radius-sm);cursor:pointer;padding:2px"/>
                 </div>
               </div>
-              <button class="btn-add-variant" onclick="addVariantRow()">+ Tambah Varian</button>
+
+              <!-- Variasi 2: Ukuran -->
+              <div class="var-section" style="border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px;margin-bottom:14px">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+                  <span style="font-size:13px;font-weight:600">Variasi 2 — Ukuran</span>
+                </div>
+                <div class="var-tag-row" id="v2-tags" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px"></div>
+                <div style="display:flex;gap:8px;flex-wrap:wrap">
+                  <button class="filter-tab" onclick="addSizePreset('S')">S</button>
+                  <button class="filter-tab" onclick="addSizePreset('M')">M</button>
+                  <button class="filter-tab" onclick="addSizePreset('L')">L</button>
+                  <button class="filter-tab" onclick="addSizePreset('XL')">XL</button>
+                  <button class="filter-tab" onclick="addSizePreset('XXL')">XXL</button>
+                  <button class="filter-tab" onclick="addSizePreset('All Size')">All Size</button>
+                  <input class="form-input" id="v2-input" placeholder="Ukuran custom (Enter)" style="flex:1;min-width:140px" onkeydown="addSizeTag(event)"/>
+                </div>
+              </div>
+
+              <!-- Tabel varian otomatis -->
+              <div id="variant-table-wrap" style="display:none">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+                  <span style="font-size:13px;font-weight:600">Daftar Varian</span>
+                  <button class="btn-edit" onclick="applyToAll()">Terapkan ke Semua</button>
+                </div>
+                <div style="display:flex;gap:8px;margin-bottom:12px;align-items:center">
+                  <input class="form-input" id="bulk-price" type="number" placeholder="Harga" style="flex:1"/>
+                  <input class="form-input" id="bulk-orig" type="number" placeholder="H.Asli" style="flex:1"/>
+                  <input class="form-input" id="bulk-stock" type="number" placeholder="Stok" style="flex:1"/>
+                </div>
+                <div style="overflow-x:auto">
+                  <table style="width:100%;border-collapse:collapse;font-size:13px" id="variant-table">
+                    <thead>
+                      <tr style="border-bottom:2px solid var(--border);text-align:left">
+                        <th style="padding:8px 6px;color:var(--muted)">Warna</th>
+                        <th style="padding:8px 6px;color:var(--muted)">Ukuran</th>
+                        <th style="padding:8px 6px;color:var(--muted)">Foto</th>
+                        <th style="padding:8px 6px;color:var(--muted)">Harga</th>
+                        <th style="padding:8px 6px;color:var(--muted)">H.Asli</th>
+                        <th style="padding:8px 6px;color:var(--muted)">Stok</th>
+                      </tr>
+                    </thead>
+                    <tbody id="variant-tbody"></tbody>
+                  </table>
+                </div>
+              </div>
             </div>
             <button class="btn-primary" id="save-product-btn" onclick="saveProduct()">Simpan Produk</button>
           </div>
@@ -1082,33 +1118,138 @@ function switchTab(tab, el) {
   toggleSidebar(false);
 }
 
-function addVariantRow() {
-  const c = document.getElementById('variants-container');
-  const card = document.createElement('div');
-  card.className = 'variant-row-card';
-  card.innerHTML = `
-    <div class="variant-row">
-      <input placeholder="Nama warna" class="v-color-name"/>
-      <input placeholder="#1a1a1a" class="v-color-hex" style="width:70px"/>
-      <input placeholder="Ukuran" class="v-size"/>
-      <input placeholder="Harga" class="v-price" type="number"/>
-      <input placeholder="H.Asli" class="v-orig" type="number"/>
-      <input placeholder="Stok" class="v-stock" type="number" style="width:60px"/>
-    </div>
-    <div class="variant-photo-row">
-      <div class="variant-photo-preview"></div>
-      <input type="file" class="v-photo" accept="image/*" style="display:none" onchange="previewVariantPhoto(this)"/>
-      <button type="button" class="variant-photo-btn" onclick="this.previousElementSibling.click()">📷 Foto Varian</button>
-    </div>`;
-  c.appendChild(card);
+// ===================== VARIANT TAG SYSTEM =====================
+let colorTags = []; // [{name, hex}]
+let sizeTags = [];  // [string]
+
+function renderColorTags() {
+  const el = document.getElementById('v1-tags');
+  if (!el) return;
+  el.innerHTML = colorTags.map((c,i) => `
+    <div class="var-tag">
+      <span class="var-tag-dot" style="background:${c.hex}"></span>
+      ${c.name}
+      <button class="var-tag-remove" onclick="removeColorTag(${i})">✕</button>
+    </div>`).join('');
+  rebuildVariantTable();
 }
 
-function previewVariantPhoto(input) {
-  const preview = input.previousElementSibling;
-  if (input.files && input.files[0]) {
-    preview.style.backgroundImage = `url(${URL.createObjectURL(input.files[0])})`;
-    preview.removeAttribute('data-existing');
-  }
+function renderSizeTags() {
+  const el = document.getElementById('v2-tags');
+  if (!el) return;
+  el.innerHTML = sizeTags.map((s,i) => `
+    <div class="var-tag">${s}<button class="var-tag-remove" onclick="removeSizeTag(${i})">✕</button></div>`).join('');
+  rebuildVariantTable();
+}
+
+function addColorTag(e) {
+  if (e.key !== 'Enter') return;
+  e.preventDefault();
+  const input = document.getElementById('v1-input');
+  const picker = document.getElementById('v1-color-picker');
+  const name = input.value.trim();
+  if (!name) return;
+  if (colorTags.find(c => c.name.toLowerCase() === name.toLowerCase())) { input.value=''; return; }
+  colorTags.push({name, hex: picker.value});
+  input.value = '';
+  renderColorTags();
+}
+
+function removeColorTag(i) { colorTags.splice(i,1); renderColorTags(); }
+
+function addSizePreset(s) {
+  if (sizeTags.includes(s)) return;
+  sizeTags.push(s);
+  renderSizeTags();
+}
+
+function addSizeTag(e) {
+  if (e.key !== 'Enter') return;
+  e.preventDefault();
+  const input = document.getElementById('v2-input');
+  const s = input.value.trim();
+  if (!s || sizeTags.includes(s)) { input.value=''; return; }
+  sizeTags.push(s);
+  input.value='';
+  renderSizeTags();
+}
+
+function removeSizeTag(i) { sizeTags.splice(i,1); renderSizeTags(); }
+
+function variantKey(colorName, size) { return `${colorName}__${size}`; }
+
+let variantData = {}; // key -> {price, orig, stock, image_url}
+let variantPhotoFiles = {}; // key -> File
+
+function rebuildVariantTable() {
+  const wrap = document.getElementById('variant-table-wrap');
+  const tbody = document.getElementById('variant-tbody');
+  if (!wrap || !tbody) return;
+  if (!colorTags.length || !sizeTags.length) { wrap.style.display='none'; return; }
+  wrap.style.display='block';
+
+  const rows = [];
+  colorTags.forEach(c => {
+    sizeTags.forEach((s, si) => {
+      const key = variantKey(c.name, s);
+      const d = variantData[key] || {};
+      const existingImg = d.image_url || '';
+      const showPhoto = si === 0; // hanya 1 foto per warna (baris pertama ukuran)
+      rows.push(`
+        <tr style="border-bottom:1px solid var(--border)" data-key="${key}">
+          <td style="padding:10px 6px;white-space:nowrap">
+            ${showPhoto ? `<div style="display:flex;align-items:center;gap:8px">
+              <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${c.hex};flex-shrink:0"></span>
+              <span>${c.name}</span>
+            </div>
+            <div style="margin-top:6px;display:flex;align-items:center;gap:6px">
+              <div id="vph-${key}" style="width:36px;height:36px;border-radius:6px;background:#f0ede8;background-size:cover;background-position:center;flex-shrink:0;${existingImg?`background-image:url('${existingImg}')`:''}" data-existing="${existingImg}"></div>
+              <input type="file" id="vf-${key}" accept="image/*" style="display:none" onchange="previewVariantPhotoNew(this,'${key}')"/>
+              <button type="button" class="variant-photo-btn" onclick="document.getElementById('vf-${key}').click()">📷</button>
+            </div>` : `<span style="margin-left:18px;color:var(--muted);font-size:12px">↳</span>`}
+          </td>
+          <td style="padding:10px 6px">${s}</td>
+          <td style="padding:10px 6px"></td>
+          <td style="padding:10px 6px"><input class="form-input vt-price" style="padding:7px 10px;font-size:12px" type="number" placeholder="Harga" value="${d.price||''}" oninput="updateVariantData('${key}','price',this.value)"/></td>
+          <td style="padding:10px 6px"><input class="form-input vt-orig" style="padding:7px 10px;font-size:12px" type="number" placeholder="H.Asli" value="${d.orig||''}" oninput="updateVariantData('${key}','orig',this.value)"/></td>
+          <td style="padding:10px 6px"><input class="form-input vt-stock" style="padding:7px 10px;font-size:12px" type="number" placeholder="Stok" value="${d.stock||''}" oninput="updateVariantData('${key}','stock',this.value)"/></td>
+        </tr>`);
+    });
+  });
+  tbody.innerHTML = rows.join('');
+}
+
+function updateVariantData(key, field, val) {
+  if (!variantData[key]) variantData[key] = {};
+  variantData[key][field] = val;
+}
+
+function previewVariantPhotoNew(input, key) {
+  if (!input.files || !input.files[0]) return;
+  variantPhotoFiles[key] = input.files[0];
+  const preview = document.getElementById(`vph-${key}`);
+  if (preview) preview.style.backgroundImage = `url(${URL.createObjectURL(input.files[0])})`;
+}
+
+function applyToAll() {
+  const price = document.getElementById('bulk-price').value;
+  const orig = document.getElementById('bulk-orig').value;
+  const stock = document.getElementById('bulk-stock').value;
+  colorTags.forEach(c => sizeTags.forEach(s => {
+    const key = variantKey(c.name, s);
+    if (!variantData[key]) variantData[key] = {};
+    if (price) { variantData[key].price = price; }
+    if (orig) { variantData[key].orig = orig; }
+    if (stock) { variantData[key].stock = stock; }
+  }));
+  rebuildVariantTable();
+}
+
+function resetVariantSystem() {
+  colorTags = []; sizeTags = []; variantData = {}; variantPhotoFiles = {};
+  ['v1-tags','v2-tags'].forEach(id => { const el = document.getElementById(id); if(el) el.innerHTML=''; });
+  const wrap = document.getElementById('variant-table-wrap');
+  if (wrap) wrap.style.display='none';
 }
 
 function compressImage(file, maxDim = 1200, quality = 0.82) {
@@ -1196,22 +1337,16 @@ async function saveProduct() {
     prod = data;
   }
 
-  // Variants
-  const rows = document.querySelectorAll('.variant-row-card');
+  // Variants dari tag system
   const variants = [];
-  for (const row of rows) {
-    const cn = row.querySelector('.v-color-name').value.trim();
-    const ch = row.querySelector('.v-color-hex').value.trim();
-    const size = row.querySelector('.v-size').value.trim();
-    const price = parseInt(row.querySelector('.v-price').value)||0;
-    const orig = parseInt(row.querySelector('.v-orig').value)||null;
-    const stock = parseInt(row.querySelector('.v-stock').value)||0;
-    if (!(cn && size && price)) continue;
-
-    let variantImageUrl = row.querySelector('.variant-photo-preview').dataset.existing || null;
-    const photoInput = row.querySelector('.v-photo');
-    if (photoInput.files && photoInput.files[0]) {
-      const compressed = await compressImage(photoInput.files[0]);
+  for (const c of colorTags) {
+    // ambil foto per warna (dari file baru atau existing)
+    const firstKey = variantKey(c.name, sizeTags[0]);
+    let variantImageUrl = null;
+    const existingPreview = document.getElementById(`vph-${firstKey}`);
+    if (existingPreview && existingPreview.dataset.existing) variantImageUrl = existingPreview.dataset.existing;
+    if (variantPhotoFiles[firstKey]) {
+      const compressed = await compressImage(variantPhotoFiles[firstKey]);
       const path = `variant-${Date.now()}-${Math.random().toString(36).slice(2,7)}.jpg`;
       const { error: upErr } = await sb.storage.from('product-photos').upload(path, compressed, { contentType: 'image/jpeg' });
       if (!upErr) {
@@ -1219,7 +1354,22 @@ async function saveProduct() {
         variantImageUrl = urlData.publicUrl;
       }
     }
-    variants.push({product_id:prod.id,color_name:cn,color_hex:ch||'#1a1a1a',size,price,original_price:orig,stock,image_url:variantImageUrl});
+    for (const s of sizeTags) {
+      const key = variantKey(c.name, s);
+      const d = variantData[key] || {};
+      const price = parseInt(d.price)||0;
+      if (!price) continue;
+      variants.push({
+        product_id: prod.id,
+        color_name: c.name,
+        color_hex: c.hex,
+        size: s,
+        price,
+        original_price: parseInt(d.orig)||null,
+        stock: parseInt(d.stock)||0,
+        image_url: variantImageUrl
+      });
+    }
   }
   if (variants.length) await sb.from('variants').insert(variants);
 
@@ -1252,6 +1402,7 @@ function resetProductForm() {
   uploadedFiles=[];
   existingPhotoUrls=[];
   document.getElementById('upload-preview').innerHTML='';
+  resetVariantSystem();
 }
 
 function cancelEdit() {
@@ -1282,23 +1433,25 @@ function editProduct(id) {
   uploadedFiles = [];
   existingPhotoUrls = (p.image_urls && p.image_urls.length) ? [...p.image_urls] : (p.image_url ? [p.image_url] : []);
   renderUploadPreview();
+  // Prefill variant tag system dari data lama
+  resetVariantSystem();
   const vars = p.variants || [];
-  document.getElementById('variants-container').innerHTML = (vars.length ? vars : [{}]).map(v => `
-    <div class="variant-row-card">
-      <div class="variant-row">
-        <input placeholder="Nama warna" class="v-color-name" value="${v.color_name||''}"/>
-        <input placeholder="#1a1a1a" class="v-color-hex" style="width:70px" value="${v.color_hex||''}"/>
-        <input placeholder="Ukuran" class="v-size" value="${v.size||''}"/>
-        <input placeholder="Harga" class="v-price" type="number" value="${v.price||''}"/>
-        <input placeholder="H.Asli" class="v-orig" type="number" value="${v.original_price||''}"/>
-        <input placeholder="Stok" class="v-stock" type="number" style="width:60px" value="${v.stock||''}"/>
-      </div>
-      <div class="variant-photo-row">
-        <div class="variant-photo-preview" ${v.image_url?`style="background-image:url('${v.image_url}')" data-existing="${v.image_url}"`:''}></div>
-        <input type="file" class="v-photo" accept="image/*" style="display:none" onchange="previewVariantPhoto(this)"/>
-        <button type="button" class="variant-photo-btn" onclick="this.previousElementSibling.click()">📷 ${v.image_url?'Ganti':''} Foto Varian</button>
-      </div>
-    </div>`).join('');
+  // Build unique colors dan sizes
+  const seenColors = new Map();
+  const seenSizes = new Set();
+  vars.forEach(v => {
+    if (!seenColors.has(v.color_name)) seenColors.set(v.color_name, v.color_hex || '#1a1a1a');
+    seenSizes.add(v.size);
+  });
+  colorTags = Array.from(seenColors.entries()).map(([name,hex]) => ({name,hex}));
+  sizeTags = Array.from(seenSizes);
+  // Prefill variantData
+  vars.forEach(v => {
+    const key = variantKey(v.color_name, v.size);
+    variantData[key] = {price: v.price, orig: v.original_price, stock: v.stock, image_url: v.image_url};
+  });
+  renderColorTags();
+  renderSizeTags();
   document.getElementById('form-mode-title').textContent = `Edit Produk: ${p.name}`;
   document.getElementById('save-product-btn').textContent = 'Update Produk';
   document.getElementById('product-form-card').classList.remove('hidden');
