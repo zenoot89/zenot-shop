@@ -294,7 +294,7 @@
 
 <!-- VOUCHER BAR -->
 <div class="voucher-bar">
-  <input class="voucher-input" type="text" id="voucher-input" placeholder="KODE VOUCHER"/>
+  <input class="voucher-input" type="text" id="voucher-input" name="voucher-code" autocomplete="off" placeholder="KODE VOUCHER"/>
   <button class="voucher-btn" onclick="applyVoucher()">Pakai</button>
   <span class="voucher-msg" id="voucher-msg"></span>
 </div>
@@ -876,9 +876,9 @@ async function checkoutWA() {
   }
   const total = Math.max(0,subtotal-disc);
   const lines = cart.map(i=>`• ${i.name} (${i.color}, ${i.size}) x${i.qty} — ${fRp(i.price*i.qty)}`);
-  let msg = `Halo ZENOT, saya mau order:\n\n${lines.join('\n')}`;
-  if (disc>0) msg += `\n\nSubtotal: ${fRp(subtotal)}\nDiskon: -${fRp(disc)}`;
-  msg += `\n\nTotal: ${fRp(total)}\n\nMohon konfirmasi ketersediaan. Terima kasih!`;
+  let msg = `Halo ZENOT, saya mau order:\n\n${lines.join('\n')}\n\nSubtotal Pesanan: ${fRp(subtotal)}`;
+  if (disc>0) msg += `\nDiskon Voucher: -${fRp(disc)}`;
+  msg += `\nOngkos Kirim: Dikonfirmasi kemudian\n\nTotal (belum termasuk ongkir): ${fRp(total)}\n\nMohon konfirmasi ketersediaan. Terima kasih!`;
   window.open(`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(msg)}`, '_blank');
 }
 
