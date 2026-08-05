@@ -62,6 +62,20 @@
     .voucher-msg.ok{color:#2a7a2a}
     .voucher-msg.err{color:#c0392b}
 
+    /* ===== VOUCHER PROMO POPUP ===== */
+    .promo-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:250;align-items:center;justify-content:center;padding:20px}
+    .promo-overlay.open{display:flex}
+    .promo-box{background:var(--surface);border-radius:var(--radius);padding:28px 24px;width:100%;max-width:380px;max-height:85vh;overflow-y:auto;position:relative}
+    .promo-close{position:absolute;top:14px;right:14px;background:none;border:none;font-size:20px;cursor:pointer;color:var(--muted)}
+    .promo-title{font-family:'Source Serif 4',serif;font-size:20px;font-weight:600;margin-bottom:4px}
+    .promo-sub{font-size:13px;color:var(--sec);margin-bottom:20px}
+    .promo-card{display:flex;align-items:center;gap:14px;border:1.5px dashed var(--sep);border-radius:var(--radius-sm);padding:14px 16px;margin-bottom:12px;position:relative;overflow:hidden}
+    .promo-card-badge{background:var(--accent);color:#fff;font-family:'Source Serif 4',serif;font-size:22px;font-weight:600;width:56px;height:56px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;text-align:center;line-height:1.05}
+    .promo-card-info{flex:1}
+    .promo-card-name{font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:13px;letter-spacing:.04em}
+    .promo-card-desc{font-size:12px;color:var(--sec);margin-top:2px}
+    .promo-card-exp{font-size:11px;color:var(--muted);margin-top:2px}
+
     /* ===== GRID ===== */
     .catalog{max-width:1100px;margin:0 auto;padding:0 20px 60px}
     .product-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:20px}
@@ -336,6 +350,16 @@
   </div>
 </div>
 
+<!-- VOUCHER PROMO POPUP -->
+<div class="promo-overlay" id="promo-overlay">
+  <div class="promo-box">
+    <button class="promo-close" onclick="closeVoucherPopup()">✕</button>
+    <p class="promo-title">Voucher Tersedia 🎉</p>
+    <p class="promo-sub">Otomatis kepakai kalau belanjaanmu memenuhi syarat.</p>
+    <div id="promo-list"></div>
+  </div>
+</div>
+
 <!-- CART DRAWER -->
 <div class="cart-drawer" id="cart-drawer">
   <div class="cart-overlay" onclick="closeCart()"></div>
@@ -566,6 +590,8 @@ let selectedVariant = null;
 let qty = 1;
 let cart = [];
 let voucher = null;
+let voucherAutoMode = true;
+let allVouchers = [];
 let adminUser = null;
 let reviewRating = 0;
 
@@ -797,6 +823,7 @@ function addToCart() {
 
 function updateCartUI() {
   const subtotal = cart.reduce((s,i)=>s+i.price*i.qty,0);
+  autoApplyBestVoucher(subtotal);
   let disc = 0;
   if (voucher) {
     disc = voucher.discount_type==='percent' ? Math.round(subtotal*voucher.discount_value/100) : voucher.discount_value;
@@ -811,7 +838,7 @@ function updateCartUI() {
   const discRow = document.getElementById('discount-row');
   if (disc > 0) {
     discRow.classList.remove('hidden');
-    document.getElementById('discount-val').textContent = `-${fRp(disc)}`;
+    document.getElementById('discount-val').textContent = `-${fRp(disc)} (${voucher.code})`;
   } else { discRow.classList.add('hidden'); }
 
   const list = document.getElementById('cart-items-list');
@@ -844,8 +871,62 @@ function cartQty(key, d) {
   updateCartUI();
 }
 
-function openCart() { updateCartUI(); document.getElementById('cart-drawer').classList.add('open'); document.body.style.overflow='hidden'; }
+function openCart() { updateCartUI(); document.getElementById('cart-drawer').classList.add('open'); document.body.style.overflow='hidden'; showVoucherPopup(); }
 function closeCart() { document.getElementById('cart-drawer').classList.remove('open'); document.body.style.overflow=''; }
+
+// ===================== VOUCHER PROMO (popup + auto-apply) =====================
+async function loadVouchersForPromo() {
+  const { data } = await sb.from('vouchers').select('*').eq('is_active', true);
+  const now = new Date();
+  allVouchers = (data || []).filter(v => (!v.expires_at || new Date(v.expires_at) >= now) && v.used_count < v.max_uses);
+  renderVoucherPopupList();
+}
+
+function discAmountFor(v, subtotal) {
+  return v.discount_type === 'percent' ? Math.round(subtotal * v.discount_value / 100) : v.discount_value;
+}
+
+function renderVoucherPopupList() {
+  const el = document.getElementById('promo-list');
+  if (!el) return;
+  if (!allVouchers.length) { el.innerHTML = '<p style="font-size:13px;color:var(--muted)">Belum ada voucher aktif saat ini.</p>'; return; }
+  el.innerHTML = allVouchers.map(v => {
+    const badge = v.discount_type === 'percent' ? `${v.discount_value}%` : `${Math.round(v.discount_value/1000)}rb`;
+    const expText = v.expires_at ? `Berlaku sampai ${new Date(v.expires_at).toLocaleDateString('id-ID')}` : 'Tanpa batas waktu';
+    return `
+    <div class="promo-card">
+      <div class="promo-card-badge">${badge}</div>
+      <div class="promo-card-info">
+        <p class="promo-card-name">${v.code}</p>
+        <p class="promo-card-desc">Min. belanja ${fRp(v.min_order)}</p>
+        <p class="promo-card-exp">${expText}</p>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function showVoucherPopup() {
+  if (!allVouchers.length) return;
+  document.getElementById('promo-overlay').classList.add('open');
+}
+function closeVoucherPopup() {
+  document.getElementById('promo-overlay').classList.remove('open');
+}
+
+function autoApplyBestVoucher(subtotal) {
+  if (!voucherAutoMode) {
+    if (voucher && subtotal < voucher.min_order) { voucher = null; voucherAutoMode = true; }
+    else return;
+  }
+  const eligible = allVouchers.filter(v => subtotal >= v.min_order);
+  if (!eligible.length) { voucher = null; return; }
+  let best = null, bestDisc = -1;
+  eligible.forEach(v => {
+    const d = discAmountFor(v, subtotal);
+    if (d > bestDisc) { bestDisc = d; best = v; }
+  });
+  voucher = best;
+}
 
 // ===================== VOUCHER =====================
 async function applyVoucher() {
@@ -859,6 +940,7 @@ async function applyVoucher() {
   const subtotal = cart.reduce((s,i)=>s+i.price*i.qty,0);
   if (subtotal < data.min_order) { msg.textContent=`Min. order ${fRp(data.min_order)}`; msg.className='voucher-msg err'; voucher=null; return; }
   voucher = data;
+  voucherAutoMode = false;
   const discText = data.discount_type==='percent'?`${data.discount_value}%`:`Rp ${data.discount_value.toLocaleString('id-ID')}`;
   msg.textContent = `✓ Hemat ${discText}!`;
   msg.className = 'voucher-msg ok';
@@ -1124,6 +1206,12 @@ sb.auth.onAuthStateChange((event, session) => {
   adminUser = session?.user || null;
 });
 loadProducts();
+loadVouchersForPromo().then(() => {
+  if (!sessionStorage.getItem('zenot_promo_seen')) {
+    sessionStorage.setItem('zenot_promo_seen', '1');
+    setTimeout(showVoucherPopup, 800);
+  }
+});
 </script>
 </body>
 </html>
