@@ -172,6 +172,7 @@
     .cart-qty-val{font-family:'IBM Plex Mono',monospace;font-size:13px;min-width:20px;text-align:center}
     .cart-footer{padding:20px 24px;border-top:1px solid var(--sep)}
     .discount-row{display:flex;justify-content:space-between;margin-bottom:8px;font-size:13px;color:#2a7a2a;font-family:'IBM Plex Mono',monospace}
+    .summary-row{display:flex;justify-content:space-between;margin-bottom:8px;font-size:13px;color:var(--sec);font-family:'IBM Plex Mono',monospace}
     .cart-total-row{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:16px}
     .cart-total-label{font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:.1em;color:var(--muted);text-transform:uppercase}
     .cart-total-val{font-family:'IBM Plex Mono',monospace;font-size:20px;font-weight:500}
@@ -370,11 +371,17 @@
     </div>
     <div class="cart-items" id="cart-items-list"></div>
     <div class="cart-footer">
+      <div class="summary-row" id="subtotal-row">
+        <span>Subtotal Pesanan</span><span id="subtotal-val">Rp 0</span>
+      </div>
+      <div class="summary-row" id="shipping-row">
+        <span>Ongkos Kirim</span><span>Dikonfirmasi kemudian</span>
+      </div>
       <div class="discount-row hidden" id="discount-row">
         <span>Diskon voucher</span><span id="discount-val"></span>
       </div>
       <div class="cart-total-row">
-        <span class="cart-total-label">Total</span>
+        <span class="cart-total-label">Total Pembayaran</span>
         <span class="cart-total-val" id="cart-total">Rp 0</span>
       </div>
       <button class="btn-checkout" onclick="checkoutWA()">
@@ -834,6 +841,7 @@ function updateCartUI() {
   document.getElementById('cart-count').textContent = count;
   document.getElementById('cart-count').classList.toggle('hidden', count===0);
   document.getElementById('cart-total').textContent = fRp(total);
+  document.getElementById('subtotal-val').textContent = fRp(subtotal);
   
   const discRow = document.getElementById('discount-row');
   if (disc > 0) {
