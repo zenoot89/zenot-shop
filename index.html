@@ -75,6 +75,9 @@
     .promo-card-name{font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:13px;letter-spacing:.04em}
     .promo-card-desc{font-size:12px;color:var(--sec);margin-top:2px}
     .promo-card-exp{font-size:11px;color:var(--muted);margin-top:2px}
+    .promo-banner-inner{max-width:1100px;margin:0 auto 16px;padding:12px 20px;background:#1a1a1a;color:#fff;border-radius:50px;font-size:13px;text-align:center}
+    .promo-banner-inner strong{font-family:'IBM Plex Mono',monospace}
+    @media(max-width:480px){.promo-banner-inner{margin-left:16px;margin-right:16px;border-radius:var(--radius-sm);font-size:12px}}
 
     /* ===== GRID ===== */
     .catalog{max-width:1100px;margin:0 auto;padding:0 20px 60px}
@@ -313,6 +316,8 @@
   <button class="voucher-btn" onclick="applyVoucher()">Pakai</button>
   <span class="voucher-msg" id="voucher-msg"></span>
 </div>
+
+<div id="promo-banner"></div>
 
 <!-- CATALOG -->
 <main class="catalog">
@@ -894,14 +899,24 @@ function discAmountFor(v, subtotal) {
   return v.discount_type === 'percent' ? Math.round(subtotal * v.discount_value / 100) : v.discount_value;
 }
 
+function getBestPromoVoucher() {
+  if (!allVouchers.length) return null;
+  let best = null, bestAmt = -1;
+  allVouchers.forEach(v => {
+    const amt = v.discount_type === 'percent' ? Math.round(v.min_order * v.discount_value / 100) : v.discount_value;
+    if (amt > bestAmt) { bestAmt = amt; best = v; }
+  });
+  return best;
+}
+
 function renderVoucherPopupList() {
   const el = document.getElementById('promo-list');
   if (!el) return;
-  if (!allVouchers.length) { el.innerHTML = '<p style="font-size:13px;color:var(--muted)">Belum ada voucher aktif saat ini.</p>'; return; }
-  el.innerHTML = allVouchers.map(v => {
-    const badge = v.discount_type === 'percent' ? `${v.discount_value}%` : `${Math.round(v.discount_value/1000)}rb`;
-    const expText = v.expires_at ? `Berlaku sampai ${new Date(v.expires_at).toLocaleDateString('id-ID')}` : 'Tanpa batas waktu';
-    return `
+  const v = getBestPromoVoucher();
+  if (!v) { el.innerHTML = '<p style="font-size:13px;color:var(--muted)">Belum ada voucher aktif saat ini.</p>'; renderPromoBanner(); return; }
+  const badge = v.discount_type === 'percent' ? `${v.discount_value}%` : `${Math.round(v.discount_value/1000)}rb`;
+  const expText = v.expires_at ? `Berlaku sampai ${new Date(v.expires_at).toLocaleDateString('id-ID')}` : 'Tanpa batas waktu';
+  el.innerHTML = `
     <div class="promo-card">
       <div class="promo-card-badge">${badge}</div>
       <div class="promo-card-info">
@@ -910,7 +925,19 @@ function renderVoucherPopupList() {
         <p class="promo-card-exp">${expText}</p>
       </div>
     </div>`;
-  }).join('');
+  renderPromoBanner();
+}
+
+function renderPromoBanner() {
+  const el = document.getElementById('promo-banner');
+  if (!el) return;
+  const v = getBestPromoVoucher();
+  if (!v) { el.innerHTML = ''; return; }
+  const discText = v.discount_type === 'percent' ? `${v.discount_value}%` : fRp(v.discount_value);
+  el.innerHTML = `
+    <div class="promo-banner-inner">
+      🎉 Diskon <strong>${discText}</strong> pakai kode <strong>${v.code}</strong> · Min. belanja ${fRp(v.min_order)}
+    </div>`;
 }
 
 function showVoucherPopup() {
