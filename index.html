@@ -842,7 +842,7 @@ function updateCartUI() {
   const discRow = document.getElementById('discount-row');
   if (disc > 0) {
     discRow.classList.remove('hidden');
-    document.getElementById('discount-val').textContent = `-${fRp(disc)} (${voucher.code})`;
+    document.getElementById('discount-val').textContent = `-${fRp(disc)}`;
   } else { discRow.classList.add('hidden'); }
 
   const list = document.getElementById('cart-items-list');
@@ -898,7 +898,7 @@ function voucherCardHTML(v) {
     <div class="promo-card">
       <div class="promo-card-badge">${badge}</div>
       <div class="promo-card-info">
-        <p class="promo-card-name">${v.code}</p>
+        <p class="promo-card-name">Diskon ${badge}</p>
         <p class="promo-card-desc">Min. belanja ${fRp(v.min_order)}</p>
         <p class="promo-card-exp">${expText}</p>
       </div>
