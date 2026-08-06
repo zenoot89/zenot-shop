@@ -312,10 +312,6 @@
   </div>
   <div class="filter-tabs" id="filter-tabs">
     <button class="filter-tab active" onclick="setFilter('all',this)">Semua</button>
-    <button class="filter-tab" onclick="setFilter('Cardigan',this)">Cardigan</button>
-    <button class="filter-tab" onclick="setFilter('Sweater',this)">Sweater</button>
-    <button class="filter-tab" onclick="setFilter('Polo Knit',this)">Polo Knit</button>
-    <button class="filter-tab" onclick="setFilter('Vest',this)">Vest</button>
   </div>
 </div>
 
@@ -437,9 +433,17 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 8l-9-5-9 5 9 5 9-5z"/><path d="M3 8v8l9 5 9-5V8"/><path d="M12 13v8"/></svg>
         Produk
       </button>
+      <button class="admin-nav-item" data-tab="promotions" onclick="switchTab('promotions',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+        Promosi
+      </button>
       <button class="admin-nav-item" data-tab="vouchers" onclick="switchTab('vouchers',this)">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20.59 13.41L11 3.83A2 2 0 009.59 3.24H4a1 1 0 00-1 1v5.59a2 2 0 00.59 1.41l9.58 9.59a2 2 0 002.83 0l4.59-4.59a2 2 0 000-2.83z"/><circle cx="7.5" cy="7.5" r="1.2"/></svg>
         Voucher
+      </button>
+      <button class="admin-nav-item" data-tab="categories" onclick="switchTab('categories',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+        Kategori
       </button>
       <button class="admin-nav-item" data-tab="reviews" onclick="switchTab('reviews',this)">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
@@ -499,9 +503,7 @@
             <div class="form-row">
               <div class="form-group">
                 <label class="form-label">Kategori</label>
-                <select class="form-input" id="p-cat">
-                  <option>Cardigan</option><option>Sweater</option><option>Polo Knit</option><option>Vest</option>
-                </select>
+                <select class="form-input" id="p-cat"><option>Memuat...</option></select>
               </div>
               <div class="form-group">
                 <label class="form-label">Deskripsi Produk</label>
@@ -555,9 +557,8 @@
                   <button class="btn-edit" onclick="applyToAll()">Terapkan ke Semua</button>
                 </div>
                 <div style="display:flex;gap:8px;margin-bottom:12px;align-items:center">
-                  <input class="form-input" id="bulk-price" type="number" placeholder="Harga" style="flex:1"/>
-                  <input class="form-input" id="bulk-orig" type="number" placeholder="H.Asli" style="flex:1"/>
-                  <input class="form-input" id="bulk-stock" type="number" placeholder="Stok" style="flex:1"/>
+                  <input class="form-input" id="bulk-price" type="number" placeholder="Harga"/>
+                  <input class="form-input" id="bulk-stock" type="number" placeholder="Stok"/>
                 </div>
                 <div style="overflow-x:auto">
                   <table style="width:100%;border-collapse:collapse;font-size:13px" id="variant-table">
@@ -567,7 +568,6 @@
                         <th style="padding:8px 6px;color:var(--muted)">Ukuran</th>
                         <th style="padding:8px 6px;color:var(--muted)">Foto</th>
                         <th style="padding:8px 6px;color:var(--muted)">Harga</th>
-                        <th style="padding:8px 6px;color:var(--muted)">H.Asli</th>
                         <th style="padding:8px 6px;color:var(--muted)">Stok</th>
                       </tr>
                     </thead>
@@ -633,6 +633,66 @@
           <div class="admin-card">
             <h3 class="admin-card-title">Ulasan Masuk</h3>
             <div id="all-reviews-render"></div>
+          </div>
+        </div>
+
+        <!-- TAB: PROMOSI -->
+        <div class="admin-section" id="tab-promotions">
+          <div class="admin-card">
+            <h3 class="admin-card-title">Diskon Produk</h3>
+            <p style="font-size:13px;color:var(--sec);margin-bottom:16px">Terapkan diskon % ke satu atau beberapa produk sekaligus. Harga diskon otomatis dihitung dan ditampilkan di katalog.</p>
+            <div class="form-row" style="margin-bottom:12px">
+              <div class="form-group">
+                <label class="form-label">Pilih Produk</label>
+                <select class="form-input" id="promo-product-id"><option value="">-- Semua Produk --</option></select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Diskon (%)</label>
+                <input class="form-input" id="promo-discount" type="number" min="1" max="99" placeholder="cth: 20"/>
+              </div>
+            </div>
+            <button class="btn-primary" onclick="applyProductDiscount()">Terapkan Diskon</button>
+          </div>
+          <div class="admin-card" style="margin-top:16px">
+            <h3 class="admin-card-title">Flash Sale</h3>
+            <p style="font-size:13px;color:var(--sec);margin-bottom:16px">Atur harga flash sale + durasi waktu. Otomatis badge "FLASH SALE" muncul di produk selama periode berlaku.</p>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Produk</label>
+                <select class="form-input" id="flash-product-id"><option value="">-- Pilih Produk --</option></select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Harga Flash Sale</label>
+                <input class="form-input" id="flash-price" type="number" placeholder="cth: 89000"/>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Mulai</label>
+                <input class="form-input" id="flash-start" type="datetime-local"/>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Berakhir</label>
+                <input class="form-input" id="flash-end" type="datetime-local"/>
+              </div>
+            </div>
+            <button class="btn-primary" onclick="saveFlashSale()">Simpan Flash Sale</button>
+          </div>
+          <div class="admin-card" style="margin-top:16px">
+            <h3 class="admin-card-title">Promo Aktif</h3>
+            <div id="promo-list-render"><p style="font-size:13px;color:var(--muted)">Belum ada promo aktif.</p></div>
+          </div>
+        </div>
+
+        <!-- TAB: KATEGORI -->
+        <div class="admin-section" id="tab-categories">
+          <div class="admin-card">
+            <h3 class="admin-card-title">Kelola Kategori</h3>
+            <div style="display:flex;gap:10px;margin-bottom:16px">
+              <input class="form-input" id="new-category-input" placeholder="Nama kategori baru" onkeydown="if(event.key==='Enter')saveCategory()"/>
+              <button class="btn-primary" style="width:auto;padding:10px 20px" onclick="saveCategory()">Tambah</button>
+            </div>
+            <div id="categories-render"></div>
           </div>
         </div>
 
@@ -876,7 +936,7 @@ async function loadReviews(productId) {
   const avg = reviews.length ? (reviews.reduce((s,r)=>s+r.rating,0)/reviews.length).toFixed(1) : null;
   
   document.getElementById('modal-reviews').innerHTML = `
-    <h4 style="font-family:'Source Serif 4',serif;font-size:16px;font-weight:600;margin-bottom:4px">
+    <h4 style="font-family:'Source Serif 4',serif;font-size:16px;font-weight:600;margin-bottom:12px">
       Ulasan ${avg ? `⭐ ${avg} (${reviews.length})` : '(belum ada)'}
     </h4>
     ${reviews.map(r=>`
@@ -887,15 +947,7 @@ async function loadReviews(productId) {
         </div>
         <p class="review-comment">${r.comment||''}</p>
       </div>`).join('')}
-    <div class="review-form" style="margin-top:16px">
-      <h4 style="font-size:14px;font-weight:600;margin-bottom:12px">Tulis Ulasan</h4>
-      <input id="review-name" class="form-input" placeholder="Nama kamu" style="margin-bottom:10px"/>
-      <div class="review-stars-input" id="review-stars">
-        ${[1,2,3,4,5].map(i=>`<button onclick="setReviewStar(${i})" id="rstar-${i}">☆</button>`).join('')}
-      </div>
-      <textarea id="review-comment" class="form-input" rows="3" placeholder="Ceritakan pengalamanmu..."></textarea>
-      <button class="btn-review" onclick="submitReview('${productId}')">Kirim Ulasan</button>
-    </div>`;
+    ${!reviews.length ? '<p style="font-size:13px;color:var(--muted);font-style:italic">Belum ada ulasan untuk produk ini.</p>' : ''}`;
   reviewRating = 0;
 }
 
@@ -1104,7 +1156,7 @@ function openAdmin() {
   const email = adminUser?.email || 'admin';
   document.getElementById('admin-email-chip').textContent = email;
   document.getElementById('admin-avatar').textContent = email[0].toUpperCase();
-  loadAdminProducts();
+  loadAdminProducts().then(() => loadCategories());
   loadAdminVouchers();
   loadAdminReviews();
 }
@@ -1123,7 +1175,7 @@ function toggleSidebar(open) {
   document.getElementById('admin-scrim').classList.toggle('open', open);
 }
 
-const TAB_TITLES = { products: 'Produk', vouchers: 'Voucher', reviews: 'Ulasan' };
+const TAB_TITLES = { products: 'Produk', vouchers: 'Voucher', reviews: 'Ulasan', promotions: 'Promosi', categories: 'Kategori' };
 function switchTab(tab, el) {
   document.querySelectorAll('.admin-nav-item[data-tab]').forEach(t=>t.classList.remove('active'));
   document.querySelectorAll('.admin-section').forEach(s=>s.classList.remove('active'));
@@ -1131,6 +1183,15 @@ function switchTab(tab, el) {
   document.getElementById(`tab-${tab}`).classList.add('active');
   document.getElementById('admin-topbar-title').textContent = TAB_TITLES[tab] || '';
   toggleSidebar(false);
+  if (tab === 'categories') loadAdminCategories();
+  if (tab === 'promotions') {
+    loadCategories();
+    ['promo-product-id','flash-product-id'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.innerHTML = `<option value="">-- ${id.includes('flash')?'Pilih':'Semua'} Produk --</option>` +
+        adminProductsData.map(p=>`<option value="${p.id}">${p.name}</option>`).join('');
+    });
+  }
 }
 
 // ===================== VARIANT TAG SYSTEM =====================
@@ -1226,7 +1287,6 @@ function rebuildVariantTable() {
           <td style="padding:10px 6px">${s}</td>
           <td style="padding:10px 6px"></td>
           <td style="padding:10px 6px"><input class="form-input vt-price" style="padding:7px 10px;font-size:12px" type="number" placeholder="Harga" value="${d.price||''}" oninput="updateVariantData('${key}','price',this.value)"/></td>
-          <td style="padding:10px 6px"><input class="form-input vt-orig" style="padding:7px 10px;font-size:12px" type="number" placeholder="H.Asli" value="${d.orig||''}" oninput="updateVariantData('${key}','orig',this.value)"/></td>
           <td style="padding:10px 6px"><input class="form-input vt-stock" style="padding:7px 10px;font-size:12px" type="number" placeholder="Stok" value="${d.stock||''}" oninput="updateVariantData('${key}','stock',this.value)"/></td>
         </tr>`);
     });
@@ -1248,14 +1308,12 @@ function previewVariantPhotoNew(input, key) {
 
 function applyToAll() {
   const price = document.getElementById('bulk-price').value;
-  const orig = document.getElementById('bulk-orig').value;
   const stock = document.getElementById('bulk-stock').value;
   colorTags.forEach(c => sizeTags.forEach(s => {
     const key = variantKey(c.name, s);
     if (!variantData[key]) variantData[key] = {};
-    if (price) { variantData[key].price = price; }
-    if (orig) { variantData[key].orig = orig; }
-    if (stock) { variantData[key].stock = stock; }
+    if (price) variantData[key].price = price;
+    if (stock) variantData[key].stock = stock;
   }));
   rebuildVariantTable();
 }
@@ -1380,7 +1438,7 @@ async function saveProduct() {
         color_hex: c.hex,
         size: s,
         price,
-        original_price: parseInt(d.orig)||null,
+        original_price: null,
         stock: parseInt(d.stock)||0,
         image_url: variantImageUrl
       });
@@ -1541,6 +1599,108 @@ async function deleteVoucher(id) {
   loadAdminVouchers();
 }
 
+// ===================== CATEGORIES =====================
+let allCategories = [];
+
+async function loadCategories() {
+  const { data } = await sb.from('categories').select('*').order('name');
+  allCategories = data || [];
+  // Update filter tabs
+  const tabs = document.getElementById('filter-tabs');
+  if (tabs) {
+    tabs.innerHTML = `<button class="filter-tab active" onclick="setFilter('all',this)">Semua</button>` +
+      allCategories.map(c => `<button class="filter-tab" onclick="setFilter('${c.name}',this)">${c.name}</button>`).join('');
+  }
+  // Update dropdown di form produk
+  const sel = document.getElementById('p-cat');
+  if (sel) sel.innerHTML = allCategories.map(c => `<option value="${c.name}">${c.name}</option>`).join('');
+  // Update dropdown di promosi
+  ['promo-product-id','flash-product-id'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el && adminProductsData.length) {
+      el.innerHTML = `<option value="">-- ${id.includes('flash') ? 'Pilih' : 'Semua'} Produk --</option>` +
+        adminProductsData.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
+    }
+  });
+}
+
+async function loadAdminCategories() {
+  const el = document.getElementById('categories-render');
+  if (!el) return;
+  if (!allCategories.length) { el.innerHTML = '<p style="font-size:13px;color:var(--muted)">Belum ada kategori.</p>'; return; }
+  el.innerHTML = allCategories.map(c => `
+    <div class="admin-product-item">
+      <div class="admin-product-info"><p class="admin-product-name">${c.name}</p></div>
+      <button class="btn-danger" onclick="deleteCategory('${c.id}','${c.name}')">Hapus</button>
+    </div>`).join('');
+}
+
+async function saveCategory() {
+  const input = document.getElementById('new-category-input');
+  const name = input.value.trim();
+  if (!name) return;
+  const { error } = await sb.from('categories').insert({name});
+  if (error) { showToast(error.message.includes('unique') ? 'Kategori sudah ada' : 'Gagal tambah kategori'); return; }
+  input.value = '';
+  showToast(`Kategori "${name}" ditambahkan ✓`);
+  await loadCategories();
+  loadAdminCategories();
+}
+
+async function deleteCategory(id, name) {
+  if (!confirm(`Hapus kategori "${name}"? Produk dengan kategori ini tidak terhapus.`)) return;
+  await sb.from('categories').delete().eq('id', id);
+  showToast('Kategori dihapus');
+  await loadCategories();
+  loadAdminCategories();
+}
+
+// ===================== PROMOTIONS =====================
+async function applyProductDiscount() {
+  const productId = document.getElementById('promo-product-id').value;
+  const disc = parseInt(document.getElementById('promo-discount').value);
+  if (!disc || disc < 1 || disc > 99) { showToast('Isi persen diskon (1-99)'); return; }
+
+  let variants;
+  if (productId) {
+    const { data } = await sb.from('variants').select('id,price').eq('product_id', productId);
+    variants = data;
+  } else {
+    const { data } = await sb.from('variants').select('id,price');
+    variants = data;
+  }
+  if (!variants || !variants.length) { showToast('Tidak ada varian ditemukan'); return; }
+
+  for (const v of variants) {
+    const newPrice = Math.round(v.price * (1 - disc/100));
+    const origPrice = v.price;
+    await sb.from('variants').update({price: newPrice, original_price: origPrice}).eq('id', v.id);
+  }
+  showToast(`Diskon ${disc}% berhasil diterapkan ✓`);
+  await loadProducts();
+}
+
+async function saveFlashSale() {
+  const productId = document.getElementById('flash-product-id').value;
+  const price = parseInt(document.getElementById('flash-price').value);
+  const start = document.getElementById('flash-start').value;
+  const end = document.getElementById('flash-end').value;
+  if (!productId || !price || !end) { showToast('Isi produk, harga, dan waktu berakhir'); return; }
+
+  const { data: vars } = await sb.from('variants').select('id,price').eq('product_id', productId);
+  if (!vars || !vars.length) { showToast('Produk tidak punya varian'); return; }
+
+  for (const v of vars) {
+    await sb.from('variants').update({
+      price: price,
+      original_price: v.price,
+      flash_sale_end: end
+    }).eq('id', v.id);
+  }
+  showToast('Flash Sale berhasil disimpan ✓');
+  await loadProducts();
+}
+
 // ===================== REVIEWS ADMIN =====================
 async function loadAdminReviews() {
   const { data } = await sb.from('reviews').select('*,products(name)');
@@ -1578,6 +1738,7 @@ sb.auth.onAuthStateChange((event, session) => {
   adminUser = session?.user || null;
 });
 loadProducts();
+loadCategories();
 loadVouchersForPromo().then(() => {
   if (!sessionStorage.getItem('zenot_promo_seen')) {
     sessionStorage.setItem('zenot_promo_seen', '1');
