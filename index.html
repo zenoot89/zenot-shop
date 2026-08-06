@@ -49,6 +49,28 @@
     .search-input{width:100%;padding:11px 16px 11px 40px;border:1px solid var(--border);border-radius:50px;background:var(--surface);font-family:'Inter',sans-serif;font-size:14px;outline:none;transition:border-color .2s}
     .search-input:focus{border-color:var(--sep)}
     .filter-tabs{display:flex;gap:8px;flex-wrap:wrap}
+    .hamburger-btn{background:none;border:none;cursor:pointer;padding:6px;display:flex;color:var(--ink)}
+    .hamburger-btn svg{width:22px;height:22px}
+    .drawer-scrim{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:600}
+    .drawer-scrim.open{display:block}
+    .menu-drawer{position:fixed;top:0;left:0;bottom:0;width:300px;max-width:85vw;background:#fff;z-index:601;transform:translateX(-100%);transition:transform .25s ease;display:flex;flex-direction:column;box-shadow:2px 0 24px rgba(0,0,0,.15)}
+    .menu-drawer.open{transform:translateX(0)}
+    .drawer-header{display:flex;align-items:center;justify-content:space-between;padding:18px 20px;border-bottom:1px solid var(--border)}
+    .drawer-close{background:none;border:none;font-size:18px;cursor:pointer;color:var(--muted);padding:4px}
+    .drawer-items{display:flex;flex-direction:column;padding:8px 0;overflow-y:auto}
+    .drawer-item{display:flex;align-items:center;justify-content:space-between;width:100%;text-align:left;background:none;border:none;padding:15px 20px;font-size:15px;cursor:pointer;color:var(--ink);border-bottom:1px solid var(--border)}
+    .drawer-item:hover{background:var(--bg)}
+    .drawer-chevron{transition:transform .2s;color:var(--muted)}
+    .drawer-chevron.open{transform:rotate(180deg)}
+    .drawer-sub{max-height:0;overflow:hidden;transition:max-height .2s ease;background:var(--bg)}
+    .drawer-sub.open{max-height:400px}
+    .drawer-sub-item{display:block;width:100%;text-align:left;background:none;border:none;padding:12px 20px 12px 34px;font-size:14px;cursor:pointer;color:var(--sec);border-bottom:1px solid var(--border)}
+    .drawer-sub-item:hover{color:var(--ink)}
+    .side-panel{position:fixed;top:0;right:0;bottom:0;width:340px;max-width:88vw;background:#fff;z-index:601;transform:translateX(100%);transition:transform .25s ease;display:flex;flex-direction:column;box-shadow:-2px 0 24px rgba(0,0,0,.15)}
+    .side-panel.open{transform:translateX(0)}
+    .side-panel-title{font-family:'Source Serif 4',serif;font-size:19px}
+    .side-panel-body{padding:24px 20px;overflow-y:auto;flex:1}
+    .side-panel-empty{color:var(--muted);font-size:14px;text-align:center;padding:40px 10px}
     .filter-tab{padding:9px 16px;border:1px solid var(--border);border-radius:50px;background:var(--surface);font-size:13px;color:var(--sec);cursor:pointer;transition:all .2s;white-space:nowrap}
     .filter-tab:hover{border-color:var(--sep);color:var(--text)}
     .filter-tab.active{background:var(--accent);border-color:var(--accent);color:#fff}
@@ -289,6 +311,9 @@
 
 <header>
   <div class="header-inner">
+    <button class="hamburger-btn" onclick="toggleDrawer(true)" aria-label="Menu">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    </button>
     <a href="#" class="logo">ZEN<em>ot</em></a>
     <div class="header-right">
       <a href="seller.html" class="admin-link">Admin</a>
@@ -301,21 +326,39 @@
   </div>
 </header>
 
-<!-- HERO -->
-<section class="hero">
-  <p class="hero-eyebrow">Men's Knitwear</p>
-  <h1 class="hero-title">Koleksi<br><em>ZENOT</em></h1>
-  <p class="hero-sub">Pilih varian favoritmu, checkout langsung via WhatsApp.</p>
-</section>
+<!-- MENU DRAWER -->
+<div class="drawer-scrim" id="drawer-scrim" onclick="toggleDrawer(false)"></div>
+<nav class="menu-drawer" id="menu-drawer">
+  <div class="drawer-header">
+    <a href="#" class="logo">ZEN<em>ot</em></a>
+    <button class="drawer-close" onclick="toggleDrawer(false)">✕</button>
+  </div>
+  <div class="drawer-items">
+    <button class="drawer-item" onclick="setFilter('all');toggleDrawer(false)">Semua Produk</button>
+    <button class="drawer-item drawer-item-expand" onclick="toggleDrawerSub('cat')">
+      Kategori <span class="drawer-chevron" id="cat-chevron">⌄</span>
+    </button>
+    <div class="drawer-sub" id="drawer-sub-cat"></div>
+    <button class="drawer-item" onclick="openWishlist()">Wishlist</button>
+    <button class="drawer-item" onclick="openAccount()">Akun</button>
+  </div>
+</nav>
+
+<!-- WISHLIST / AKUN PLACEHOLDER PANEL -->
+<div class="drawer-scrim" id="panel-scrim" onclick="closeSidePanel()"></div>
+<div class="side-panel" id="side-panel">
+  <div class="drawer-header">
+    <p class="side-panel-title" id="side-panel-title">Wishlist</p>
+    <button class="drawer-close" onclick="closeSidePanel()">✕</button>
+  </div>
+  <div class="side-panel-body" id="side-panel-body"></div>
+</div>
 
 <!-- CONTROLS -->
-<div class="controls">
+<div class="controls" style="padding-top:24px">
   <div class="search-wrap">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
     <input class="search-input" type="text" placeholder="Cari produk..." id="search-input" oninput="filterProducts()"/>
-  </div>
-  <div class="filter-tabs" id="filter-tabs">
-    <button class="filter-tab active" onclick="setFilter('all',this)">Semua</button>
   </div>
 </div>
 
@@ -500,11 +543,46 @@ function renderProducts() {
 
 function setFilter(v, el) {
   activeFilter = v;
-  document.querySelectorAll('.filter-tab').forEach(t=>t.classList.remove('active'));
-  el.classList.add('active');
+  document.querySelectorAll('.filter-tab, .drawer-sub-item').forEach(t=>t.classList.remove('active'));
+  if (el) el.classList.add('active');
   renderProducts();
 }
 function filterProducts() { renderProducts(); }
+
+// ===================== MENU DRAWER =====================
+function toggleDrawer(open) {
+  document.getElementById('menu-drawer').classList.toggle('open', open);
+  document.getElementById('drawer-scrim').classList.toggle('open', open);
+}
+function toggleDrawerSub(key) {
+  document.getElementById(`drawer-sub-${key}`).classList.toggle('open');
+  document.getElementById(`${key}-chevron`).classList.toggle('open');
+}
+function renderDrawerCategories() {
+  const el = document.getElementById('drawer-sub-cat');
+  if (!el) return;
+  el.innerHTML = `<button class="drawer-sub-item active" onclick="setFilter('all',this);toggleDrawer(false)">Semua Kategori</button>` +
+    allCategories.map(c => `<button class="drawer-sub-item" onclick="setFilter('${c.name}',this);toggleDrawer(false)">${c.name}</button>`).join('');
+}
+
+// ===================== SIDE PANEL (Wishlist / Akun) =====================
+function openSidePanel(title, bodyHtml) {
+  toggleDrawer(false);
+  document.getElementById('side-panel-title').textContent = title;
+  document.getElementById('side-panel-body').innerHTML = bodyHtml;
+  document.getElementById('side-panel').classList.add('open');
+  document.getElementById('panel-scrim').classList.add('open');
+}
+function closeSidePanel() {
+  document.getElementById('side-panel').classList.remove('open');
+  document.getElementById('panel-scrim').classList.remove('open');
+}
+function openWishlist() {
+  openSidePanel('Wishlist', `<div class="side-panel-empty">Fitur Wishlist akan segera hadir di sini.</div>`);
+}
+function openAccount() {
+  openSidePanel('Akun', `<div class="side-panel-empty">Fitur Masuk / Daftar akun akan segera hadir di sini.</div>`);
+}
 
 // ===================== PRODUCT MODAL =====================
 async function openProduct(id) {
@@ -836,6 +914,7 @@ async function loadCategories() {
     tabs.innerHTML = `<button class="filter-tab active" onclick="setFilter('all',this)">Semua</button>` +
       allCategories.map(c => `<button class="filter-tab" onclick="setFilter('${c.name}',this)">${c.name}</button>`).join('');
   }
+  renderDrawerCategories();
 }
 
 // ===================== TOAST =====================
