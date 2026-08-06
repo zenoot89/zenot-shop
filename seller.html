@@ -1,0 +1,873 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ZENOT — Seller Center</title>
+  <!-- Open Graph untuk preview di WA/IG/FB -->
+  <meta property="og:title" content="ZENOT — Men's Knitwear"/>
+  <meta property="og:description" content="Koleksi knitwear pria premium. Pilih varian, checkout via WhatsApp."/>
+  <meta property="og:type" content="website"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,wght@0,300;0,400;0,600;1,400&family=Inter:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    .hidden{display:none !important}
+    :root{
+      --bg:#f5f4f2;--surface:#fff;--border:#e0ddd8;--sep:#b5a898;
+      --text:#1a1a1a;--muted:#9e9890;--sec:#6b6560;
+      --accent:#1a1a1a;--radius:12px;--radius-sm:8px;
+      --green:#25D366;
+    }
+    body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+
+    /* ===== HEADER ===== */
+    header{background:var(--surface);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100}
+    .header-inner{max-width:1100px;margin:0 auto;padding:0 20px;height:60px;display:flex;align-items:center;justify-content:space-between}
+    .logo{font-family:'Source Serif 4',serif;font-size:22px;font-weight:600;letter-spacing:.08em;text-decoration:none;color:var(--text)}
+    .logo em{font-weight:300;font-style:italic}
+    .header-right{display:flex;align-items:center;gap:12px}
+    .cart-btn{position:relative;background:none;border:none;cursor:pointer;padding:8px;color:var(--text);display:flex;align-items:center;gap:6px;font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--sec)}
+    .cart-btn svg{width:22px;height:22px}
+    .cart-count{background:var(--accent);color:#fff;border-radius:50%;width:18px;height:18px;font-size:10px;display:flex;align-items:center;justify-content:center;position:absolute;top:2px;right:2px}
+    .cart-count.hidden{display:none}
+    .admin-link{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--muted);text-decoration:none;padding:6px 10px;border:1px solid var(--border);border-radius:50px}
+    .admin-link:hover{color:var(--text);border-color:var(--sep)}
+
+    /* ===== HERO ===== */
+    .hero{max-width:1100px;margin:0 auto;padding:48px 20px 32px}
+    .hero-eyebrow{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.2em;color:var(--muted);text-transform:uppercase;margin-bottom:10px}
+    .hero-title{font-family:'Source Serif 4',serif;font-size:clamp(36px,6vw,56px);font-weight:300;line-height:1.1;margin-bottom:8px}
+    .hero-title em{font-style:italic;font-weight:400}
+    .hero-sub{font-size:14px;color:var(--sec)}
+
+    /* ===== CONTROLS ===== */
+    .controls{max-width:1100px;margin:0 auto;padding:24px 20px 20px;display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+    .search-wrap{flex:1;min-width:200px;position:relative}
+    .search-wrap svg{position:absolute;left:14px;top:50%;transform:translateY(-50%);width:16px;height:16px;color:var(--muted)}
+    .search-input{width:100%;padding:11px 16px 11px 40px;border:1px solid var(--border);border-radius:50px;background:var(--surface);font-family:'Inter',sans-serif;font-size:14px;outline:none;transition:border-color .2s}
+    .search-input:focus{border-color:var(--sep)}
+    .filter-tabs{display:flex;gap:8px;flex-wrap:wrap}
+    .filter-tab{padding:9px 16px;border:1px solid var(--border);border-radius:50px;background:var(--surface);font-size:13px;color:var(--sec);cursor:pointer;transition:all .2s;white-space:nowrap}
+    .filter-tab:hover{border-color:var(--sep);color:var(--text)}
+    .filter-tab.active{background:var(--accent);border-color:var(--accent);color:#fff}
+
+    /* ===== VOUCHER BAR ===== */
+    .promo-section{max-width:1100px;margin:0 auto;padding:0 20px 24px}
+    .promo-section-list{display:flex;gap:12px;overflow-x:auto;padding-bottom:4px}
+    .promo-section .promo-card{flex-shrink:0;width:260px;margin-bottom:0}
+
+    /* ===== VOUCHER PROMO POPUP ===== */
+    .promo-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:250;align-items:center;justify-content:center;padding:20px}
+    .promo-overlay.open{display:flex}
+    .promo-box{background:var(--surface);border-radius:var(--radius);padding:28px 24px;width:100%;max-width:380px;max-height:85vh;overflow-y:auto;position:relative}
+    .promo-close{position:absolute;top:14px;right:14px;background:none;border:none;font-size:20px;cursor:pointer;color:var(--muted)}
+    .promo-title{font-family:'Source Serif 4',serif;font-size:20px;font-weight:600;margin-bottom:4px}
+    .promo-sub{font-size:13px;color:var(--sec);margin-bottom:20px}
+    .promo-card{position:relative;display:flex;align-items:stretch;background:var(--surface);border-radius:10px;border:1px solid var(--border);overflow:visible;min-height:84px;width:100%;margin-bottom:16px}
+    .promo-card::before,.promo-card::after{content:'';position:absolute;left:76px;transform:translateX(-50%);width:16px;height:16px;background:var(--bg);border-radius:50%;z-index:2}
+    .promo-card::before{top:-8px}
+    .promo-card::after{bottom:-8px}
+    .promo-card-badge{width:76px;flex-shrink:0;background:linear-gradient(160deg,#ff7a45,#ff3d5f);color:#fff;display:flex;align-items:center;justify-content:center;border-radius:10px 0 0 10px;font-family:'Source Serif 4',serif;font-size:19px;font-weight:600;text-align:center;line-height:1.1;padding:8px}
+    .promo-card-info{flex:1;padding:12px 14px;border-left:1.5px dashed var(--border);display:flex;flex-direction:column;justify-content:center;gap:2px}
+    .promo-card-name{font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:13px;letter-spacing:.04em;color:#e0472e}
+    .promo-card-desc{font-size:12px;color:var(--sec)}
+    .promo-card-exp{font-size:11px;color:var(--muted)}
+    .promo-claim-btn{position:absolute;right:12px;bottom:10px;background:linear-gradient(160deg,#ff7a45,#ff3d5f);color:#fff;border:none;border-radius:50px;padding:7px 16px;font-size:12px;font-weight:600;cursor:pointer;flex-shrink:0}
+    .promo-claim-btn.claimed{background:#e8e5e0;color:var(--muted);cursor:default}
+    .promo-section .promo-card{width:280px}
+
+    /* ===== GRID ===== */
+    .catalog{max-width:1100px;margin:0 auto;padding:0 20px 60px}
+    .product-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:20px}
+    .product-card{background:var(--surface);border-radius:var(--radius);overflow:hidden;border:1px solid var(--border);transition:transform .2s,box-shadow .2s;cursor:pointer}
+    .product-card:hover{transform:translateY(-3px);box-shadow:0 8px 24px rgba(0,0,0,.08)}
+    .card-img{position:relative;aspect-ratio:1/1;background:#f0ede8;overflow:hidden}
+    .card-img img{width:100%;height:100%;object-fit:cover}
+    .card-img-ph{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-family:'Source Serif 4',serif;font-size:13px;color:var(--muted);font-style:italic}
+    .badge-disc{position:absolute;top:10px;left:10px;background:var(--accent);color:#fff;font-family:'IBM Plex Mono',monospace;font-size:11px;padding:3px 8px;border-radius:4px}
+    .badge-var{position:absolute;top:10px;right:10px;background:rgba(255,255,255,.92);color:var(--sec);font-family:'IBM Plex Mono',monospace;font-size:10px;padding:3px 8px;border-radius:4px}
+    .card-body{padding:14px 16px 16px}
+    .card-cat{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.12em;color:var(--muted);text-transform:uppercase;margin-bottom:5px}
+    .card-name{font-family:'Source Serif 4',serif;font-size:17px;font-weight:600;margin-bottom:10px;line-height:1.3}
+    .card-price-row{display:flex;align-items:baseline;gap:8px;margin-bottom:14px}
+    .price-final{font-family:'IBM Plex Mono',monospace;font-size:16px;font-weight:500}
+    .price-orig{font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--muted);text-decoration:line-through}
+    .card-colors{display:flex;gap:5px;margin-bottom:14px;flex-wrap:wrap}
+    .color-dot{width:18px;height:18px;border-radius:50%;border:1.5px solid var(--border)}
+    .card-rating{display:flex;align-items:center;gap:4px;margin-bottom:10px;font-size:12px;color:var(--sec)}
+    .stars{color:#f0a500;font-size:13px}
+    .btn-pilih{width:100%;padding:11px;background:var(--accent);color:#fff;border:none;border-radius:var(--radius-sm);font-size:13px;font-weight:500;letter-spacing:.06em;cursor:pointer;transition:background .2s}
+    .btn-pilih:hover{background:#333}
+    .empty-state{text-align:center;padding:80px 20px;grid-column:1/-1}
+    .empty-state p{font-family:'Source Serif 4',serif;font-size:18px;font-style:italic;color:var(--muted)}
+    .loading-state{text-align:center;padding:80px 20px;grid-column:1/-1;color:var(--muted);font-family:'IBM Plex Mono',monospace;font-size:13px}
+
+    /* ===== PRODUCT MODAL ===== */
+    .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;align-items:flex-end;justify-content:center}
+    .modal-overlay.open{display:flex}
+    @media(min-width:600px){.modal-overlay{align-items:center}}
+    .modal{background:var(--surface);border-radius:var(--radius) var(--radius) 0 0;padding:28px 24px 32px;width:100%;max-width:480px;max-height:90vh;overflow-y:auto}
+    @media(min-width:600px){.modal{border-radius:var(--radius)}}
+    .modal-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px}
+    .modal-title{font-family:'Source Serif 4',serif;font-size:22px;font-weight:600;line-height:1.2}
+    .modal-close{background:none;border:none;cursor:pointer;color:var(--muted);padding:4px;font-size:20px}
+    .modal-img{aspect-ratio:1/1;background:#f0ede8;border-radius:var(--radius-sm);overflow:hidden;margin-bottom:20px}
+    .modal-img img{width:100%;height:100%;object-fit:cover}
+    .modal-img-ph{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-family:'Source Serif 4',serif;font-size:13px;color:var(--muted);font-style:italic}
+    .modal-gallery{display:flex;gap:8px;margin-bottom:20px;overflow-x:auto}
+    .modal-gallery-thumb{width:56px;height:56px;border-radius:6px;overflow:hidden;flex-shrink:0;border:2px solid transparent;cursor:pointer;opacity:.65}
+    .modal-gallery-thumb.active{border-color:var(--text);opacity:1}
+    .modal-gallery-thumb img{width:100%;height:100%;object-fit:cover}
+    .modal-price-row{display:flex;align-items:baseline;gap:10px;margin-bottom:6px}
+    .modal-price-final{font-family:'IBM Plex Mono',monospace;font-size:22px;font-weight:500}
+    .modal-price-orig{font-family:'IBM Plex Mono',monospace;font-size:15px;color:var(--muted);text-decoration:line-through}
+    .modal-disc-label{display:inline-block;background:var(--accent);color:#fff;font-family:'IBM Plex Mono',monospace;font-size:11px;padding:2px 7px;border-radius:4px;margin-bottom:16px}
+    .modal-sec-label{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:10px}
+    .modal-colors{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px}
+    .modal-color-btn{display:flex;align-items:center;gap:7px;padding:7px 12px;border:1.5px solid var(--border);border-radius:50px;background:none;font-size:13px;color:var(--sec);cursor:pointer;transition:all .15s}
+    .modal-color-btn .dot{width:14px;height:14px;border-radius:50%;border:1px solid var(--border)}
+    .modal-color-btn.active{border-color:var(--text);color:var(--text);font-weight:500}
+    .modal-sizes{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px}
+    .modal-size-btn{min-width:48px;padding:8px 14px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:none;font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--sec);cursor:pointer;transition:all .15s}
+    .modal-size-btn.active{background:var(--accent);border-color:var(--accent);color:#fff}
+    .modal-size-btn.out{opacity:.4;cursor:not-allowed;text-decoration:line-through}
+    .modal-qty{display:flex;align-items:center;gap:16px;margin-bottom:24px}
+    .qty-btn{width:36px;height:36px;border:1px solid var(--border);border-radius:50%;background:none;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .15s}
+    .qty-btn:hover{background:#f0ede8}
+    .qty-val{font-family:'IBM Plex Mono',monospace;font-size:16px;min-width:24px;text-align:center}
+    .btn-add-cart{width:100%;padding:14px;background:var(--accent);color:#fff;border:none;border-radius:var(--radius-sm);font-size:14px;font-weight:500;letter-spacing:.06em;cursor:pointer;transition:background .2s;margin-bottom:10px}
+    .btn-add-cart:hover{background:#333}
+    .btn-add-cart:disabled{opacity:.4;cursor:not-allowed}
+
+    /* ===== REVIEWS in modal ===== */
+    .modal-reviews{margin-top:24px;border-top:1px solid var(--border);padding-top:20px}
+    .review-item{padding:12px 0;border-bottom:1px solid var(--border)}
+    .review-header{display:flex;justify-content:space-between;margin-bottom:4px}
+    .review-name{font-size:13px;font-weight:500}
+    .review-stars{color:#f0a500;font-size:13px}
+    .review-comment{font-size:13px;color:var(--sec)}
+    .review-form{margin-top:16px}
+    .review-form input,.review-form textarea{width:100%;padding:10px 14px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:13px;font-family:'Inter',sans-serif;margin-bottom:10px;outline:none}
+    .review-form input:focus,.review-form textarea:focus{border-color:var(--sep)}
+    .review-stars-input{display:flex;gap:6px;margin-bottom:10px}
+    .review-stars-input button{background:none;border:none;font-size:22px;cursor:pointer;color:#ddd;transition:color .15s}
+    .review-stars-input button.active{color:#f0a500}
+    .btn-review{padding:10px 20px;background:var(--accent);color:#fff;border:none;border-radius:var(--radius-sm);font-size:13px;cursor:pointer}
+
+    /* ===== CART ===== */
+    .cart-drawer{display:none;position:fixed;inset:0;z-index:300}
+    .cart-drawer.open{display:block}
+    .cart-overlay{position:absolute;inset:0;background:rgba(0,0,0,.5)}
+    .cart-panel{position:absolute;right:0;top:0;bottom:0;width:min(380px,100%);background:var(--surface);display:flex;flex-direction:column}
+    .cart-panel-header{padding:20px 24px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
+    .cart-panel-title{font-family:'Source Serif 4',serif;font-size:20px;font-weight:600}
+    .cart-close{background:none;border:none;font-size:22px;cursor:pointer;color:var(--muted)}
+    .cart-items{flex:1;overflow-y:auto;padding:16px 24px}
+    .cart-item{display:flex;gap:12px;padding:14px 0;border-bottom:1px solid var(--border)}
+    .cart-item-img{width:60px;height:60px;border-radius:var(--radius-sm);background:#f0ede8;overflow:hidden;flex-shrink:0}
+    .cart-item-img img{width:100%;height:100%;object-fit:cover}
+    .cart-item-info{flex:1}
+    .cart-item-name{font-family:'Source Serif 4',serif;font-size:14px;font-weight:600;margin-bottom:3px}
+    .cart-item-variant{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--muted);margin-bottom:8px}
+    .cart-item-bottom{display:flex;align-items:center;justify-content:space-between}
+    .cart-item-price{font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:500}
+    .cart-item-qty{display:flex;align-items:center;gap:10px}
+    .cart-qty-btn{width:28px;height:28px;border:1px solid var(--border);border-radius:50%;background:none;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+    .cart-qty-val{font-family:'IBM Plex Mono',monospace;font-size:13px;min-width:20px;text-align:center}
+    .cart-footer{padding:20px 24px;border-top:1px solid var(--sep)}
+    .discount-row{display:flex;justify-content:space-between;margin-bottom:8px;font-size:13px;color:#2a7a2a;font-family:'IBM Plex Mono',monospace}
+    .summary-row{display:flex;justify-content:space-between;margin-bottom:8px;font-size:13px;color:var(--sec);font-family:'IBM Plex Mono',monospace}
+    .cart-total-row{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:16px}
+    .cart-total-label{font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:.1em;color:var(--muted);text-transform:uppercase}
+    .cart-total-val{font-family:'IBM Plex Mono',monospace;font-size:20px;font-weight:500}
+    .btn-checkout{width:100%;padding:15px;background:var(--green);color:#fff;border:none;border-radius:var(--radius-sm);font-size:14px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:background .2s}
+    .btn-checkout:hover{background:#1ebe5d}
+    .btn-checkout svg{width:18px;height:18px}
+    .cart-empty{text-align:center;padding:60px 20px}
+    .cart-empty p{font-family:'Source Serif 4',serif;font-size:16px;font-style:italic;color:var(--muted)}
+
+    /* ===== ADMIN (Seller-Center style, sidebar layout) ===== */
+    .admin-page{display:none;position:fixed;inset:0;background:var(--bg);z-index:400}
+    .admin-page.open{display:flex}
+    .admin-sidebar{width:240px;flex-shrink:0;background:#1a1a1a;color:#f5f4f2;display:flex;flex-direction:column;height:100%}
+    .admin-sidebar-brand{padding:22px 22px 18px;border-bottom:1px solid rgba(255,255,255,.08)}
+    .admin-sidebar-brand .logo{color:#fff;font-size:19px}
+    .admin-sidebar-brand p{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.4);margin-top:4px}
+    .admin-nav{flex:1;padding:14px 12px;overflow-y:auto}
+    .admin-nav-group-label{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.35);padding:10px 12px 6px}
+    .admin-nav-item{display:flex;align-items:center;gap:11px;width:100%;padding:11px 12px;border-radius:var(--radius-sm);background:none;border:none;color:rgba(255,255,255,.62);font-family:'Inter',sans-serif;font-size:13.5px;cursor:pointer;text-align:left;margin-bottom:2px;transition:background .15s,color .15s}
+    .admin-nav-item svg{width:17px;height:17px;flex-shrink:0}
+    .admin-nav-item:hover{background:rgba(255,255,255,.06);color:#fff}
+    .admin-nav-item.active{background:#fff;color:#1a1a1a;font-weight:500}
+    .admin-sidebar-footer{padding:12px;border-top:1px solid rgba(255,255,255,.08)}
+    .admin-nav-group-toggle .chevron{width:14px!important;height:14px!important;margin-left:auto;transition:transform .2s}
+    .admin-nav-group-toggle.open .chevron{transform:rotate(180deg)}
+    .admin-nav-sub{max-height:0;overflow:hidden;transition:max-height .2s ease}
+    .admin-nav-sub.open{max-height:300px}
+    .admin-nav-sub-item{padding-left:38px;font-size:12.5px}
+    .admin-user-chip{display:flex;align-items:center;gap:10px;padding:8px 10px;margin-bottom:4px}
+    .admin-user-avatar{width:28px;height:28px;border-radius:50%;background:var(--sep);color:#1a1a1a;font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+    .admin-user-email{font-size:11px;color:rgba(255,255,255,.5);font-family:'IBM Plex Mono',monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+    .admin-main{flex:1;display:flex;flex-direction:column;height:100%;overflow:hidden}
+    .admin-topbar{height:60px;flex-shrink:0;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 28px}
+    .admin-topbar-title{font-family:'Source Serif 4',serif;font-size:19px;font-weight:600}
+    .admin-topbar-actions{display:flex;align-items:center;gap:10px}
+    .admin-mobile-toggle{display:none;background:none;border:1px solid var(--border);border-radius:var(--radius-sm);width:36px;height:36px;cursor:pointer;align-items:center;justify-content:center}
+    .admin-content{flex:1;overflow-y:auto;padding:28px}
+    .admin-content-inner{max-width:760px;margin:0 auto}
+    .admin-section{display:none}
+    .admin-section.active{display:block}
+    .admin-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:24px;margin-bottom:20px}
+    .admin-card-title{font-family:'Source Serif 4',serif;font-size:17px;font-weight:600;margin-bottom:18px}
+    .admin-list-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+
+    .form-group{margin-bottom:16px}
+    .form-label{display:block;font-size:12px;font-family:'IBM Plex Mono',monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--sec);margin-bottom:6px}
+    .form-input{width:100%;padding:10px 14px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:14px;font-family:'Inter',sans-serif;outline:none}
+    .form-input:focus{border-color:var(--sep)}
+    .form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .btn-primary{padding:12px 24px;background:var(--accent);color:#fff;border:none;border-radius:var(--radius-sm);font-size:14px;font-weight:500;cursor:pointer;width:100%}
+    .btn-danger{padding:8px 16px;background:#c0392b;color:#fff;border:none;border-radius:var(--radius-sm);font-size:12px;cursor:pointer}
+    .btn-edit{padding:8px 16px;background:#f0ede8;color:var(--text);border:none;border-radius:var(--radius-sm);font-size:12px;cursor:pointer;margin-right:6px}
+    .admin-product-list{margin-top:20px}
+    .admin-product-item{display:flex;align-items:center;gap:12px;padding:12px;border:1px solid var(--border);border-radius:var(--radius-sm);margin-bottom:10px}
+    .admin-product-img{width:50px;height:50px;border-radius:var(--radius-sm);background:#f0ede8;overflow:hidden;flex-shrink:0}
+    .admin-product-img img{width:100%;height:100%;object-fit:cover}
+    .admin-product-info{flex:1}
+    .admin-product-name{font-weight:600;font-size:14px}
+    .admin-product-meta{font-size:12px;color:var(--muted);font-family:'IBM Plex Mono',monospace}
+    .admin-product-actions{display:flex;gap:6px}
+    .var-tag{display:flex;align-items:center;gap:6px;padding:6px 12px;background:#f0ede8;border-radius:50px;font-size:12px;font-family:'IBM Plex Mono',monospace}
+    .var-tag-dot{width:12px;height:12px;border-radius:50%;flex-shrink:0}
+    .var-tag-remove{background:none;border:none;cursor:pointer;color:var(--muted);font-size:14px;line-height:1;padding:0 0 0 2px}
+    .btn-add-variant{background:none;border:1px dashed var(--border);border-radius:var(--radius-sm);padding:8px;width:100%;font-size:13px;color:var(--sec);cursor:pointer;margin-top:8px}
+    .btn-add-variant:hover{border-color:var(--sep)}
+    .upload-area{border:2px dashed var(--border);border-radius:var(--radius-sm);padding:24px;text-align:center;cursor:pointer;transition:border-color .2s}
+    .upload-area:hover{border-color:var(--sep)}
+    .upload-preview{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+    .upload-preview img{width:80px;height:80px;object-fit:cover;border-radius:var(--radius-sm)}
+    .upload-thumb{position:relative;width:80px;height:80px}
+    .upload-thumb img{width:100%;height:100%;object-fit:cover;border-radius:var(--radius-sm)}
+    .upload-thumb-remove{position:absolute;top:-6px;right:-6px;width:20px;height:20px;border-radius:50%;background:#1a1a1a;color:#fff;border:2px solid var(--surface);font-size:11px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center}
+    .upload-thumb-cover{position:absolute;bottom:2px;left:2px;background:rgba(0,0,0,.7);color:#fff;font-size:9px;padding:1px 5px;border-radius:3px;font-family:'IBM Plex Mono',monospace}
+
+    @media(max-width:860px){
+      .admin-sidebar{position:fixed;top:0;bottom:0;left:0;width:220px;transform:translateX(-100%);transition:transform .2s;z-index:30}
+      .admin-sidebar.open{transform:translateX(0)}
+      .admin-mobile-toggle{display:flex}
+      .admin-sidebar-scrim{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:20}
+      .admin-sidebar-scrim.open{display:block}
+    }
+
+    /* ===== LOGIN ===== */
+    .login-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:500;align-items:center;justify-content:center}
+    .login-overlay.open{display:flex}
+    .login-box{background:var(--surface);border-radius:var(--radius);padding:40px;width:min(360px,90vw)}
+    .login-title{font-family:'Source Serif 4',serif;font-size:24px;font-weight:600;margin-bottom:24px;text-align:center}
+    .login-err{font-size:13px;color:#c0392b;margin-bottom:12px;text-align:center;font-family:'IBM Plex Mono',monospace}
+
+    /* ===== WA FLOAT ===== */
+    .wa-float{position:fixed;bottom:24px;right:24px;width:52px;height:52px;background:var(--green);border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 4px 16px rgba(37,211,102,.4);z-index:99;transition:transform .2s}
+    .wa-float:hover{transform:scale(1.08)}
+    .wa-float svg{width:28px;height:28px;fill:#fff}
+
+    /* ===== TOAST ===== */
+    .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--accent);color:#fff;font-size:13px;padding:10px 20px;border-radius:50px;z-index:600;transition:transform .3s;white-space:nowrap}
+    .toast.show{transform:translateX(-50%) translateY(0)}
+
+    @media(max-width:480px){
+      .product-grid{grid-template-columns:repeat(2,1fr);gap:12px}
+      .hero{padding:28px 16px 20px}
+      .controls,.promo-section,.catalog{padding-left:16px;padding-right:16px}
+    }
+  </style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div class="login-overlay" id="login-overlay">
+  <div class="login-box">
+    <h2 class="login-title">Admin Login</h2>
+    <p class="login-err hidden" id="login-err"></p>
+    <div class="form-group">
+      <label class="form-label">Email</label>
+      <input class="form-input" type="email" id="login-email" placeholder="admin@zenot.com"/>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Password</label>
+      <input class="form-input" type="password" id="login-pass" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()"/>
+    </div>
+    <button class="btn-primary" onclick="doLogin()">Masuk</button>
+    <a href="index.html" style="display:block;text-align:center;margin-top:10px;padding:12px;font-size:13px;color:var(--muted)">← Kembali ke Toko</a>
+  </div>
+</div>
+
+<!-- ADMIN PAGE (Seller Center style) -->
+<div class="admin-page" id="admin-overlay">
+  <div class="admin-sidebar-scrim" id="admin-scrim" onclick="toggleSidebar(false)"></div>
+  <aside class="admin-sidebar" id="admin-sidebar">
+    <div class="admin-sidebar-brand">
+      <a href="#" class="logo">ZEN<em>ot</em></a>
+      <p>Seller Center</p>
+    </div>
+    <nav class="admin-nav">
+      <p class="admin-nav-group-label">Kelola</p>
+      <button class="admin-nav-item active" data-tab="products" onclick="switchTab('products',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 8l-9-5-9 5 9 5 9-5z"/><path d="M3 8v8l9 5 9-5V8"/><path d="M12 13v8"/></svg>
+        Produk
+      </button>
+      <button class="admin-nav-item admin-nav-group-toggle open" id="promo-group-toggle" onclick="toggleNavGroup(this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+        Promosi
+        <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+      </button>
+      <div class="admin-nav-sub open" id="promo-subnav">
+        <button class="admin-nav-item admin-nav-sub-item" data-tab="promotions" onclick="switchTab('promotions',this)">Diskon Produk</button>
+        <button class="admin-nav-item admin-nav-sub-item" data-tab="vouchers" onclick="switchTab('vouchers',this)">Voucher</button>
+        <button class="admin-nav-item admin-nav-sub-item" data-tab="bundling" onclick="switchTab('bundling',this)">Bundling</button>
+        <button class="admin-nav-item admin-nav-sub-item" data-tab="reseller" onclick="switchTab('reseller',this)">Program Reseller</button>
+        <button class="admin-nav-item admin-nav-sub-item" data-tab="dropshipper" onclick="switchTab('dropshipper',this)">Program Dropshipper</button>
+      </div>
+      <button class="admin-nav-item" data-tab="categories" onclick="switchTab('categories',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+        Kategori
+      </button>
+      <button class="admin-nav-item" data-tab="reviews" onclick="switchTab('reviews',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+        Ulasan
+      </button>
+      <p class="admin-nav-group-label">Lainnya</p>
+      <button class="admin-nav-item" onclick="visitStore()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><path d="M15 3h6v6"/><path d="M10 14L21 3"/></svg>
+        Kunjungi Toko
+      </button>
+    </nav>
+    <div class="admin-sidebar-footer">
+      <div class="admin-user-chip">
+        <div class="admin-user-avatar" id="admin-avatar">Z</div>
+        <span class="admin-user-email" id="admin-email-chip">admin</span>
+      </div>
+      <button class="admin-nav-item" style="color:#e08a80" onclick="doLogout()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>
+        Logout
+      </button>
+    </div>
+  </aside>
+
+  <div class="admin-main">
+    <div class="admin-topbar">
+      <div style="display:flex;align-items:center;gap:12px">
+        <button class="admin-mobile-toggle" onclick="toggleSidebar(true)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="18" height="18"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        </button>
+        <span class="admin-topbar-title" id="admin-topbar-title">Produk</span>
+      </div>
+    </div>
+
+    <div class="admin-content">
+      <div class="admin-content-inner">
+
+        <!-- TAB: PRODUK -->
+        <div class="admin-section active" id="tab-products">
+          <div class="admin-list-header">
+            <h3 class="admin-card-title" style="margin-bottom:0">Kelola Produk</h3>
+            <button class="btn-primary" style="width:auto;padding:10px 18px" onclick="openProductForm()">+ Tambah Produk Baru</button>
+          </div>
+
+          <div class="admin-card admin-product-list">
+            <div id="admin-products-render"></div>
+          </div>
+
+          <div class="admin-card hidden" id="product-form-card">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">
+              <h3 class="admin-card-title" id="form-mode-title" style="margin-bottom:0">Tambah Produk</h3>
+              <button class="admin-close" style="font-size:18px" onclick="closeProductForm()">✕</button>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Nama Produk</label>
+              <input class="form-input" id="p-name" placeholder="Stripe Collar Knit"/>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Kategori</label>
+                <select class="form-input" id="p-cat"><option>Memuat...</option></select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Deskripsi Produk</label>
+                <textarea class="form-input" id="p-desc" placeholder="Jelaskan produkmu: bahan, ukuran, keunggulan, cara pakai, dll." rows="8" style="resize:vertical;min-height:160px;line-height:1.6"></textarea>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Foto Produk (maks. 9)</label>
+              <div class="upload-area" onclick="document.getElementById('p-photos').click()">
+                <p style="font-size:13px;color:var(--muted)">Klik untuk upload foto (bisa pilih beberapa sekaligus)</p>
+                <input type="file" id="p-photos" multiple accept="image/*" style="display:none" onchange="previewPhotos(this)"/>
+              </div>
+              <div class="upload-preview" id="upload-preview"></div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Variasi</label>
+
+              <!-- Variasi 1: Warna -->
+              <div class="var-section" style="border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px;margin-bottom:10px">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+                  <span style="font-size:13px;font-weight:600">Variasi 1 — Warna</span>
+                </div>
+                <div class="var-tag-row" id="v1-tags" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px"></div>
+                <div style="display:flex;gap:8px">
+                  <input class="form-input" id="v1-input" placeholder="Tambah warna (Enter)" style="flex:1" onkeydown="addColorTag(event)"/>
+                  <input type="color" id="v1-color-picker" value="#1a1a1a" style="width:40px;height:40px;border:1px solid var(--border);border-radius:var(--radius-sm);cursor:pointer;padding:2px"/>
+                </div>
+              </div>
+
+              <!-- Variasi 2: Ukuran -->
+              <div class="var-section" style="border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px;margin-bottom:14px">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+                  <span style="font-size:13px;font-weight:600">Variasi 2 — Ukuran</span>
+                </div>
+                <div class="var-tag-row" id="v2-tags" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px"></div>
+                <div style="display:flex;gap:8px;flex-wrap:wrap">
+                  <button class="filter-tab" onclick="addSizePreset('S')">S</button>
+                  <button class="filter-tab" onclick="addSizePreset('M')">M</button>
+                  <button class="filter-tab" onclick="addSizePreset('L')">L</button>
+                  <button class="filter-tab" onclick="addSizePreset('XL')">XL</button>
+                  <button class="filter-tab" onclick="addSizePreset('XXL')">XXL</button>
+                  <button class="filter-tab" onclick="addSizePreset('All Size')">All Size</button>
+                  <input class="form-input" id="v2-input" placeholder="Ukuran custom (Enter)" style="flex:1;min-width:140px" onkeydown="addSizeTag(event)"/>
+                </div>
+              </div>
+
+              <!-- Tabel varian otomatis -->
+              <div id="variant-table-wrap" style="display:none">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+                  <span style="font-size:13px;font-weight:600">Daftar Varian</span>
+                  <button class="btn-edit" onclick="applyToAll()">Terapkan ke Semua</button>
+                </div>
+                <div style="display:flex;gap:8px;margin-bottom:12px;align-items:center">
+                  <input class="form-input" id="bulk-price" type="number" placeholder="Harga"/>
+                  <input class="form-input" id="bulk-stock" type="number" placeholder="Stok"/>
+                </div>
+                <div style="overflow-x:auto">
+                  <table style="width:100%;border-collapse:collapse;font-size:13px" id="variant-table">
+                    <thead>
+                      <tr style="border-bottom:2px solid var(--border);text-align:left">
+                        <th style="padding:8px 6px;color:var(--muted)">Warna</th>
+                        <th style="padding:8px 6px;color:var(--muted)">Ukuran</th>
+                        <th style="padding:8px 6px;color:var(--muted)">Foto</th>
+                        <th style="padding:8px 6px;color:var(--muted)">Harga</th>
+                        <th style="padding:8px 6px;color:var(--muted)">Stok</th>
+                      </tr>
+                    </thead>
+                    <tbody id="variant-tbody"></tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+            <div style="display:flex;gap:10px;margin-top:4px">
+              <button class="btn-primary" id="save-product-btn" onclick="saveProduct()" style="flex:1">Simpan Produk</button>
+              <button class="btn-edit" id="cancel-product-btn" onclick="closeProductForm()" style="padding:12px 24px;font-size:14px">Batal</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB: VOUCHER -->
+        <div class="admin-section" id="tab-vouchers">
+          <div class="admin-card">
+            <h3 class="admin-card-title">Buat Voucher</h3>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Kode</label>
+                <input class="form-input" id="v-code" placeholder="ZENOT10" style="text-transform:uppercase"/>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Tipe</label>
+                <select class="form-input" id="v-type">
+                  <option value="percent">Persen (%)</option>
+                  <option value="fixed">Nominal (Rp)</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Nilai Diskon</label>
+                <input class="form-input" id="v-value" type="number" placeholder="10"/>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Min. Order (Rp)</label>
+                <input class="form-input" id="v-min" type="number" placeholder="0"/>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Max. Pakai</label>
+                <input class="form-input" id="v-maxuse" type="number" placeholder="100"/>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Berlaku Sampai</label>
+                <input class="form-input" id="v-expires" type="date"/>
+              </div>
+            </div>
+            <button class="btn-primary" onclick="saveVoucher()">Simpan Voucher</button>
+          </div>
+          <div class="admin-card">
+            <h3 class="admin-card-title">Daftar Voucher</h3>
+            <div id="voucher-list"></div>
+          </div>
+        </div>
+
+        <!-- TAB: ULASAN -->
+        <div class="admin-section" id="tab-reviews">
+          <div class="admin-card">
+            <h3 class="admin-card-title">Ulasan Masuk</h3>
+            <div id="all-reviews-render"></div>
+          </div>
+        </div>
+
+        <!-- TAB: PROMOSI -->
+        <div class="admin-section" id="tab-promotions">
+          <div class="admin-card">
+            <h3 class="admin-card-title">Diskon Produk</h3>
+            <p style="font-size:13px;color:var(--sec);margin-bottom:16px">Terapkan diskon % ke satu atau beberapa produk sekaligus. Harga diskon otomatis dihitung dan ditampilkan di katalog.</p>
+            <div class="form-row" style="margin-bottom:12px">
+              <div class="form-group">
+                <label class="form-label">Pilih Produk</label>
+                <select class="form-input" id="promo-product-id"><option value="">-- Semua Produk --</option></select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Diskon (%)</label>
+                <input class="form-input" id="promo-discount" type="number" min="1" max="99" placeholder="cth: 20"/>
+              </div>
+            </div>
+            <button class="btn-primary" onclick="applyProductDiscount()">Terapkan Diskon</button>
+          </div>
+          <div class="admin-card" style="margin-top:16px">
+            <h3 class="admin-card-title">Flash Sale</h3>
+            <p style="font-size:13px;color:var(--sec);margin-bottom:16px">Atur harga flash sale + durasi waktu. Otomatis badge "FLASH SALE" muncul di produk selama periode berlaku.</p>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Produk</label>
+                <select class="form-input" id="flash-product-id"><option value="">-- Pilih Produk --</option></select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Harga Flash Sale</label>
+                <input class="form-input" id="flash-price" type="number" placeholder="cth: 89000"/>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Mulai</label>
+                <input class="form-input" id="flash-start" type="datetime-local"/>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Berakhir</label>
+                <input class="form-input" id="flash-end" type="datetime-local"/>
+              </div>
+            </div>
+            <button class="btn-primary" onclick="saveFlashSale()">Simpan Flash Sale</button>
+          </div>
+          <div class="admin-card" style="margin-top:16px">
+            <h3 class="admin-card-title">Promo Aktif</h3>
+            <div id="promo-list-render"><p style="font-size:13px;color:var(--muted)">Belum ada promo aktif.</p></div>
+          </div>
+        </div>
+
+        <!-- TAB: KATEGORI -->
+        <div class="admin-section" id="tab-categories">
+          <div class="admin-card">
+            <h3 class="admin-card-title">Kelola Kategori</h3>
+            <div style="display:flex;gap:10px;margin-bottom:16px">
+              <input class="form-input" id="new-category-input" placeholder="Nama kategori baru" onkeydown="if(event.key==='Enter')saveCategory()"/>
+              <button class="btn-primary" style="width:auto;padding:10px 20px" onclick="saveCategory()">Tambah</button>
+            </div>
+            <div id="categories-render"></div>
+          </div>
+        </div>
+
+        <div class="admin-section" id="tab-bundling">
+          <div class="admin-card">
+            <h3 class="admin-card-title">Bundling</h3>
+            <p style="color:var(--muted);font-size:13px">Fitur bundling produk akan segera hadir di sini.</p>
+          </div>
+        </div>
+
+        <div class="admin-section" id="tab-reseller">
+          <div class="admin-card">
+            <h3 class="admin-card-title">Program Reseller</h3>
+            <p style="color:var(--muted);font-size:13px">Fitur program reseller akan segera hadir di sini.</p>
+          </div>
+        </div>
+
+        <div class="admin-section" id="tab-dropshipper">
+          <div class="admin-card">
+            <h3 class="admin-card-title">Program Dropshipper</h3>
+            <p style="color:var(--muted);font-size:13px">Fitur program dropshipper akan segera hadir di sini.</p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ===================== CONFIG =====================
+const SUPABASE_URL = 'https://xvaxwxnvjzrazxgdxsrt.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh2YXh3eG52anpyYXp4Z2R4c3J0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU3ODk4OTQsImV4cCI6MjEwMTM2NTg5NH0.JbL_0Q_zq0LGLnKIro8wzpvPvRxMj3OqWZTxYUYAj5o';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// ===================== STATE =====================
+let adminUser = null;
+let allCategories = [];
+
+// ===================== TOAST =====================
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 2500);
+}
+
+// ===================== LOGIN =====================
+async function doLogin() {
+  const email = document.getElementById('login-email').value;
+  const pass = document.getElementById('login-pass').value;
+  const err = document.getElementById('login-err');
+  err.classList.add('hidden');
+  const { data, error } = await sb.auth.signInWithPassword({email, password: pass});
+  if (error) { err.textContent=error.message; err.classList.remove('hidden'); return; }
+  adminUser = data.user;
+  showDashboard();
+}
+
+async function doLogout() {
+  await sb.auth.signOut();
+  adminUser = null;
+  showLoginScreen();
+  showToast('Berhasil logout');
+}
+
+// ===================== VIEW SWITCH (login screen <-> dashboard) =====================
+function showLoginScreen() {
+  document.getElementById('admin-overlay').classList.remove('open');
+  document.getElementById('login-overlay').classList.add('open');
+}
+
+function showDashboard() {
+  document.getElementById('login-overlay').classList.remove('open');
+  document.getElementById('admin-overlay').classList.add('open');
+  const email = adminUser?.email || 'admin';
+  document.getElementById('admin-email-chip').textContent = email;
+  document.getElementById('admin-avatar').textContent = email[0].toUpperCase();
+  loadAdminProducts().then(() => loadCategories());
+  loadAdminVouchers();
+  loadAdminReviews();
+}
+
+function visitStore() {
+  window.open('index.html', '_blank');
+}
+
+function toggleSidebar(open) {
+  document.getElementById('admin-sidebar').classList.toggle('open', open);
+  document.getElementById('admin-scrim').classList.toggle('open', open);
+}
+
+const TAB_TITLES = { products: 'Produk', vouchers: 'Voucher', reviews: 'Ulasan', promotions: 'Diskon Produk', categories: 'Kategori', bundling: 'Bundling', reseller: 'Program Reseller', dropshipper: 'Program Dropshipper' };
+
+function toggleNavGroup(btn) {
+  btn.classList.toggle('open');
+  document.getElementById('promo-subnav').classList.toggle('open');
+}
+function switchTab(tab, el) {
+  document.querySelectorAll('.admin-nav-item[data-tab]').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.admin-section').forEach(s=>s.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById(`tab-${tab}`).classList.add('active');
+  document.getElementById('admin-topbar-title').textContent = TAB_TITLES[tab] || '';
+  toggleSidebar(false);
+  if (tab === 'categories') loadAdminCategories();
+  if (tab === 'promotions') {
+    loadCategories();
+    ['promo-product-id','flash-product-id'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.innerHTML = `<option value="">-- ${id.includes('flash')?'Pilih':'Semua'} Produk --</option>` +
+        adminProductsData.map(p=>`<option value="${p.id}">${p.name}</option>`).join('');
+    });
+  }
+}
+// ===================== VOUCHER ADMIN =====================
+async function saveVoucher() {
+  const code = document.getElementById('v-code').value.trim().toUpperCase();
+  const discount_type = document.getElementById('v-type').value;
+  const discount_value = parseInt(document.getElementById('v-value').value)||0;
+  const min_order = parseInt(document.getElementById('v-min').value)||0;
+  const max_uses = parseInt(document.getElementById('v-maxuse').value)||1;
+  const expires_at = document.getElementById('v-expires').value||null;
+  if (!code||!discount_value) { showToast('Isi kode dan nilai diskon'); return; }
+  const { error } = await sb.from('vouchers').insert({code,discount_type,discount_value,min_order,max_uses,expires_at});
+  if (error) { showToast(error.message); return; }
+  showToast('Voucher disimpan ✓');
+  loadAdminVouchers();
+}
+
+async function loadAdminVouchers() {
+  const { data } = await sb.from('vouchers').select('*');
+  const el = document.getElementById('voucher-list');
+  if (!data||!data.length) { el.innerHTML='<p style="color:var(--muted);font-size:13px">Belum ada voucher.</p>'; return; }
+  el.innerHTML = `<table style="width:100%;border-collapse:collapse;font-size:13px">
+    <tr style="border-bottom:1px solid var(--border);text-align:left">
+      <th style="padding:8px 4px">Kode</th><th>Diskon</th><th>Pakai</th><th>Aktif</th><th></th>
+    </tr>
+    ${data.map(v=>`<tr style="border-bottom:1px solid var(--border)">
+      <td style="padding:8px 4px;font-family:'IBM Plex Mono',monospace;font-weight:500">${v.code}</td>
+      <td>${v.discount_type==='percent'?v.discount_value+'%':'Rp '+v.discount_value.toLocaleString('id-ID')}</td>
+      <td>${v.used_count}/${v.max_uses}</td>
+      <td>${v.is_active?'✓':'✗'}</td>
+      <td><button class="btn-danger" onclick="deleteVoucher('${v.id}')">Hapus</button></td>
+    </tr>`).join('')}
+  </table>`;
+}
+
+async function deleteVoucher(id) {
+  await sb.from('vouchers').delete().eq('id',id);
+  showToast('Voucher dihapus');
+  loadAdminVouchers();
+}
+// ===================== CATEGORIES =====================
+async function loadCategories() {
+  const { data } = await sb.from('categories').select('*').order('name');
+  allCategories = data || [];
+  // Update filter tabs
+  const tabs = document.getElementById('filter-tabs');
+  if (tabs) {
+    tabs.innerHTML = `<button class="filter-tab active" onclick="setFilter('all',this)">Semua</button>` +
+      allCategories.map(c => `<button class="filter-tab" onclick="setFilter('${c.name}',this)">${c.name}</button>`).join('');
+  }
+  // Update dropdown di form produk
+  const sel = document.getElementById('p-cat');
+  if (sel) sel.innerHTML = allCategories.map(c => `<option value="${c.name}">${c.name}</option>`).join('');
+  // Update dropdown di promosi
+  ['promo-product-id','flash-product-id'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el && adminProductsData.length) {
+      el.innerHTML = `<option value="">-- ${id.includes('flash') ? 'Pilih' : 'Semua'} Produk --</option>` +
+        adminProductsData.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
+    }
+  });
+}
+
+async function loadAdminCategories() {
+  const el = document.getElementById('categories-render');
+  if (!el) return;
+  if (!allCategories.length) { el.innerHTML = '<p style="font-size:13px;color:var(--muted)">Belum ada kategori.</p>'; return; }
+  el.innerHTML = allCategories.map(c => `
+    <div class="admin-product-item">
+      <div class="admin-product-info"><p class="admin-product-name">${c.name}</p></div>
+      <button class="btn-danger" onclick="deleteCategory('${c.id}','${c.name}')">Hapus</button>
+    </div>`).join('');
+}
+
+async function saveCategory() {
+  const input = document.getElementById('new-category-input');
+  const name = input.value.trim();
+  if (!name) return;
+  const { error } = await sb.from('categories').insert({name});
+  if (error) { showToast(error.message.includes('unique') ? 'Kategori sudah ada' : 'Gagal tambah kategori'); return; }
+  input.value = '';
+  showToast(`Kategori "${name}" ditambahkan ✓`);
+  await loadCategories();
+  loadAdminCategories();
+}
+
+async function deleteCategory(id, name) {
+  if (!confirm(`Hapus kategori "${name}"? Produk dengan kategori ini tidak terhapus.`)) return;
+  await sb.from('categories').delete().eq('id', id);
+  showToast('Kategori dihapus');
+  await loadCategories();
+  loadAdminCategories();
+}
+// ===================== PROMOTIONS =====================
+async function applyProductDiscount() {
+  const productId = document.getElementById('promo-product-id').value;
+  const disc = parseInt(document.getElementById('promo-discount').value);
+  if (!disc || disc < 1 || disc > 99) { showToast('Isi persen diskon (1-99)'); return; }
+
+  let variants;
+  if (productId) {
+    const { data } = await sb.from('variants').select('id,price').eq('product_id', productId);
+    variants = data;
+  } else {
+    const { data } = await sb.from('variants').select('id,price');
+    variants = data;
+  }
+  if (!variants || !variants.length) { showToast('Tidak ada varian ditemukan'); return; }
+
+  for (const v of variants) {
+    const newPrice = Math.round(v.price * (1 - disc/100));
+    const origPrice = v.price;
+    await sb.from('variants').update({price: newPrice, original_price: origPrice}).eq('id', v.id);
+  }
+  showToast(`Diskon ${disc}% berhasil diterapkan ✓`);
+}
+
+async function saveFlashSale() {
+  const productId = document.getElementById('flash-product-id').value;
+  const price = parseInt(document.getElementById('flash-price').value);
+  const start = document.getElementById('flash-start').value;
+  const end = document.getElementById('flash-end').value;
+  if (!productId || !price || !end) { showToast('Isi produk, harga, dan waktu berakhir'); return; }
+
+  const { data: vars } = await sb.from('variants').select('id,price').eq('product_id', productId);
+  if (!vars || !vars.length) { showToast('Produk tidak punya varian'); return; }
+
+  for (const v of vars) {
+    await sb.from('variants').update({
+      price: price,
+      original_price: v.price,
+      flash_sale_end: end
+    }).eq('id', v.id);
+  }
+  showToast('Flash Sale berhasil disimpan ✓');
+}
+// ===================== REVIEWS ADMIN =====================
+async function loadAdminReviews() {
+  const { data } = await sb.from('reviews').select('*,products(name)');
+  const el = document.getElementById('all-reviews-render');
+  if (!data||!data.length) { el.innerHTML='<p style="color:var(--muted);font-size:13px">Belum ada ulasan.</p>'; return; }
+  el.innerHTML = data.map(r=>`
+    <div class="review-item">
+      <div class="review-header">
+        <span class="review-name">${r.buyer_name} — <span style="color:var(--muted);font-size:11px">${r.products?.name||''}</span></span>
+        <div style="display:flex;gap:8px;align-items:center">
+          <span class="review-stars">${'★'.repeat(r.rating)}${'☆'.repeat(5-r.rating)}</span>
+          <button class="btn-danger" style="font-size:11px;padding:4px 8px" onclick="deleteReview('${r.id}')">Hapus</button>
+        </div>
+      </div>
+      <p class="review-comment">${r.comment||''}</p>
+    </div>`).join('');
+}
+
+async function deleteReview(id) {
+  await sb.from('reviews').delete().eq('id',id);
+  showToast('Ulasan dihapus');
+  loadAdminReviews();
+}
+
+// ===================== INIT =====================
+sb.auth.getSession().then(({data}) => {
+  adminUser = data.session?.user || null;
+  if (adminUser) showDashboard(); else showLoginScreen();
+});
+sb.auth.onAuthStateChange((event, session) => {
+  adminUser = session?.user || null;
+});
+</script>
+<script src="admin-products.js"></script>
+</body>
+</html>

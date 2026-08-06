@@ -202,6 +202,11 @@
     .admin-nav-item:hover{background:rgba(255,255,255,.06);color:#fff}
     .admin-nav-item.active{background:#fff;color:#1a1a1a;font-weight:500}
     .admin-sidebar-footer{padding:12px;border-top:1px solid rgba(255,255,255,.08)}
+    .admin-nav-group-toggle .chevron{width:14px!important;height:14px!important;margin-left:auto;transition:transform .2s}
+    .admin-nav-group-toggle.open .chevron{transform:rotate(180deg)}
+    .admin-nav-sub{max-height:0;overflow:hidden;transition:max-height .2s ease}
+    .admin-nav-sub.open{max-height:300px}
+    .admin-nav-sub-item{padding-left:38px;font-size:12.5px}
     .admin-user-chip{display:flex;align-items:center;gap:10px;padding:8px 10px;margin-bottom:4px}
     .admin-user-avatar{width:28px;height:28px;border-radius:50%;background:var(--sep);color:#1a1a1a;font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;display:flex;align-items:center;justify-content:center;flex-shrink:0}
     .admin-user-email{font-size:11px;color:rgba(255,255,255,.5);font-family:'IBM Plex Mono',monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -282,12 +287,11 @@
 </head>
 <body>
 
-<!-- HEADER -->
 <header>
   <div class="header-inner">
     <a href="#" class="logo">ZEN<em>ot</em></a>
     <div class="header-right">
-      <a href="#" class="admin-link" onclick="openAdminOrLogin(event)">Admin</a>
+      <a href="seller.html" class="admin-link">Admin</a>
       <button class="cart-btn" onclick="openCart()">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
         <span id="cart-label">Keranjang</span>
@@ -401,306 +405,6 @@
   </div>
 </div>
 
-<!-- LOGIN -->
-<div class="login-overlay" id="login-overlay">
-  <div class="login-box">
-    <h2 class="login-title">Admin Login</h2>
-    <p class="login-err hidden" id="login-err"></p>
-    <div class="form-group">
-      <label class="form-label">Email</label>
-      <input class="form-input" type="email" id="login-email" placeholder="admin@zenot.com"/>
-    </div>
-    <div class="form-group">
-      <label class="form-label">Password</label>
-      <input class="form-input" type="password" id="login-pass" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()"/>
-    </div>
-    <button class="btn-primary" onclick="doLogin()">Masuk</button>
-    <button style="width:100%;margin-top:10px;padding:12px;background:none;border:none;font-size:13px;color:var(--muted);cursor:pointer" onclick="closeLogin()">Batal</button>
-  </div>
-</div>
-
-<!-- ADMIN PAGE (Seller Center style) -->
-<div class="admin-page" id="admin-overlay">
-  <div class="admin-sidebar-scrim" id="admin-scrim" onclick="toggleSidebar(false)"></div>
-  <aside class="admin-sidebar" id="admin-sidebar">
-    <div class="admin-sidebar-brand">
-      <a href="#" class="logo">ZEN<em>ot</em></a>
-      <p>Seller Center</p>
-    </div>
-    <nav class="admin-nav">
-      <p class="admin-nav-group-label">Kelola</p>
-      <button class="admin-nav-item active" data-tab="products" onclick="switchTab('products',this)">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 8l-9-5-9 5 9 5 9-5z"/><path d="M3 8v8l9 5 9-5V8"/><path d="M12 13v8"/></svg>
-        Produk
-      </button>
-      <button class="admin-nav-item" data-tab="promotions" onclick="switchTab('promotions',this)">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-        Promosi
-      </button>
-      <button class="admin-nav-item" data-tab="vouchers" onclick="switchTab('vouchers',this)">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20.59 13.41L11 3.83A2 2 0 009.59 3.24H4a1 1 0 00-1 1v5.59a2 2 0 00.59 1.41l9.58 9.59a2 2 0 002.83 0l4.59-4.59a2 2 0 000-2.83z"/><circle cx="7.5" cy="7.5" r="1.2"/></svg>
-        Voucher
-      </button>
-      <button class="admin-nav-item" data-tab="categories" onclick="switchTab('categories',this)">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
-        Kategori
-      </button>
-      <button class="admin-nav-item" data-tab="reviews" onclick="switchTab('reviews',this)">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-        Ulasan
-      </button>
-      <p class="admin-nav-group-label">Lainnya</p>
-      <button class="admin-nav-item" onclick="visitStore()">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><path d="M15 3h6v6"/><path d="M10 14L21 3"/></svg>
-        Kunjungi Toko
-      </button>
-    </nav>
-    <div class="admin-sidebar-footer">
-      <div class="admin-user-chip">
-        <div class="admin-user-avatar" id="admin-avatar">Z</div>
-        <span class="admin-user-email" id="admin-email-chip">admin</span>
-      </div>
-      <button class="admin-nav-item" style="color:#e08a80" onclick="doLogout()">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>
-        Logout
-      </button>
-    </div>
-  </aside>
-
-  <div class="admin-main">
-    <div class="admin-topbar">
-      <div style="display:flex;align-items:center;gap:12px">
-        <button class="admin-mobile-toggle" onclick="toggleSidebar(true)">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="18" height="18"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
-        </button>
-        <span class="admin-topbar-title" id="admin-topbar-title">Produk</span>
-      </div>
-    </div>
-
-    <div class="admin-content">
-      <div class="admin-content-inner">
-
-        <!-- TAB: PRODUK -->
-        <div class="admin-section active" id="tab-products">
-          <div class="admin-list-header">
-            <h3 class="admin-card-title" style="margin-bottom:0">Kelola Produk</h3>
-            <button class="btn-primary" style="width:auto;padding:10px 18px" onclick="openProductForm()">+ Tambah Produk Baru</button>
-          </div>
-
-          <div class="admin-card admin-product-list">
-            <div id="admin-products-render"></div>
-          </div>
-
-          <div class="admin-card hidden" id="product-form-card">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">
-              <h3 class="admin-card-title" id="form-mode-title" style="margin-bottom:0">Tambah Produk</h3>
-              <button class="admin-close" style="font-size:18px" onclick="closeProductForm()">✕</button>
-            </div>
-            <div class="form-group">
-              <label class="form-label">Nama Produk</label>
-              <input class="form-input" id="p-name" placeholder="Stripe Collar Knit"/>
-            </div>
-            <div class="form-row">
-              <div class="form-group">
-                <label class="form-label">Kategori</label>
-                <select class="form-input" id="p-cat"><option>Memuat...</option></select>
-              </div>
-              <div class="form-group">
-                <label class="form-label">Deskripsi Produk</label>
-                <textarea class="form-input" id="p-desc" placeholder="Jelaskan produkmu: bahan, ukuran, keunggulan, cara pakai, dll." rows="8" style="resize:vertical;min-height:160px;line-height:1.6"></textarea>
-              </div>
-            </div>
-            <div class="form-group">
-              <label class="form-label">Foto Produk (maks. 9)</label>
-              <div class="upload-area" onclick="document.getElementById('p-photos').click()">
-                <p style="font-size:13px;color:var(--muted)">Klik untuk upload foto (bisa pilih beberapa sekaligus)</p>
-                <input type="file" id="p-photos" multiple accept="image/*" style="display:none" onchange="previewPhotos(this)"/>
-              </div>
-              <div class="upload-preview" id="upload-preview"></div>
-            </div>
-            <div class="form-group">
-              <label class="form-label">Variasi</label>
-
-              <!-- Variasi 1: Warna -->
-              <div class="var-section" style="border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px;margin-bottom:10px">
-                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
-                  <span style="font-size:13px;font-weight:600">Variasi 1 — Warna</span>
-                </div>
-                <div class="var-tag-row" id="v1-tags" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px"></div>
-                <div style="display:flex;gap:8px">
-                  <input class="form-input" id="v1-input" placeholder="Tambah warna (Enter)" style="flex:1" onkeydown="addColorTag(event)"/>
-                  <input type="color" id="v1-color-picker" value="#1a1a1a" style="width:40px;height:40px;border:1px solid var(--border);border-radius:var(--radius-sm);cursor:pointer;padding:2px"/>
-                </div>
-              </div>
-
-              <!-- Variasi 2: Ukuran -->
-              <div class="var-section" style="border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px;margin-bottom:14px">
-                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
-                  <span style="font-size:13px;font-weight:600">Variasi 2 — Ukuran</span>
-                </div>
-                <div class="var-tag-row" id="v2-tags" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px"></div>
-                <div style="display:flex;gap:8px;flex-wrap:wrap">
-                  <button class="filter-tab" onclick="addSizePreset('S')">S</button>
-                  <button class="filter-tab" onclick="addSizePreset('M')">M</button>
-                  <button class="filter-tab" onclick="addSizePreset('L')">L</button>
-                  <button class="filter-tab" onclick="addSizePreset('XL')">XL</button>
-                  <button class="filter-tab" onclick="addSizePreset('XXL')">XXL</button>
-                  <button class="filter-tab" onclick="addSizePreset('All Size')">All Size</button>
-                  <input class="form-input" id="v2-input" placeholder="Ukuran custom (Enter)" style="flex:1;min-width:140px" onkeydown="addSizeTag(event)"/>
-                </div>
-              </div>
-
-              <!-- Tabel varian otomatis -->
-              <div id="variant-table-wrap" style="display:none">
-                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
-                  <span style="font-size:13px;font-weight:600">Daftar Varian</span>
-                  <button class="btn-edit" onclick="applyToAll()">Terapkan ke Semua</button>
-                </div>
-                <div style="display:flex;gap:8px;margin-bottom:12px;align-items:center">
-                  <input class="form-input" id="bulk-price" type="number" placeholder="Harga"/>
-                  <input class="form-input" id="bulk-stock" type="number" placeholder="Stok"/>
-                </div>
-                <div style="overflow-x:auto">
-                  <table style="width:100%;border-collapse:collapse;font-size:13px" id="variant-table">
-                    <thead>
-                      <tr style="border-bottom:2px solid var(--border);text-align:left">
-                        <th style="padding:8px 6px;color:var(--muted)">Warna</th>
-                        <th style="padding:8px 6px;color:var(--muted)">Ukuran</th>
-                        <th style="padding:8px 6px;color:var(--muted)">Foto</th>
-                        <th style="padding:8px 6px;color:var(--muted)">Harga</th>
-                        <th style="padding:8px 6px;color:var(--muted)">Stok</th>
-                      </tr>
-                    </thead>
-                    <tbody id="variant-tbody"></tbody>
-                  </table>
-                </div>
-              </div>
-            </div>
-            <div style="display:flex;gap:10px;margin-top:4px">
-              <button class="btn-primary" id="save-product-btn" onclick="saveProduct()" style="flex:1">Simpan Produk</button>
-              <button class="btn-edit" id="cancel-product-btn" onclick="closeProductForm()" style="padding:12px 24px;font-size:14px">Batal</button>
-            </div>
-          </div>
-        </div>
-
-        <!-- TAB: VOUCHER -->
-        <div class="admin-section" id="tab-vouchers">
-          <div class="admin-card">
-            <h3 class="admin-card-title">Buat Voucher</h3>
-            <div class="form-row">
-              <div class="form-group">
-                <label class="form-label">Kode</label>
-                <input class="form-input" id="v-code" placeholder="ZENOT10" style="text-transform:uppercase"/>
-              </div>
-              <div class="form-group">
-                <label class="form-label">Tipe</label>
-                <select class="form-input" id="v-type">
-                  <option value="percent">Persen (%)</option>
-                  <option value="fixed">Nominal (Rp)</option>
-                </select>
-              </div>
-            </div>
-            <div class="form-row">
-              <div class="form-group">
-                <label class="form-label">Nilai Diskon</label>
-                <input class="form-input" id="v-value" type="number" placeholder="10"/>
-              </div>
-              <div class="form-group">
-                <label class="form-label">Min. Order (Rp)</label>
-                <input class="form-input" id="v-min" type="number" placeholder="0"/>
-              </div>
-            </div>
-            <div class="form-row">
-              <div class="form-group">
-                <label class="form-label">Max. Pakai</label>
-                <input class="form-input" id="v-maxuse" type="number" placeholder="100"/>
-              </div>
-              <div class="form-group">
-                <label class="form-label">Berlaku Sampai</label>
-                <input class="form-input" id="v-expires" type="date"/>
-              </div>
-            </div>
-            <button class="btn-primary" onclick="saveVoucher()">Simpan Voucher</button>
-          </div>
-          <div class="admin-card">
-            <h3 class="admin-card-title">Daftar Voucher</h3>
-            <div id="voucher-list"></div>
-          </div>
-        </div>
-
-        <!-- TAB: ULASAN -->
-        <div class="admin-section" id="tab-reviews">
-          <div class="admin-card">
-            <h3 class="admin-card-title">Ulasan Masuk</h3>
-            <div id="all-reviews-render"></div>
-          </div>
-        </div>
-
-        <!-- TAB: PROMOSI -->
-        <div class="admin-section" id="tab-promotions">
-          <div class="admin-card">
-            <h3 class="admin-card-title">Diskon Produk</h3>
-            <p style="font-size:13px;color:var(--sec);margin-bottom:16px">Terapkan diskon % ke satu atau beberapa produk sekaligus. Harga diskon otomatis dihitung dan ditampilkan di katalog.</p>
-            <div class="form-row" style="margin-bottom:12px">
-              <div class="form-group">
-                <label class="form-label">Pilih Produk</label>
-                <select class="form-input" id="promo-product-id"><option value="">-- Semua Produk --</option></select>
-              </div>
-              <div class="form-group">
-                <label class="form-label">Diskon (%)</label>
-                <input class="form-input" id="promo-discount" type="number" min="1" max="99" placeholder="cth: 20"/>
-              </div>
-            </div>
-            <button class="btn-primary" onclick="applyProductDiscount()">Terapkan Diskon</button>
-          </div>
-          <div class="admin-card" style="margin-top:16px">
-            <h3 class="admin-card-title">Flash Sale</h3>
-            <p style="font-size:13px;color:var(--sec);margin-bottom:16px">Atur harga flash sale + durasi waktu. Otomatis badge "FLASH SALE" muncul di produk selama periode berlaku.</p>
-            <div class="form-row">
-              <div class="form-group">
-                <label class="form-label">Produk</label>
-                <select class="form-input" id="flash-product-id"><option value="">-- Pilih Produk --</option></select>
-              </div>
-              <div class="form-group">
-                <label class="form-label">Harga Flash Sale</label>
-                <input class="form-input" id="flash-price" type="number" placeholder="cth: 89000"/>
-              </div>
-            </div>
-            <div class="form-row">
-              <div class="form-group">
-                <label class="form-label">Mulai</label>
-                <input class="form-input" id="flash-start" type="datetime-local"/>
-              </div>
-              <div class="form-group">
-                <label class="form-label">Berakhir</label>
-                <input class="form-input" id="flash-end" type="datetime-local"/>
-              </div>
-            </div>
-            <button class="btn-primary" onclick="saveFlashSale()">Simpan Flash Sale</button>
-          </div>
-          <div class="admin-card" style="margin-top:16px">
-            <h3 class="admin-card-title">Promo Aktif</h3>
-            <div id="promo-list-render"><p style="font-size:13px;color:var(--muted)">Belum ada promo aktif.</p></div>
-          </div>
-        </div>
-
-        <!-- TAB: KATEGORI -->
-        <div class="admin-section" id="tab-categories">
-          <div class="admin-card">
-            <h3 class="admin-card-title">Kelola Kategori</h3>
-            <div style="display:flex;gap:10px;margin-bottom:16px">
-              <input class="form-input" id="new-category-input" placeholder="Nama kategori baru" onkeydown="if(event.key==='Enter')saveCategory()"/>
-              <button class="btn-primary" style="width:auto;padding:10px 20px" onclick="saveCategory()">Tambah</button>
-            </div>
-            <div id="categories-render"></div>
-          </div>
-        </div>
-
-      </div>
-    </div>
-  </div>
-</div>
-
 <!-- WA FLOAT -->
 <div class="wa-float" onclick="window.open('https://wa.me/GANTI_NOMOR_WA','_blank')">
   <svg viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
@@ -728,8 +432,8 @@ let cart = [];
 let voucher = null;
 let claimedCodes = JSON.parse(localStorage.getItem('zenot_claimed_vouchers') || '[]');
 let allVouchers = [];
-let adminUser = null;
 let reviewRating = 0;
+let allCategories = [];
 
 // ===================== FORMAT =====================
 const fRp = n => 'Rp ' + Number(n).toLocaleString('id-ID');
@@ -1105,6 +809,7 @@ function autoApplyBestVoucher(subtotal) {
   voucher = best;
 }
 
+
 // ===================== CHECKOUT WA =====================
 async function checkoutWA() {
   if (!cart.length) return;
@@ -1122,242 +827,15 @@ async function checkoutWA() {
   window.open(`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(msg)}`, '_blank');
 }
 
-// ===================== LOGIN =====================
-function openAdminOrLogin(e) {
-  e.preventDefault();
-  if (adminUser) { openAdmin(); }
-  else { document.getElementById('login-overlay').classList.add('open'); }
-}
-function closeLogin() { document.getElementById('login-overlay').classList.remove('open'); }
-
-async function doLogin() {
-  const email = document.getElementById('login-email').value;
-  const pass = document.getElementById('login-pass').value;
-  const err = document.getElementById('login-err');
-  err.classList.add('hidden');
-  const { data, error } = await sb.auth.signInWithPassword({email, password: pass});
-  if (error) { err.textContent=error.message; err.classList.remove('hidden'); return; }
-  adminUser = data.user;
-  closeLogin();
-  openAdmin();
-}
-
-async function doLogout() {
-  await sb.auth.signOut();
-  adminUser = null;
-  closeAdmin();
-  showToast('Berhasil logout');
-}
-
-// ===================== ADMIN =====================
-function openAdmin() {
-  document.getElementById('admin-overlay').classList.add('open');
-  document.body.style.overflow = 'hidden';
-  const email = adminUser?.email || 'admin';
-  document.getElementById('admin-email-chip').textContent = email;
-  document.getElementById('admin-avatar').textContent = email[0].toUpperCase();
-  loadAdminProducts().then(() => loadCategories());
-  loadAdminVouchers();
-  loadAdminReviews();
-}
-function closeAdmin() {
-  document.getElementById('admin-overlay').classList.remove('open');
-  document.body.style.overflow = '';
-  toggleSidebar(false);
-}
-
-function visitStore() {
-  window.open(window.location.origin + window.location.pathname, '_blank');
-}
-
-function toggleSidebar(open) {
-  document.getElementById('admin-sidebar').classList.toggle('open', open);
-  document.getElementById('admin-scrim').classList.toggle('open', open);
-}
-
-const TAB_TITLES = { products: 'Produk', vouchers: 'Voucher', reviews: 'Ulasan', promotions: 'Promosi', categories: 'Kategori' };
-function switchTab(tab, el) {
-  document.querySelectorAll('.admin-nav-item[data-tab]').forEach(t=>t.classList.remove('active'));
-  document.querySelectorAll('.admin-section').forEach(s=>s.classList.remove('active'));
-  el.classList.add('active');
-  document.getElementById(`tab-${tab}`).classList.add('active');
-  document.getElementById('admin-topbar-title').textContent = TAB_TITLES[tab] || '';
-  toggleSidebar(false);
-  if (tab === 'categories') loadAdminCategories();
-  if (tab === 'promotions') {
-    loadCategories();
-    ['promo-product-id','flash-product-id'].forEach(id => {
-      const el = document.getElementById(id);
-      if (el) el.innerHTML = `<option value="">-- ${id.includes('flash')?'Pilih':'Semua'} Produk --</option>` +
-        adminProductsData.map(p=>`<option value="${p.id}">${p.name}</option>`).join('');
-    });
-  }
-}
-
-
-// ===================== VOUCHER ADMIN =====================
-async function saveVoucher() {
-  const code = document.getElementById('v-code').value.trim().toUpperCase();
-  const discount_type = document.getElementById('v-type').value;
-  const discount_value = parseInt(document.getElementById('v-value').value)||0;
-  const min_order = parseInt(document.getElementById('v-min').value)||0;
-  const max_uses = parseInt(document.getElementById('v-maxuse').value)||1;
-  const expires_at = document.getElementById('v-expires').value||null;
-  if (!code||!discount_value) { showToast('Isi kode dan nilai diskon'); return; }
-  const { error } = await sb.from('vouchers').insert({code,discount_type,discount_value,min_order,max_uses,expires_at});
-  if (error) { showToast(error.message); return; }
-  showToast('Voucher disimpan ✓');
-  loadAdminVouchers();
-}
-
-async function loadAdminVouchers() {
-  const { data } = await sb.from('vouchers').select('*');
-  const el = document.getElementById('voucher-list');
-  if (!data||!data.length) { el.innerHTML='<p style="color:var(--muted);font-size:13px">Belum ada voucher.</p>'; return; }
-  el.innerHTML = `<table style="width:100%;border-collapse:collapse;font-size:13px">
-    <tr style="border-bottom:1px solid var(--border);text-align:left">
-      <th style="padding:8px 4px">Kode</th><th>Diskon</th><th>Pakai</th><th>Aktif</th><th></th>
-    </tr>
-    ${data.map(v=>`<tr style="border-bottom:1px solid var(--border)">
-      <td style="padding:8px 4px;font-family:'IBM Plex Mono',monospace;font-weight:500">${v.code}</td>
-      <td>${v.discount_type==='percent'?v.discount_value+'%':'Rp '+v.discount_value.toLocaleString('id-ID')}</td>
-      <td>${v.used_count}/${v.max_uses}</td>
-      <td>${v.is_active?'✓':'✗'}</td>
-      <td><button class="btn-danger" onclick="deleteVoucher('${v.id}')">Hapus</button></td>
-    </tr>`).join('')}
-  </table>`;
-}
-
-async function deleteVoucher(id) {
-  await sb.from('vouchers').delete().eq('id',id);
-  showToast('Voucher dihapus');
-  loadAdminVouchers();
-}
-
-// ===================== CATEGORIES =====================
-let allCategories = [];
-
+// ===================== CATEGORIES (filter toko) =====================
 async function loadCategories() {
   const { data } = await sb.from('categories').select('*').order('name');
   allCategories = data || [];
-  // Update filter tabs
   const tabs = document.getElementById('filter-tabs');
   if (tabs) {
     tabs.innerHTML = `<button class="filter-tab active" onclick="setFilter('all',this)">Semua</button>` +
       allCategories.map(c => `<button class="filter-tab" onclick="setFilter('${c.name}',this)">${c.name}</button>`).join('');
   }
-  // Update dropdown di form produk
-  const sel = document.getElementById('p-cat');
-  if (sel) sel.innerHTML = allCategories.map(c => `<option value="${c.name}">${c.name}</option>`).join('');
-  // Update dropdown di promosi
-  ['promo-product-id','flash-product-id'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el && adminProductsData.length) {
-      el.innerHTML = `<option value="">-- ${id.includes('flash') ? 'Pilih' : 'Semua'} Produk --</option>` +
-        adminProductsData.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
-    }
-  });
-}
-
-async function loadAdminCategories() {
-  const el = document.getElementById('categories-render');
-  if (!el) return;
-  if (!allCategories.length) { el.innerHTML = '<p style="font-size:13px;color:var(--muted)">Belum ada kategori.</p>'; return; }
-  el.innerHTML = allCategories.map(c => `
-    <div class="admin-product-item">
-      <div class="admin-product-info"><p class="admin-product-name">${c.name}</p></div>
-      <button class="btn-danger" onclick="deleteCategory('${c.id}','${c.name}')">Hapus</button>
-    </div>`).join('');
-}
-
-async function saveCategory() {
-  const input = document.getElementById('new-category-input');
-  const name = input.value.trim();
-  if (!name) return;
-  const { error } = await sb.from('categories').insert({name});
-  if (error) { showToast(error.message.includes('unique') ? 'Kategori sudah ada' : 'Gagal tambah kategori'); return; }
-  input.value = '';
-  showToast(`Kategori "${name}" ditambahkan ✓`);
-  await loadCategories();
-  loadAdminCategories();
-}
-
-async function deleteCategory(id, name) {
-  if (!confirm(`Hapus kategori "${name}"? Produk dengan kategori ini tidak terhapus.`)) return;
-  await sb.from('categories').delete().eq('id', id);
-  showToast('Kategori dihapus');
-  await loadCategories();
-  loadAdminCategories();
-}
-
-// ===================== PROMOTIONS =====================
-async function applyProductDiscount() {
-  const productId = document.getElementById('promo-product-id').value;
-  const disc = parseInt(document.getElementById('promo-discount').value);
-  if (!disc || disc < 1 || disc > 99) { showToast('Isi persen diskon (1-99)'); return; }
-
-  let variants;
-  if (productId) {
-    const { data } = await sb.from('variants').select('id,price').eq('product_id', productId);
-    variants = data;
-  } else {
-    const { data } = await sb.from('variants').select('id,price');
-    variants = data;
-  }
-  if (!variants || !variants.length) { showToast('Tidak ada varian ditemukan'); return; }
-
-  for (const v of variants) {
-    const newPrice = Math.round(v.price * (1 - disc/100));
-    const origPrice = v.price;
-    await sb.from('variants').update({price: newPrice, original_price: origPrice}).eq('id', v.id);
-  }
-  showToast(`Diskon ${disc}% berhasil diterapkan ✓`);
-  await loadProducts();
-}
-
-async function saveFlashSale() {
-  const productId = document.getElementById('flash-product-id').value;
-  const price = parseInt(document.getElementById('flash-price').value);
-  const start = document.getElementById('flash-start').value;
-  const end = document.getElementById('flash-end').value;
-  if (!productId || !price || !end) { showToast('Isi produk, harga, dan waktu berakhir'); return; }
-
-  const { data: vars } = await sb.from('variants').select('id,price').eq('product_id', productId);
-  if (!vars || !vars.length) { showToast('Produk tidak punya varian'); return; }
-
-  for (const v of vars) {
-    await sb.from('variants').update({
-      price: price,
-      original_price: v.price,
-      flash_sale_end: end
-    }).eq('id', v.id);
-  }
-  showToast('Flash Sale berhasil disimpan ✓');
-  await loadProducts();
-}
-
-// ===================== REVIEWS ADMIN =====================
-async function loadAdminReviews() {
-  const { data } = await sb.from('reviews').select('*,products(name)');
-  const el = document.getElementById('all-reviews-render');
-  if (!data||!data.length) { el.innerHTML='<p style="color:var(--muted);font-size:13px">Belum ada ulasan.</p>'; return; }
-  el.innerHTML = data.map(r=>`
-    <div class="review-item">
-      <div class="review-header">
-        <span class="review-name">${r.buyer_name} — <span style="color:var(--muted);font-size:11px">${r.products?.name||''}</span></span>
-        <div style="display:flex;gap:8px;align-items:center">
-          <span class="review-stars">${'★'.repeat(r.rating)}${'☆'.repeat(5-r.rating)}</span>
-          <button class="btn-danger" style="font-size:11px;padding:4px 8px" onclick="deleteReview('${r.id}')">Hapus</button>
-        </div>
-      </div>
-      <p class="review-comment">${r.comment||''}</p>
-    </div>`).join('');
-}
-
-async function deleteReview(id) {
-  await sb.from('reviews').delete().eq('id',id);
-  showToast('Ulasan dihapus');
-  loadAdminReviews();
 }
 
 // ===================== TOAST =====================
@@ -1369,9 +847,6 @@ function showToast(msg) {
 }
 
 // ===================== INIT =====================
-sb.auth.onAuthStateChange((event, session) => {
-  adminUser = session?.user || null;
-});
 loadProducts();
 loadCategories();
 loadVouchersForPromo().then(() => {
@@ -1381,6 +856,5 @@ loadVouchersForPromo().then(() => {
   }
 });
 </script>
-<script src="admin-products.js"></script>
 </body>
 </html>

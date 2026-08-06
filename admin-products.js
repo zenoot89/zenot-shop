@@ -252,7 +252,6 @@ async function saveProduct() {
 
   showToast(editingProductId ? 'Produk berhasil diupdate ✓' : 'Produk berhasil disimpan ✓');
   closeProductForm();
-  await loadProducts();
   loadAdminProducts();
 }
 
@@ -344,6 +343,5 @@ async function deleteProduct(id) {
   if (!confirm('Hapus produk ini?')) return;
   await sb.from('products').delete().eq('id',id);
   showToast('Produk dihapus');
-  await loadProducts();
   loadAdminProducts();
 }
