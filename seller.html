@@ -615,6 +615,7 @@
 <!-- TOAST -->
 <div class="toast" id="toast"></div>
 
+<script src="admin-products.js"></script>
 <script>
 // ===================== CONFIG =====================
 const SUPABASE_URL = 'https://xvaxwxnvjzrazxgdxsrt.supabase.co';
@@ -868,6 +869,5 @@ sb.auth.onAuthStateChange((event, session) => {
   adminUser = session?.user || null;
 });
 </script>
-<script src="admin-products.js"></script>
 </body>
 </html>
