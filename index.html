@@ -580,8 +580,120 @@ function closeSidePanel() {
 function openWishlist() {
   openSidePanel('Wishlist', `<div class="side-panel-empty">Fitur Wishlist akan segera hadir di sini.</div>`);
 }
-function openAccount() {
-  openSidePanel('Akun', `<div class="side-panel-empty">Fitur Masuk / Daftar akun akan segera hadir di sini.</div>`);
+
+// ===================== AKUN BUYER =====================
+let buyerUser = null;
+let buyerProfile = null;
+let accountTab = 'masuk';
+
+async function openAccount() {
+  if (buyerUser) renderAccountProfile();
+  else { accountTab = 'masuk'; renderAccountAuth(); }
+}
+
+function showAccountTab(tab) { accountTab = tab; renderAccountAuth(); }
+
+function renderAccountAuth() {
+  const loginHtml = `
+    <div class="acc-form">
+      <h4 style="margin-bottom:14px">Masuk</h4>
+      <input class="form-input" id="acc-login-email" type="email" placeholder="Email" style="margin-bottom:10px"/>
+      <input class="form-input" id="acc-login-pass" type="password" placeholder="Password" style="margin-bottom:10px"/>
+      <p class="hidden" id="acc-login-err" style="color:#c0392b;font-size:12px;margin-bottom:10px"></p>
+      <button class="btn-primary" onclick="doBuyerLogin()">Masuk</button>
+      <p style="text-align:center;font-size:13px;margin-top:14px;color:var(--muted)">Belum punya akun? <a href="#" onclick="showAccountTab('daftar');return false" style="color:var(--ink)">Daftar</a></p>
+    </div>`;
+  const regHtml = `
+    <div class="acc-form">
+      <h4 style="margin-bottom:14px">Daftar Akun Baru</h4>
+      <input class="form-input" id="acc-reg-name" placeholder="Nama Lengkap" style="margin-bottom:10px"/>
+      <input class="form-input" id="acc-reg-wa" placeholder="No. WhatsApp" style="margin-bottom:10px"/>
+      <textarea class="form-input" id="acc-reg-address" placeholder="Alamat" rows="2" style="margin-bottom:10px"></textarea>
+      <input class="form-input" id="acc-reg-email" type="email" placeholder="Email" style="margin-bottom:10px"/>
+      <input class="form-input" id="acc-reg-pass" type="password" placeholder="Password (min 6 karakter)" style="margin-bottom:10px"/>
+      <p class="hidden" id="acc-reg-err" style="color:#c0392b;font-size:12px;margin-bottom:10px"></p>
+      <button class="btn-primary" onclick="doBuyerRegister()">Daftar</button>
+      <p style="text-align:center;font-size:13px;margin-top:14px;color:var(--muted)">Sudah punya akun? <a href="#" onclick="showAccountTab('masuk');return false" style="color:var(--ink)">Masuk</a></p>
+    </div>`;
+  openSidePanel('Akun', accountTab === 'masuk' ? loginHtml : regHtml);
+}
+
+function renderAccountProfile() {
+  const p = buyerProfile || {};
+  const initial = (p.name || buyerUser.email || '?')[0].toUpperCase();
+  openSidePanel('Akun Saya', `
+    <div class="acc-profile">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px">
+        <div style="width:44px;height:44px;border-radius:50%;background:var(--ink);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:600;flex-shrink:0">${initial}</div>
+        <div><p style="font-weight:600">${p.name || '(belum diisi)'}</p><p style="font-size:12px;color:var(--muted)">${buyerUser.email}</p></div>
+      </div>
+      <label style="font-size:11px;color:var(--muted);text-transform:uppercase">No. WhatsApp</label>
+      <input class="form-input" id="acc-p-wa" value="${p.whatsapp || ''}" style="margin:6px 0 14px"/>
+      <label style="font-size:11px;color:var(--muted);text-transform:uppercase">Alamat</label>
+      <textarea class="form-input" id="acc-p-address" rows="3" style="margin:6px 0 14px">${p.address || ''}</textarea>
+      <button class="btn-primary" style="margin-bottom:10px" onclick="saveBuyerProfile()">Simpan Perubahan</button>
+      <button style="width:100%;padding:12px;background:none;border:1px solid var(--border);border-radius:8px;cursor:pointer;color:var(--muted)" onclick="doBuyerLogout()">Keluar</button>
+      <div style="margin-top:24px;padding-top:18px;border-top:1px solid var(--border)">
+        <p style="font-size:12px;color:var(--muted);text-transform:uppercase;margin-bottom:8px">Riwayat Pesanan</p>
+        <div class="side-panel-empty" style="padding:20px 0">Fitur ini akan segera hadir.</div>
+      </div>
+    </div>`);
+}
+
+async function doBuyerLogin() {
+  const email = document.getElementById('acc-login-email').value.trim();
+  const pass = document.getElementById('acc-login-pass').value;
+  const err = document.getElementById('acc-login-err');
+  err.classList.add('hidden');
+  const { data, error } = await sb.auth.signInWithPassword({email, password: pass});
+  if (error) { err.textContent = 'Email atau password salah'; err.classList.remove('hidden'); return; }
+  buyerUser = data.user;
+  await loadBuyerProfile();
+  renderAccountProfile();
+  showToast('Berhasil masuk ✓');
+}
+
+async function doBuyerRegister() {
+  const name = document.getElementById('acc-reg-name').value.trim();
+  const wa = document.getElementById('acc-reg-wa').value.trim();
+  const address = document.getElementById('acc-reg-address').value.trim();
+  const email = document.getElementById('acc-reg-email').value.trim();
+  const pass = document.getElementById('acc-reg-pass').value;
+  const err = document.getElementById('acc-reg-err');
+  err.classList.add('hidden');
+  if (!name || !email || !pass) { err.textContent = 'Nama, email, dan password wajib diisi'; err.classList.remove('hidden'); return; }
+  if (pass.length < 6) { err.textContent = 'Password minimal 6 karakter'; err.classList.remove('hidden'); return; }
+  const { data, error } = await sb.auth.signUp({email, password: pass});
+  if (error) { err.textContent = error.message; err.classList.remove('hidden'); return; }
+  await sb.from('customers').upsert({id: data.user.id, email, name, whatsapp: wa, address, role: 'buyer'});
+  if (data.session) {
+    buyerUser = data.user;
+    await loadBuyerProfile();
+    renderAccountProfile();
+    showToast('Akun berhasil dibuat ✓');
+  } else {
+    openSidePanel('Akun', `<div class="side-panel-empty">Akun berhasil didaftarkan. Cek email kamu untuk konfirmasi sebelum bisa masuk.</div>`);
+  }
+}
+
+async function loadBuyerProfile() {
+  const { data } = await sb.from('customers').select('*').eq('id', buyerUser.id).single();
+  buyerProfile = data || {};
+}
+
+async function saveBuyerProfile() {
+  const wa = document.getElementById('acc-p-wa').value.trim();
+  const address = document.getElementById('acc-p-address').value.trim();
+  await sb.from('customers').update({whatsapp: wa, address}).eq('id', buyerUser.id);
+  buyerProfile.whatsapp = wa; buyerProfile.address = address;
+  showToast('Profil disimpan ✓');
+}
+
+async function doBuyerLogout() {
+  await sb.auth.signOut();
+  buyerUser = null; buyerProfile = null;
+  closeSidePanel();
+  showToast('Berhasil keluar');
 }
 
 // ===================== PRODUCT MODAL =====================
@@ -932,6 +1044,12 @@ loadVouchersForPromo().then(() => {
   if (!sessionStorage.getItem('zenot_promo_seen')) {
     sessionStorage.setItem('zenot_promo_seen', '1');
     setTimeout(showVoucherPopup, 800);
+  }
+});
+sb.auth.getSession().then(async ({data}) => {
+  if (data.session) {
+    buyerUser = data.session.user;
+    await loadBuyerProfile();
   }
 });
 </script>
