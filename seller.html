@@ -536,6 +536,11 @@
             <p style="font-size:13px;color:var(--sec);margin-bottom:16px">Daftar akun buyer yang terdaftar di toko.</p>
             <div id="customers-render"><div style="font-size:13px;color:var(--muted)">Memuat...</div></div>
           </div>
+          <div class="admin-card" style="margin-top:16px">
+            <h3 class="admin-card-title">Admin Terdaftar</h3>
+            <p style="font-size:13px;color:var(--sec);margin-bottom:16px">Akun dengan akses ke Seller Center ini.</p>
+            <div id="admins-render"><div style="font-size:13px;color:var(--muted)">Memuat...</div></div>
+          </div>
         </div>
 
         <!-- TAB: PROMOSI -->
@@ -728,33 +733,39 @@ function switchTab(tab, el) {
   }
 }
 // ===================== PELANGGAN ADMIN =====================
-async function loadAdminCustomers() {
-  const el = document.getElementById('customers-render');
-  const { data, error } = await sb.from('customers').select('*').order('created_at', {ascending:false});
-  if (error) { el.innerHTML = `<p style="font-size:13px;color:#c0392b">${error.message}</p>`; return; }
-  if (!data || !data.length) { el.innerHTML = `<p style="font-size:13px;color:var(--muted)">Belum ada pelanggan terdaftar.</p>`; return; }
-  el.innerHTML = `
+function renderCustomerTable(rows, emptyMsg) {
+  if (!rows.length) return `<p style="font-size:13px;color:var(--muted)">${emptyMsg}</p>`;
+  return `
     <table style="width:100%;border-collapse:collapse;font-size:13px">
       <thead>
         <tr style="border-bottom:1px solid var(--border);text-align:left">
           <th style="padding:8px 6px;font-weight:600">Nama</th>
           <th style="padding:8px 6px;font-weight:600">Email</th>
           <th style="padding:8px 6px;font-weight:600">WhatsApp</th>
-          <th style="padding:8px 6px;font-weight:600">Role</th>
           <th style="padding:8px 6px;font-weight:600">Bergabung</th>
         </tr>
       </thead>
       <tbody>
-        ${data.map(c => `
+        ${rows.map(c => `
         <tr style="border-bottom:1px solid var(--border)">
           <td style="padding:10px 6px">${c.name || '-'}</td>
           <td style="padding:10px 6px;font-family:'IBM Plex Mono',monospace;font-size:12px">${c.email || '-'}</td>
           <td style="padding:10px 6px">${c.whatsapp || '-'}</td>
-          <td style="padding:10px 6px;text-transform:capitalize">${c.role}</td>
           <td style="padding:10px 6px;font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--muted)">${new Date(c.created_at).toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'})}</td>
         </tr>`).join('')}
       </tbody>
     </table>`;
+}
+
+async function loadAdminCustomers() {
+  const custEl = document.getElementById('customers-render');
+  const adminEl = document.getElementById('admins-render');
+  const { data, error } = await sb.from('customers').select('*').order('created_at', {ascending:false});
+  if (error) { custEl.innerHTML = `<p style="font-size:13px;color:#c0392b">${error.message}</p>`; adminEl.innerHTML = ''; return; }
+  const buyers = (data||[]).filter(c => c.role === 'buyer');
+  const admins = (data||[]).filter(c => c.role === 'admin');
+  custEl.innerHTML = renderCustomerTable(buyers, 'Belum ada pelanggan terdaftar.');
+  adminEl.innerHTML = renderCustomerTable(admins, 'Belum ada admin terdaftar.');
 }
 
 // ===================== VOUCHER ADMIN =====================
