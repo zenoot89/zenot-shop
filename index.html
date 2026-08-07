@@ -9,7 +9,7 @@
   <meta property="og:description" content="Koleksi knitwear pria premium. Pilih varian, checkout via WhatsApp."/>
   <meta property="og:type" content="website"/>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
-  <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,wght@0,300;0,400;0,600;1,400&family=Inter:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,wght@0,300;0,400;0,600;1,400&family=Space+Grotesk:wght@500;700&family=Inter:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet"/>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -25,8 +25,7 @@
     /* ===== HEADER ===== */
     header{background:var(--surface);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100}
     .header-inner{max-width:1100px;margin:0 auto;padding:0 20px;height:60px;display:flex;align-items:center;justify-content:space-between}
-    .logo{font-family:'Source Serif 4',serif;font-size:22px;font-weight:600;letter-spacing:.08em;text-decoration:none;color:var(--text)}
-    .logo em{font-weight:300;font-style:italic}
+    .logo{font-family:'Space Grotesk',sans-serif;font-size:20px;font-weight:700;letter-spacing:.14em;text-decoration:none;color:var(--text)}
     .header-right{display:flex;align-items:center;gap:12px}
     .cart-btn{position:relative;background:none;border:none;cursor:pointer;padding:8px;color:var(--text);display:flex;align-items:center;gap:6px;font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--sec)}
     .cart-btn svg{width:22px;height:22px}
@@ -331,7 +330,7 @@
     <button class="hamburger-btn" onclick="toggleDrawer(true)" aria-label="Menu">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
     </button>
-    <a href="#" class="logo">ZEN<em>ot</em></a>
+    <a href="#" class="logo">ZENOT</a>
     <div class="header-right">
       <button class="cart-btn" onclick="openCart()">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
@@ -346,7 +345,7 @@
 <div class="drawer-scrim" id="drawer-scrim" onclick="toggleDrawer(false)"></div>
 <nav class="menu-drawer" id="menu-drawer">
   <div class="drawer-header">
-    <a href="#" class="logo">ZEN<em>ot</em></a>
+    <a href="#" class="logo">ZENOT</a>
     <button class="drawer-close" onclick="toggleDrawer(false)">✕</button>
   </div>
   <div class="drawer-items">
