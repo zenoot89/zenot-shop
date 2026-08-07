@@ -47,6 +47,13 @@
     .search-wrap svg{position:absolute;left:14px;top:50%;transform:translateY(-50%);width:16px;height:16px;color:var(--muted)}
     .search-input{width:100%;padding:11px 16px 11px 40px;border:1px solid var(--border);border-radius:50px;background:var(--surface);font-family:'Inter',sans-serif;font-size:14px;outline:none;transition:border-color .2s}
     .search-input:focus{border-color:var(--sep)}
+    .icon-btn{background:none;border:none;cursor:pointer;padding:6px;display:flex;align-items:center}
+    .icon-btn svg{width:20px;height:20px;stroke:var(--ink);stroke-width:1.7}
+    .search-overlay{max-height:0;overflow:hidden;transition:max-height .25s ease;background:var(--bg);border-bottom:1px solid var(--border)}
+    .search-overlay.open{max-height:90px}
+    .search-overlay-inner{display:flex;align-items:center;gap:14px;padding:16px 20px}
+    .search-overlay-inner input{flex:1;border:none;background:none;outline:none;font-size:16px;font-family:'Inter',sans-serif}
+    .search-overlay-close{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--sec);background:none;border:none;cursor:pointer;white-space:nowrap}
     .filter-tabs{display:flex;gap:8px;flex-wrap:wrap}
     .hamburger-btn{background:none;border:none;cursor:pointer;padding:6px;display:flex;color:var(--ink)}
     .hamburger-btn svg{width:22px;height:22px}
@@ -332,11 +339,21 @@
     </button>
     <a href="#" class="logo">ZENOT</a>
     <div class="header-right">
+      <button class="icon-btn" onclick="toggleSearchOverlay()" aria-label="Cari">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+      </button>
       <button class="cart-btn" onclick="openCart()">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
         <span id="cart-label">Keranjang</span>
         <span class="cart-count hidden" id="cart-count">0</span>
       </button>
+    </div>
+  </div>
+  <div class="search-overlay" id="search-overlay">
+    <div class="search-overlay-inner">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+      <input type="text" placeholder="Cari produk..." id="search-input" oninput="filterProducts()"/>
+      <button class="search-overlay-close" onclick="toggleSearchOverlay(false)">Tutup</button>
     </div>
   </div>
 </header>
@@ -349,11 +366,15 @@
     <button class="drawer-close" onclick="toggleDrawer(false)">✕</button>
   </div>
   <div class="drawer-items">
-    <button class="drawer-item" onclick="setFilter('all');toggleDrawer(false)">Semua Produk</button>
-    <button class="drawer-item drawer-item-expand" onclick="toggleDrawerSub('cat')">
-      Kategori <span class="drawer-chevron" id="cat-chevron">⌄</span>
+    <button class="drawer-item" onclick="setFilterGender('all','all');toggleDrawer(false)">Semua Produk</button>
+    <button class="drawer-item drawer-item-expand" onclick="toggleDrawerSub('pria')">
+      Pria <span class="drawer-chevron" id="pria-chevron">⌄</span>
     </button>
-    <div class="drawer-sub" id="drawer-sub-cat"></div>
+    <div class="drawer-sub" id="drawer-sub-pria"></div>
+    <button class="drawer-item drawer-item-expand" onclick="toggleDrawerSub('wanita')">
+      Wanita <span class="drawer-chevron" id="wanita-chevron">⌄</span>
+    </button>
+    <div class="drawer-sub" id="drawer-sub-wanita"></div>
     <button class="drawer-item" onclick="openWishlist()">Wishlist</button>
     <button class="drawer-item" onclick="openAccount()">Akun</button>
   </div>
@@ -370,12 +391,7 @@
 </div>
 
 <!-- CONTROLS -->
-<div class="controls" style="padding-top:24px">
-  <div class="search-wrap">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
-    <input class="search-input" type="text" placeholder="Cari produk..." id="search-input" oninput="filterProducts()"/>
-  </div>
-</div>
+<div class="controls" style="padding-top:24px"></div>
 
 <!-- VOUCHER BAR -->
 <section class="promo-section">
@@ -482,6 +498,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 // ===================== STATE =====================
 let products = [];
 let activeFilter = 'all';
+let activeGender = 'all';
 let activeProduct = null;
 let activeVariants = [];
 let selectedVariant = null;
@@ -521,8 +538,9 @@ function renderProducts() {
   const grid = document.getElementById('product-grid');
   const filtered = products.filter(p => {
     const matchF = activeFilter === 'all' || p.category === activeFilter;
+    const matchG = activeGender === 'all' || p.gender === activeGender;
     const matchQ = p.name.toLowerCase().includes(q) || p.category.toLowerCase().includes(q);
-    return matchF && matchQ;
+    return matchF && matchG && matchQ;
   });
   if (!filtered.length) {
     grid.innerHTML = '<div class="empty-state"><p>Produk tidak ditemukan.</p></div>';
@@ -546,7 +564,7 @@ function renderProducts() {
         </button>
       </div>
       <div class="card-body">
-        <p class="card-cat">${p.category}</p>
+        <p class="card-cat">${p.gender==='wanita'?'Wanita':'Pria'} · ${p.category}</p>
         <h3 class="card-name">${p.name}</h3>
         <div class="card-price-row">
           <span class="price-final">${fRp(minPrice)}</span>
@@ -559,9 +577,10 @@ function renderProducts() {
   }).join('');
 }
 
-function setFilter(v, el) {
-  activeFilter = v;
-  document.querySelectorAll('.filter-tab, .drawer-sub-item').forEach(t=>t.classList.remove('active'));
+function setFilterGender(gender, category, el) {
+  activeGender = gender;
+  activeFilter = category;
+  document.querySelectorAll('.drawer-sub-item').forEach(t=>t.classList.remove('active'));
   if (el) el.classList.add('active');
   renderProducts();
 }
@@ -576,11 +595,19 @@ function toggleDrawerSub(key) {
   document.getElementById(`drawer-sub-${key}`).classList.toggle('open');
   document.getElementById(`${key}-chevron`).classList.toggle('open');
 }
+function toggleSearchOverlay(force) {
+  const el = document.getElementById('search-overlay');
+  const open = force !== undefined ? force : !el.classList.contains('open');
+  el.classList.toggle('open', open);
+  if (open) setTimeout(()=>document.getElementById('search-input').focus(), 150);
+}
 function renderDrawerCategories() {
-  const el = document.getElementById('drawer-sub-cat');
-  if (!el) return;
-  el.innerHTML = `<button class="drawer-sub-item active" onclick="setFilter('all',this);toggleDrawer(false)">Semua Kategori</button>` +
-    allCategories.map(c => `<button class="drawer-sub-item" onclick="setFilter('${c.name}',this);toggleDrawer(false)">${c.name}</button>`).join('');
+  ['pria','wanita'].forEach(gender => {
+    const el = document.getElementById(`drawer-sub-${gender}`);
+    if (!el) return;
+    el.innerHTML = `<button class="drawer-sub-item" onclick="setFilterGender('${gender}','all',this);toggleDrawer(false)">Semua ${gender==='pria'?'Pria':'Wanita'}</button>` +
+      allCategories.map(c => `<button class="drawer-sub-item" onclick="setFilterGender('${gender}','${c.name}',this);toggleDrawer(false)">${c.name}</button>`).join('');
+  });
 }
 
 // ===================== SIDE PANEL (Wishlist / Akun) =====================
@@ -680,7 +707,12 @@ function renderAccountAuth() {
       <h4 style="margin-bottom:14px">Daftar Akun Baru</h4>
       <input class="form-input" id="acc-reg-name" placeholder="Nama Lengkap" style="margin-bottom:10px"/>
       <input class="form-input" id="acc-reg-wa" placeholder="No. WhatsApp" style="margin-bottom:10px"/>
-      <textarea class="form-input" id="acc-reg-address" placeholder="Alamat" rows="2" style="margin-bottom:10px"></textarea>
+      <textarea class="form-input" id="acc-reg-address" placeholder="Alamat (jalan, no. rumah, RT/RW)" rows="2" style="margin-bottom:10px"></textarea>
+      <div style="display:flex;gap:10px;margin-bottom:10px">
+        <input class="form-input" id="acc-reg-city" placeholder="Kota/Kabupaten" style="flex:1"/>
+        <input class="form-input" id="acc-reg-postal" placeholder="Kode Pos" style="width:100px"/>
+      </div>
+      <input class="form-input" id="acc-reg-province" placeholder="Provinsi" style="margin-bottom:10px"/>
       <input class="form-input" id="acc-reg-email" type="email" placeholder="Email" style="margin-bottom:10px"/>
       <input class="form-input" id="acc-reg-pass" type="password" placeholder="Password (min 6 karakter)" style="margin-bottom:10px"/>
       <p class="hidden" id="acc-reg-err" style="color:#c0392b;font-size:12px;margin-bottom:10px"></p>
@@ -703,6 +735,18 @@ async function renderAccountProfile() {
       <input class="form-input" id="acc-p-wa" value="${p.whatsapp || ''}" style="margin:6px 0 14px"/>
       <label style="font-size:11px;color:var(--muted);text-transform:uppercase">Alamat</label>
       <textarea class="form-input" id="acc-p-address" rows="3" style="margin:6px 0 14px">${p.address || ''}</textarea>
+      <div style="display:flex;gap:10px;margin:0 0 14px">
+        <div style="flex:1">
+          <label style="font-size:11px;color:var(--muted);text-transform:uppercase">Kota/Kabupaten</label>
+          <input class="form-input" id="acc-p-city" value="${p.city || ''}" style="margin-top:6px"/>
+        </div>
+        <div style="width:110px">
+          <label style="font-size:11px;color:var(--muted);text-transform:uppercase">Kode Pos</label>
+          <input class="form-input" id="acc-p-postal" value="${p.postal_code || ''}" style="margin-top:6px"/>
+        </div>
+      </div>
+      <label style="font-size:11px;color:var(--muted);text-transform:uppercase">Provinsi</label>
+      <input class="form-input" id="acc-p-province" value="${p.province || ''}" style="margin:6px 0 14px"/>
       <button class="btn-primary" style="margin-bottom:10px" onclick="saveBuyerProfile()">Simpan Perubahan</button>
       <button style="width:100%;padding:12px;background:none;border:1px solid var(--border);border-radius:8px;cursor:pointer;color:var(--muted)" onclick="doBuyerLogout()">Keluar</button>
       <div style="margin-top:24px;padding-top:18px;border-top:1px solid var(--border)">
@@ -751,6 +795,9 @@ async function doBuyerRegister() {
   const name = document.getElementById('acc-reg-name').value.trim();
   const wa = document.getElementById('acc-reg-wa').value.trim();
   const address = document.getElementById('acc-reg-address').value.trim();
+  const city = document.getElementById('acc-reg-city').value.trim();
+  const province = document.getElementById('acc-reg-province').value.trim();
+  const postal_code = document.getElementById('acc-reg-postal').value.trim();
   const email = document.getElementById('acc-reg-email').value.trim();
   const pass = document.getElementById('acc-reg-pass').value;
   const err = document.getElementById('acc-reg-err');
@@ -759,7 +806,7 @@ async function doBuyerRegister() {
   if (pass.length < 6) { err.textContent = 'Password minimal 6 karakter'; err.classList.remove('hidden'); return; }
   const { data, error } = await sb.auth.signUp({email, password: pass});
   if (error) { err.textContent = error.message; err.classList.remove('hidden'); return; }
-  await sb.from('customers').upsert({id: data.user.id, email, name, whatsapp: wa, address, role: 'buyer'});
+  await sb.from('customers').upsert({id: data.user.id, email, name, whatsapp: wa, address, city, province, postal_code, role: 'buyer'});
   if (data.session) {
     buyerUser = data.user;
     await loadBuyerProfile();
@@ -780,8 +827,11 @@ async function loadBuyerProfile() {
 async function saveBuyerProfile() {
   const wa = document.getElementById('acc-p-wa').value.trim();
   const address = document.getElementById('acc-p-address').value.trim();
-  await sb.from('customers').update({whatsapp: wa, address}).eq('id', buyerUser.id);
-  buyerProfile.whatsapp = wa; buyerProfile.address = address;
+  const city = document.getElementById('acc-p-city').value.trim();
+  const province = document.getElementById('acc-p-province').value.trim();
+  const postal_code = document.getElementById('acc-p-postal').value.trim();
+  await sb.from('customers').update({whatsapp: wa, address, city, province, postal_code}).eq('id', buyerUser.id);
+  buyerProfile.whatsapp = wa; buyerProfile.address = address; buyerProfile.city = city; buyerProfile.province = province; buyerProfile.postal_code = postal_code;
   showToast('Profil disimpan ✓');
 }
 

@@ -183,6 +183,7 @@ let adminProductsData = [];
 async function saveProduct() {
   const name = document.getElementById('p-name').value.trim();
   const category = document.getElementById('p-cat').value;
+  const gender = document.getElementById('p-gender').value;
   const description = document.getElementById('p-desc').value.trim();
   if (!name) { showToast('Nama produk wajib diisi'); return; }
 
@@ -203,13 +204,13 @@ async function saveProduct() {
 
   let prod;
   if (editingProductId) {
-    const payload = {name,category,description,image_url,image_urls};
+    const payload = {name,category,gender,description,image_url,image_urls};
     const { data, error } = await sb.from('products').update(payload).eq('id',editingProductId).select().single();
     if (error) { showToast('Gagal update produk'); return; }
     prod = data;
     await sb.from('variants').delete().eq('product_id', prod.id);
   } else {
-    const { data, error } = await sb.from('products').insert({name,category,description,image_url,image_urls}).select().single();
+    const { data, error } = await sb.from('products').insert({name,category,gender,description,image_url,image_urls}).select().single();
     if (error) { showToast('Gagal simpan produk'); return; }
     prod = data;
   }
@@ -259,6 +260,7 @@ function resetProductForm() {
   document.getElementById('p-name').value='';
   document.getElementById('p-desc').value='';
   document.getElementById('p-cat').value='Cardigan';
+  document.getElementById('p-gender').value='pria';
   uploadedFiles=[];
   existingPhotoUrls=[];
   document.getElementById('upload-preview').innerHTML='';
@@ -290,6 +292,7 @@ function editProduct(id) {
   editingProductId = id;
   document.getElementById('p-name').value = p.name;
   document.getElementById('p-cat').value = p.category;
+  document.getElementById('p-gender').value = p.gender || 'pria';
   document.getElementById('p-desc').value = p.description || '';
   uploadedFiles = [];
   existingPhotoUrls = (p.image_urls && p.image_urls.length) ? [...p.image_urls] : (p.image_url ? [p.image_url] : []);
@@ -330,7 +333,7 @@ async function loadAdminProducts() {
       <div class="admin-product-img">${p.image_url?`<img src="${p.image_url}"/>`:`<div style="width:100%;height:100%;background:#f0ede8"></div>`}</div>
       <div class="admin-product-info">
         <p class="admin-product-name">${p.name}</p>
-        <p class="admin-product-meta">${p.category} · ${(p.variants||[]).length} varian · ${p.is_active?'Aktif':'Nonaktif'}</p>
+        <p class="admin-product-meta">${p.gender==='wanita'?'Wanita':'Pria'} · ${p.category} · ${(p.variants||[]).length} varian · ${p.is_active?'Aktif':'Nonaktif'}</p>
       </div>
       <div class="admin-product-actions">
         <button class="btn-edit" onclick="editProduct('${p.id}')">Edit</button>
