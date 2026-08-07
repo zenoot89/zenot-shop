@@ -532,14 +532,17 @@
         <!-- TAB: PELANGGAN -->
         <div class="admin-section" id="tab-customers">
           <div class="admin-card">
-            <h3 class="admin-card-title">Data Pelanggan</h3>
-            <p style="font-size:13px;color:var(--sec);margin-bottom:16px">Daftar akun buyer yang terdaftar di toko.</p>
-            <div id="customers-render"><div style="font-size:13px;color:var(--muted)">Memuat...</div></div>
-          </div>
-          <div class="admin-card" style="margin-top:16px">
             <h3 class="admin-card-title">Admin Terdaftar</h3>
             <p style="font-size:13px;color:var(--sec);margin-bottom:16px">Akun dengan akses ke Seller Center ini.</p>
             <div id="admins-render"><div style="font-size:13px;color:var(--muted)">Memuat...</div></div>
+          </div>
+          <div class="admin-card" style="margin-top:16px">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+              <h3 class="admin-card-title" style="margin-bottom:0">Data Pelanggan</h3>
+              <button onclick="exportCustomersCSV()" style="padding:8px 14px;font-size:12px;border:1px solid var(--border);background:#fff;border-radius:6px;cursor:pointer;font-weight:500">⭳ Export CSV</button>
+            </div>
+            <p style="font-size:13px;color:var(--sec);margin-bottom:16px">Daftar akun buyer yang terdaftar di toko.</p>
+            <div id="customers-render"><div style="font-size:13px;color:var(--muted)">Memuat...</div></div>
           </div>
         </div>
 
@@ -733,6 +736,8 @@ function switchTab(tab, el) {
   }
 }
 // ===================== PELANGGAN ADMIN =====================
+let lastBuyerRows = [];
+
 function renderCustomerTable(rows, emptyMsg) {
   if (!rows.length) return `<p style="font-size:13px;color:var(--muted)">${emptyMsg}</p>`;
   return `
@@ -764,8 +769,27 @@ async function loadAdminCustomers() {
   if (error) { custEl.innerHTML = `<p style="font-size:13px;color:#c0392b">${error.message}</p>`; adminEl.innerHTML = ''; return; }
   const buyers = (data||[]).filter(c => c.role === 'buyer');
   const admins = (data||[]).filter(c => c.role === 'admin');
+  lastBuyerRows = buyers;
   custEl.innerHTML = renderCustomerTable(buyers, 'Belum ada pelanggan terdaftar.');
   adminEl.innerHTML = renderCustomerTable(admins, 'Belum ada admin terdaftar.');
+}
+
+function exportCustomersCSV() {
+  if (!lastBuyerRows.length) { showToast('Belum ada data pelanggan untuk di-export'); return; }
+  const header = ['Nama','Email','WhatsApp','Alamat','Tanggal Bergabung'];
+  const rows = lastBuyerRows.map(c => [
+    c.name || '', c.email || '', c.whatsapp || '', (c.address || '').replace(/\n/g,' '),
+    new Date(c.created_at).toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'})
+  ]);
+  const escapeCsv = v => `"${String(v).replace(/"/g,'""')}"`;
+  const csv = [header, ...rows].map(r => r.map(escapeCsv).join(',')).join('\r\n');
+  const blob = new Blob(['\uFEFF' + csv], {type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `zenot-pelanggan-${new Date().toISOString().slice(0,10)}.csv`;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
 }
 
 // ===================== VOUCHER ADMIN =====================
