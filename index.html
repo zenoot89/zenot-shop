@@ -691,7 +691,7 @@ function renderAccountAuth() {
   openSidePanel('Akun', accountTab === 'masuk' ? loginHtml : regHtml);
 }
 
-function renderAccountProfile() {
+async function renderAccountProfile() {
   const p = buyerProfile || {};
   const initial = (p.name || buyerUser.email || '?')[0].toUpperCase();
   openSidePanel('Akun Saya', `
