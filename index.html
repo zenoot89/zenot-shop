@@ -187,22 +187,31 @@
     @media(min-width:600px){.modal{border-radius:var(--radius)}}
     .modal-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px}
     .modal-header-actions{display:flex;align-items:center;gap:6px;flex-shrink:0}
-    .modal-icon-btn{background:none;border:none;cursor:pointer;padding:4px;display:flex;color:var(--sec)}
+    .modal-icon-btn{background:none;border:none;cursor:pointer;padding:4px;display:flex;color:var(--sec);flex-shrink:0}
     .modal-icon-btn svg{width:19px;height:19px;stroke-width:1.8}
     #modal-wish-btn svg{fill:none;stroke:var(--sec);stroke-width:1.8}
     #modal-wish-btn.active svg{fill:#e0472e;stroke:#e0472e}
     .modal-title{font-family:'Source Serif 4',serif;font-size:22px;font-weight:600;line-height:1.2}
     .modal-close{background:none;border:none;cursor:pointer;color:var(--muted);padding:4px;font-size:20px}
-    .modal-img{aspect-ratio:1/1;background:#f0ede8;border-radius:var(--radius-sm);overflow:hidden;margin-bottom:20px}
-    .modal-img img{width:100%;height:100%;object-fit:cover}
+    .modal-carousel-wrap{position:relative;aspect-ratio:1/1;background:#f0ede8;border-radius:var(--radius-sm);overflow:hidden;margin-bottom:16px}
+    .modal-carousel{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;height:100%;scrollbar-width:none}
+    .modal-carousel::-webkit-scrollbar{display:none}
+    .modal-carousel-slide{flex:0 0 100%;scroll-snap-align:start;height:100%}
+    .modal-carousel-slide img{width:100%;height:100%;object-fit:cover;display:block}
+    .modal-carousel-topbar{position:absolute;top:12px;left:0;right:0;display:flex;justify-content:flex-end;gap:8px;padding:0 12px}
+    .modal-icon-btn-t{width:32px;height:32px;border-radius:50%;background:rgba(0,0,0,.35);border:none;color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px}
+    .modal-icon-btn-t svg{width:16px;height:16px;stroke:#fff;stroke-width:2}
+    .modal-carousel-dots{position:absolute;bottom:10px;left:0;right:0;display:flex;justify-content:center;gap:5px}
+    .modal-carousel-dot{width:5px;height:5px;border-radius:50%;background:rgba(255,255,255,.55)}
+    .modal-carousel-dot.active{background:#fff;width:14px;border-radius:3px}
     .modal-img-ph{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-family:'Source Serif 4',serif;font-size:13px;color:var(--muted);font-style:italic}
-    .modal-gallery{display:flex;gap:8px;margin-bottom:20px;overflow-x:auto}
-    .modal-gallery-thumb{width:56px;height:56px;border-radius:6px;overflow:hidden;flex-shrink:0;border:2px solid transparent;cursor:pointer;opacity:.65}
-    .modal-gallery-thumb.active{border-color:var(--text);opacity:1}
-    .modal-gallery-thumb img{width:100%;height:100%;object-fit:cover}
-    .modal-price-row{display:flex;align-items:baseline;gap:10px;margin-bottom:6px}
+    .modal-title-row{margin-bottom:6px}
+    .modal-title-row .modal-title{margin:0}
+    .modal-price-row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:6px}
+    .modal-price-left{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
     .modal-price-final{font-family:'IBM Plex Mono',monospace;font-size:22px;font-weight:500}
     .modal-price-orig{font-family:'IBM Plex Mono',monospace;font-size:15px;color:var(--muted);text-decoration:line-through}
+    .modal-voucher-badge{display:flex;align-items:center;gap:4px;font-size:11.5px;font-weight:600;color:#d0342c}
     .modal-disc-label{display:inline-block;background:var(--accent);color:#fff;font-family:'IBM Plex Mono',monospace;font-size:11px;padding:2px 7px;border-radius:4px;margin-bottom:16px}
     .modal-sec-label{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:10px}
     .modal-colors{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px}
@@ -500,23 +509,28 @@
 <div class="modal-overlay" id="product-modal" onclick="closeModalBg(event)">
   <div class="modal">
     <div class="modal-scroll">
-      <div class="modal-header">
-        <h2 class="modal-title" id="modal-name"></h2>
-        <div class="modal-header-actions">
-          <button class="modal-icon-btn" id="modal-share-btn" onclick="shareProduct()" aria-label="Bagikan">
+      <div class="modal-carousel-wrap" id="modal-carousel-wrap">
+        <div class="modal-carousel" id="modal-carousel"></div>
+        <div class="modal-carousel-topbar">
+          <button class="modal-icon-btn-t" onclick="shareProduct()" aria-label="Bagikan">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 10.5l6.8-3.9M8.6 13.5l6.8 3.9"/></svg>
           </button>
-          <button class="modal-icon-btn" id="modal-wish-btn" onclick="toggleWishlist(activeProduct.id, this)" aria-label="Wishlist">
-            <svg viewBox="0 0 24 24"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg>
-          </button>
-          <button class="modal-close" onclick="closeProductModal()">✕</button>
+          <button class="modal-icon-btn-t" onclick="closeProductModal()" aria-label="Tutup">✕</button>
         </div>
+        <div class="modal-carousel-dots" id="modal-carousel-dots"></div>
       </div>
-      <div class="modal-img" id="modal-img-wrap"></div>
-      <div class="modal-gallery" id="modal-gallery"></div>
+      <div class="modal-title-row">
+        <h2 class="modal-title" id="modal-name"></h2>
+      </div>
       <div class="modal-price-row">
-        <span class="modal-price-final" id="modal-price-final"></span>
-        <span class="modal-price-orig" id="modal-price-orig"></span>
+        <div class="modal-price-left">
+          <span class="modal-price-final" id="modal-price-final"></span>
+          <span class="modal-price-orig" id="modal-price-orig"></span>
+          <span class="modal-voucher-badge hidden" id="modal-voucher-badge"></span>
+        </div>
+        <button class="modal-icon-btn" id="modal-wish-btn" onclick="toggleWishlist(activeProduct.id, this)" aria-label="Wishlist">
+          <svg viewBox="0 0 24 24"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg>
+        </button>
       </div>
       <div id="modal-disc-label"></div>
       <p class="modal-sec-label">Warna</p>
@@ -1087,7 +1101,6 @@ async function openProduct(id) {
   // Trigger first color
   const firstColor = colors[0]?.[0];
   renderSizes(firstColor);
-  updateModalImage(firstColor);
   renderModalGallery();
 
   // Price
@@ -1103,28 +1116,40 @@ async function openProduct(id) {
   if (scrollEl) scrollEl.scrollTop = 0;
 }
 
+let modalCarouselImages = [];
+
 function renderModalGallery() {
-  const el = document.getElementById('modal-gallery');
-  const urls = (activeProduct.image_urls && activeProduct.image_urls.length) ? activeProduct.image_urls : (activeProduct.image_url ? [activeProduct.image_url] : []);
-  if (urls.length <= 1) { el.innerHTML = ''; return; }
-  el.innerHTML = urls.map((u,i) => `
-    <div class="modal-gallery-thumb ${i===0?'active':''}" onclick="setModalMainImage('${u}', this)">
-      <img src="${u}"/>
+  const mainUrls = (activeProduct.image_urls && activeProduct.image_urls.length) ? activeProduct.image_urls : (activeProduct.image_url ? [activeProduct.image_url] : []);
+  const variantUrls = [...new Map(activeVariants.filter(v=>v.image_url).map(v=>[v.color_name, v.image_url])).values()];
+  const seen = new Set(mainUrls);
+  const extra = variantUrls.filter(u => !seen.has(u));
+  modalCarouselImages = [...mainUrls, ...extra];
+  if (!modalCarouselImages.length) modalCarouselImages = [null]; // placeholder kosong
+
+  const track = document.getElementById('modal-carousel');
+  track.innerHTML = modalCarouselImages.map(u => `
+    <div class="modal-carousel-slide">
+      ${u ? `<img src="${u}" alt="${activeProduct.name}"/>` : `<div class="modal-img-ph"><em>${activeProduct.name}</em></div>`}
     </div>`).join('');
+
+  const dotsEl = document.getElementById('modal-carousel-dots');
+  dotsEl.innerHTML = modalCarouselImages.length > 1
+    ? modalCarouselImages.map((_,i) => `<span class="modal-carousel-dot ${i===0?'active':''}"></span>`).join('')
+    : '';
+
+  track.onscroll = () => {
+    const idx = Math.round(track.scrollLeft / track.clientWidth);
+    document.querySelectorAll('.modal-carousel-dot').forEach((d,i)=>d.classList.toggle('active', i===idx));
+  };
+  track.scrollLeft = 0;
 }
 
-function setModalMainImage(url, el) {
-  document.getElementById('modal-img-wrap').innerHTML = `<img src="${url}" alt="${activeProduct.name}"/>`;
-  document.querySelectorAll('.modal-gallery-thumb').forEach(t=>t.classList.remove('active'));
-  if (el) el.classList.add('active');
-}
-
-function updateModalImage(colorName) {
-  const variantWithPhoto = activeVariants.find(v => v.color_name === colorName && v.image_url);
-  const img = variantWithPhoto ? variantWithPhoto.image_url : activeProduct.image_url;
-  document.getElementById('modal-img-wrap').innerHTML = img
-    ? `<img src="${img}" alt="${activeProduct.name}"/>`
-    : `<div class="modal-img-ph"><em>${activeProduct.name}</em></div>`;
+function scrollCarouselToImage(url) {
+  if (!url) return;
+  const idx = modalCarouselImages.indexOf(url);
+  if (idx === -1) return;
+  const track = document.getElementById('modal-carousel');
+  track.scrollTo({ left: idx * track.clientWidth, behavior: 'smooth' });
 }
 
 function selectColor(el, colorName) {
@@ -1133,7 +1158,8 @@ function selectColor(el, colorName) {
   selectedVariant = null;
   document.getElementById('btn-add-cart').disabled = true;
   renderSizes(colorName);
-  updateModalImage(colorName);
+  const variantWithPhoto = activeVariants.find(v => v.color_name === colorName && v.image_url);
+  if (variantWithPhoto) scrollCarouselToImage(variantWithPhoto.image_url);
   const firstVar = activeVariants.find(v=>v.color_name===colorName);
   updateModalPrice(firstVar);
 }
@@ -1176,6 +1202,21 @@ function updateStickyTotal() {
   const el = document.getElementById('modal-sticky-total');
   if (!el) return;
   el.textContent = selectedVariant ? fRp(selectedVariant.price * qty) : 'Rp 0';
+  updateVoucherBadge();
+}
+
+function updateVoucherBadge() {
+  const badge = document.getElementById('modal-voucher-badge');
+  if (!badge) return;
+  if (!selectedVariant || !allVouchers.length) { badge.classList.add('hidden'); badge.innerHTML = ''; return; }
+  const amount = selectedVariant.price * qty;
+  const eligible = allVouchers.filter(v => amount >= v.min_order)
+    .sort((a,b) => (a.discount_type==='percent'?a.discount_value:0) < (b.discount_type==='percent'?b.discount_value:0) ? 1 : -1);
+  if (!eligible.length) { badge.classList.add('hidden'); badge.innerHTML = ''; return; }
+  const v = eligible[0];
+  const discText = v.discount_type === 'percent' ? `-${v.discount_value}%` : `-${fRp(v.discount_value)}`;
+  badge.innerHTML = `🎟️ Voucher ${v.code} (${discText})`;
+  badge.classList.remove('hidden');
 }
 
 function renderModalSpecs(p) {
