@@ -331,23 +331,108 @@ function editProduct(id) {
   document.getElementById('product-form-card').scrollIntoView({behavior:'smooth', block:'start'});
 }
 
+const LOW_STOCK_THRESHOLD = 5;
+let bulkSelected = new Set();
+let expandedProductId = null;
+
 async function loadAdminProducts() {
-  const { data } = await sb.from('products').select('*,variants(*)');
+  const { data } = await sb.from('products').select('*,variants(*)').order('created_at', {ascending:false});
   adminProductsData = data || [];
+  bulkSelected.clear();
+  renderAdminProductList();
+}
+
+function productLowestStock(p) {
+  const vars = p.variants || [];
+  if (!vars.length) return 0;
+  return Math.min(...vars.map(v => v.stock ?? 0));
+}
+function productTotalStock(p) {
+  return (p.variants || []).reduce((sum,v) => sum + (v.stock ?? 0), 0);
+}
+
+function renderAdminProductList() {
   const el = document.getElementById('admin-products-render');
-  if (!data||!data.length) { el.innerHTML='<p style="color:var(--muted);font-size:13px">Belum ada produk.</p>'; return; }
-  el.innerHTML = data.map(p=>`
-    <div class="admin-product-item">
+  if (!el) return;
+  if (!adminProductsData.length) { el.innerHTML='<p style="color:var(--muted);font-size:13px">Belum ada produk.</p>'; updateBulkBar(); return; }
+
+  const q = (document.getElementById('pf-search')?.value || '').trim().toLowerCase();
+  const genderF = document.getElementById('pf-gender')?.value || '';
+  const statusF = document.getElementById('pf-status')?.value || '';
+  const sortF = document.getElementById('pf-sort')?.value || 'newest';
+
+  let list = adminProductsData.filter(p => {
+    if (q && !p.name.toLowerCase().includes(q)) return false;
+    if (genderF && p.gender !== genderF) return false;
+    if (statusF === 'active' && !p.is_active) return false;
+    if (statusF === 'inactive' && p.is_active) return false;
+    if (statusF === 'lowstock' && productLowestStock(p) > LOW_STOCK_THRESHOLD) return false;
+    return true;
+  });
+
+  if (sortF === 'name') list = list.slice().sort((a,b)=>a.name.localeCompare(b.name));
+  else if (sortF === 'stock-asc') list = list.slice().sort((a,b)=>productTotalStock(a)-productTotalStock(b));
+  // 'newest' sudah urutan default dari query (created_at desc)
+
+  if (!list.length) { el.innerHTML='<p style="color:var(--muted);font-size:13px">Nggak ada produk yang cocok dengan filter.</p>'; updateBulkBar(); return; }
+
+  el.innerHTML = list.map(p => {
+    const vars = p.variants || [];
+    const lowest = productLowestStock(p);
+    const isLow = vars.length && lowest <= LOW_STOCK_THRESHOLD;
+    const isOpen = expandedProductId === p.id;
+    const breakdown = vars.map(v => `<span class="variant-breakdown-chip ${(v.stock??0)<=LOW_STOCK_THRESHOLD?'low':''}">${v.color_name} · ${v.size}: ${v.stock??0}</span>`).join('');
+    return `
+    <div class="admin-product-item" style="align-items:flex-start;flex-wrap:wrap">
+      <input type="checkbox" class="prod-check" ${bulkSelected.has(p.id)?'checked':''} onchange="toggleBulkCheck('${p.id}',this.checked)"/>
       <div class="admin-product-img">${p.image_url?`<img src="${p.image_url}"/>`:`<div style="width:100%;height:100%;background:#f0ede8"></div>`}</div>
       <div class="admin-product-info">
-        <p class="admin-product-name">${p.name}</p>
-        <p class="admin-product-meta">${p.gender==='wanita'?'Wanita':'Pria'} · ${p.category} · ${(p.variants||[]).length} varian · ${p.is_active?'Aktif':'Nonaktif'}</p>
+        <p class="admin-product-name">${p.name}${isLow?`<span class="badge-lowstock">Stok menipis</span>`:''}</p>
+        <p class="admin-product-meta">${p.gender==='wanita'?'Wanita':'Pria'} · ${p.category||'-'} · ${vars.length} varian · ${p.is_active?'Aktif':'Nonaktif'}</p>
+        ${vars.length ? `<button class="variant-toggle" onclick="toggleVariantBreakdown('${p.id}')">${isOpen?'Sembunyikan stok per varian':'Lihat stok per varian'}</button>` : ''}
+        ${isOpen ? `<div class="variant-breakdown">${breakdown}</div>` : ''}
       </div>
       <div class="admin-product-actions">
         <button class="btn-edit" onclick="editProduct('${p.id}')">Edit</button>
         <button class="btn-danger" onclick="deleteProduct('${p.id}')">Hapus</button>
       </div>
-    </div>`).join('');
+    </div>`;
+  }).join('');
+  updateBulkBar();
+}
+
+function toggleVariantBreakdown(id) {
+  expandedProductId = (expandedProductId === id) ? null : id;
+  renderAdminProductList();
+}
+
+// ---- Bulk selection ----
+function toggleBulkCheck(id, checked) {
+  if (checked) bulkSelected.add(id); else bulkSelected.delete(id);
+  updateBulkBar();
+}
+function clearBulkSelection() {
+  bulkSelected.clear();
+  renderAdminProductList();
+}
+function updateBulkBar() {
+  const bar = document.getElementById('prod-bulkbar');
+  if (!bar) return;
+  bar.classList.toggle('hidden', bulkSelected.size === 0);
+  document.getElementById('prod-bulk-count').textContent = `${bulkSelected.size} dipilih`;
+}
+async function bulkSetActive(active) {
+  if (!bulkSelected.size) return;
+  await sb.from('products').update({is_active: active}).in('id', [...bulkSelected]);
+  showToast(`${bulkSelected.size} produk di${active?'aktifkan':'nonaktifkan'} ✓`);
+  loadAdminProducts();
+}
+async function bulkDelete() {
+  if (!bulkSelected.size) return;
+  if (!confirm(`Hapus ${bulkSelected.size} produk terpilih? Tindakan ini tidak bisa dibatalkan.`)) return;
+  await sb.from('products').delete().in('id', [...bulkSelected]);
+  showToast('Produk terpilih dihapus');
+  loadAdminProducts();
 }
 
 async function deleteProduct(id) {
