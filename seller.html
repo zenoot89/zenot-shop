@@ -260,6 +260,12 @@
     .prod-status-badge.on{background:#e6f6ea;color:#1a7a3c}
     .prod-status-badge.off{background:#f0ede8;color:var(--muted)}
     .variant-row td{padding:0 14px 14px;border-bottom:1px solid var(--border)}
+
+    /* ===== DATA MASTER SUB-TABS ===== */
+    .dm-subtabs{display:flex;gap:6px;margin-bottom:14px;border-bottom:1px solid var(--border)}
+    .dm-subtab-btn{background:none;border:none;padding:10px 16px;font-size:13px;font-weight:600;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px}
+    .dm-subtab-btn.active{color:var(--text);border-bottom-color:var(--accent)}
+
     .prod-toolbar{display:flex;gap:10px;flex-wrap:wrap}
     .prod-bulkbar{display:flex;align-items:center;gap:10px;margin-top:12px;padding-top:12px;border-top:1px solid var(--border);font-size:13px;color:var(--sec)}
     .prod-check{width:17px;height:17px;flex-shrink:0;cursor:pointer;accent-color:var(--accent)}
@@ -384,7 +390,7 @@
       </div>
       <button class="admin-nav-item" data-tab="categories" onclick="switchTab('categories',this)">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
-        Kategori
+        Data Master
       </button>
       <button class="admin-nav-item" data-tab="reviews" onclick="switchTab('reviews',this)">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
@@ -445,6 +451,9 @@
                 <option value="active">Aktif</option>
                 <option value="inactive">Nonaktif</option>
                 <option value="lowstock">Stok Menipis</option>
+              </select>
+              <select class="form-input" id="pf-supplier" onchange="renderAdminProductList()" style="flex:1;min-width:130px">
+                <option value="">Semua Supplier</option>
               </select>
               <select class="form-input" id="pf-sort" onchange="renderAdminProductList()" style="flex:1;min-width:130px">
                 <option value="newest">Terbaru</option>
@@ -507,7 +516,11 @@
               </div>
               <div class="form-group">
                 <label class="form-label">Supplier <span style="text-transform:none;font-weight:400">(khusus admin, nggak tampil di toko)</span></label>
-                <input class="form-input" id="p-supplier" placeholder="cth: CV Rajut Makmur"/>
+                <select class="form-input" id="p-supplier"><option value="">-- Pilih Supplier --</option></select>
+                <div id="p-supplier-quickadd" style="display:flex;gap:6px;margin-top:6px">
+                  <input class="form-input" id="p-supplier-new" placeholder="+ Supplier baru..." style="font-size:12px;padding:7px 10px" onkeydown="if(event.key==='Enter'){event.preventDefault();quickAddSupplier();}"/>
+                  <button type="button" class="btn-edit" style="margin-right:0" onclick="quickAddSupplier()">Tambah</button>
+                </div>
               </div>
               <div class="form-group">
                 <label class="form-label">Deskripsi Produk</label>
@@ -705,9 +718,14 @@
           </div>
         </div>
 
-        <!-- TAB: KATEGORI -->
+        <!-- TAB: DATA MASTER (Kategori, Supplier, dst) -->
         <div class="admin-section" id="tab-categories">
-          <div class="admin-card">
+          <div class="dm-subtabs">
+            <button class="dm-subtab-btn active" id="dm-tab-btn-categories" onclick="switchDataMasterTab('categories')">Kategori</button>
+            <button class="dm-subtab-btn" id="dm-tab-btn-suppliers" onclick="switchDataMasterTab('suppliers')">Supplier</button>
+          </div>
+
+          <div class="admin-card" id="dm-panel-categories">
             <h3 class="admin-card-title">Kelola Kategori</h3>
             <p style="font-size:12px;color:var(--muted);margin-bottom:14px">Klik kategori di kolom kiri untuk lihat/tambah sub-kategorinya di kolom sebelah kanan. Level 3 opsional.</p>
             <div class="cat-tree">
@@ -724,6 +742,16 @@
                 <div class="cat-add-row"><input id="catnew-3" placeholder="Sub-kategori (opsional)" onkeydown="if(event.key==='Enter')addCategory(3)"/><button onclick="addCategory(3)">+</button></div>
               </div>
             </div>
+          </div>
+
+          <div class="admin-card hidden" id="dm-panel-suppliers">
+            <h3 class="admin-card-title">Kelola Supplier</h3>
+            <p style="font-size:12px;color:var(--muted);margin-bottom:14px">Supplier yang ditambah di sini otomatis jadi pilihan di form produk, filter, dan sort.</p>
+            <div style="display:flex;gap:10px;margin-bottom:16px">
+              <input class="form-input" id="new-supplier-input" placeholder="Nama supplier baru" onkeydown="if(event.key==='Enter')addSupplier()"/>
+              <button class="btn-primary" style="width:auto;padding:10px 20px" onclick="addSupplier()">Tambah</button>
+            </div>
+            <div id="suppliers-render"></div>
           </div>
         </div>
 
@@ -786,6 +814,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 // ===================== STATE =====================
 let adminUser = null;
 let allCategories = [];
+let allSuppliers = [];
 
 // ===================== TOAST =====================
 function showToast(msg) {
@@ -838,7 +867,7 @@ function showDashboard() {
   const email = adminUser?.email || 'admin';
   document.getElementById('admin-email-chip').textContent = email;
   document.getElementById('admin-avatar').textContent = email[0].toUpperCase();
-  loadAdminProducts().then(() => loadCategories());
+  loadAdminProducts().then(() => { loadCategories(); loadSuppliers(); });
   loadAdminVouchers();
   loadAdminReviews();
 }
@@ -852,7 +881,7 @@ function toggleSidebar(open) {
   document.getElementById('admin-scrim').classList.toggle('open', open);
 }
 
-const TAB_TITLES = { products: 'Produk', vouchers: 'Voucher', reviews: 'Ulasan', promotions: 'Diskon Produk', categories: 'Kategori', bundling: 'Bundling', reseller: 'Program Reseller', dropshipper: 'Program Dropshipper', customers: 'Pelanggan' };
+const TAB_TITLES = { products: 'Produk', vouchers: 'Voucher', reviews: 'Ulasan', promotions: 'Diskon Produk', categories: 'Data Master', bundling: 'Bundling', reseller: 'Program Reseller', dropshipper: 'Program Dropshipper', customers: 'Pelanggan' };
 
 function toggleNavGroup(btn) {
   btn.classList.toggle('open');
@@ -865,7 +894,7 @@ function switchTab(tab, el) {
   document.getElementById(`tab-${tab}`).classList.add('active');
   document.getElementById('admin-topbar-title').textContent = TAB_TITLES[tab] || '';
   toggleSidebar(false);
-  if (tab === 'categories') loadAdminCategories();
+  if (tab === 'categories') { loadAdminCategories(); loadAdminSuppliers(); }
   if (tab === 'customers') loadAdminCustomers();
   if (tab === 'promotions') {
     loadCategories();
@@ -1100,6 +1129,82 @@ function confirmCategoryPicker() {
   btn.classList.add('filled');
   closeCategoryPicker();
 }
+
+function supplierName(id) { const s = allSuppliers.find(x=>x.id===id); return s ? s.name : ''; }
+
+// ===================== DATA MASTER: SUB-TABS =====================
+function switchDataMasterTab(name) {
+  ['categories','suppliers'].forEach(t => {
+    document.getElementById(`dm-tab-btn-${t}`).classList.toggle('active', t===name);
+    document.getElementById(`dm-panel-${t}`).classList.toggle('hidden', t!==name);
+  });
+  if (name === 'suppliers') loadAdminSuppliers();
+}
+
+// ===================== SUPPLIERS =====================
+async function loadSuppliers() {
+  const { data } = await sb.from('suppliers').select('*').order('name');
+  allSuppliers = data || [];
+  // Dropdown di form produk
+  const sel = document.getElementById('p-supplier');
+  if (sel) {
+    const cur = sel.value;
+    sel.innerHTML = '<option value="">-- Pilih Supplier --</option>' + allSuppliers.map(s=>`<option value="${s.id}">${s.name}</option>`).join('');
+    if (cur) sel.value = cur;
+  }
+  // Filter di toolbar list produk
+  const filt = document.getElementById('pf-supplier');
+  if (filt) {
+    const cur = filt.value;
+    filt.innerHTML = '<option value="">Semua Supplier</option>' + allSuppliers.map(s=>`<option value="${s.id}">${s.name}</option>`).join('');
+    if (cur) filt.value = cur;
+  }
+}
+
+function loadAdminSuppliers() {
+  const el = document.getElementById('suppliers-render');
+  if (!el) return;
+  if (!allSuppliers.length) { el.innerHTML = '<p style="font-size:13px;color:var(--muted)">Belum ada supplier.</p>'; return; }
+  el.innerHTML = allSuppliers.map(s => `
+    <div class="admin-product-item">
+      <div class="admin-product-info"><p class="admin-product-name">${s.name}</p></div>
+      <button class="btn-danger" onclick="deleteSupplier('${s.id}','${s.name}')">Hapus</button>
+    </div>`).join('');
+}
+
+async function addSupplier() {
+  const input = document.getElementById('new-supplier-input');
+  const name = input.value.trim();
+  if (!name) return;
+  const { error } = await sb.from('suppliers').insert({name});
+  if (error) { showToast(error.message.includes('duplicate')||error.message.includes('unique') ? 'Supplier ini sudah ada' : 'Gagal tambah: ' + error.message); return; }
+  input.value = '';
+  showToast(`Supplier "${name}" ditambahkan ✓`);
+  await loadSuppliers();
+  loadAdminSuppliers();
+}
+
+async function deleteSupplier(id, name) {
+  if (!confirm(`Hapus supplier "${name}"? Produk yang pakai supplier ini nggak ikut kehapus, tapi field supplier-nya jadi kosong.`)) return;
+  await sb.from('suppliers').delete().eq('id', id);
+  showToast('Supplier dihapus');
+  await loadSuppliers();
+  loadAdminSuppliers();
+}
+
+// Tambah cepat dari dalam form produk (nggak perlu pindah ke tab Data Master)
+async function quickAddSupplier() {
+  const input = document.getElementById('p-supplier-new');
+  const name = input.value.trim();
+  if (!name) return;
+  const { data, error } = await sb.from('suppliers').insert({name}).select().single();
+  if (error) { showToast(error.message.includes('duplicate')||error.message.includes('unique') ? 'Supplier ini sudah ada' : 'Gagal tambah: ' + error.message); return; }
+  input.value = '';
+  await loadSuppliers();
+  document.getElementById('p-supplier').value = data.id;
+  showToast(`Supplier "${name}" ditambahkan & dipilih ✓`);
+}
+
 // ===================== PROMOTIONS =====================
 async function applyProductDiscount() {
   const productId = document.getElementById('promo-product-id').value;

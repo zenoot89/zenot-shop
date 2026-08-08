@@ -185,7 +185,8 @@ async function saveProduct() {
   const category_id = document.getElementById('p-cat-id').value || null;
   const category = category_id ? catName(category_id) : null; // nama leaf, buat kompatibilitas filter toko lama
   const gender = document.getElementById('p-gender').value;
-  const supplier = document.getElementById('p-supplier').value.trim() || null;
+  const supplier_id = document.getElementById('p-supplier').value || null;
+  const supplier = supplier_id ? supplierName(supplier_id) : null; // nama supplier, buat kompatibilitas legacy
   const description = document.getElementById('p-desc').value.trim();
   if (!name) { showToast('Nama produk wajib diisi'); return; }
   if (!category_id) { showToast('Kategori wajib dipilih'); return; }
@@ -207,13 +208,13 @@ async function saveProduct() {
 
   let prod;
   if (editingProductId) {
-    const payload = {name,category,category_id,gender,supplier,description,image_url,image_urls};
+    const payload = {name,category,category_id,gender,supplier,supplier_id,description,image_url,image_urls};
     const { data, error } = await sb.from('products').update(payload).eq('id',editingProductId).select().single();
     if (error) { console.error('Update produk gagal:', error); showToast('Gagal update: ' + error.message); return; }
     prod = data;
     await sb.from('variants').delete().eq('product_id', prod.id);
   } else {
-    const { data, error } = await sb.from('products').insert({name,category,category_id,gender,supplier,description,image_url,image_urls}).select().single();
+    const { data, error } = await sb.from('products').insert({name,category,category_id,gender,supplier,supplier_id,description,image_url,image_urls}).select().single();
     if (error) { console.error('Insert produk gagal:', error); showToast('Gagal simpan: ' + error.message); return; }
     prod = data;
   }
@@ -263,6 +264,7 @@ function resetProductForm() {
   document.getElementById('p-name').value='';
   document.getElementById('p-desc').value='';
   document.getElementById('p-supplier').value='';
+  document.getElementById('p-supplier-new').value='';
   document.getElementById('p-cat-id').value='';
   const catBtn = document.getElementById('p-cat-btn');
   catBtn.textContent = 'Pilih kategori';
@@ -298,7 +300,7 @@ function editProduct(id) {
   if (!p) return;
   editingProductId = id;
   document.getElementById('p-name').value = p.name;
-  document.getElementById('p-supplier').value = p.supplier || '';
+  document.getElementById('p-supplier').value = p.supplier_id || '';
   document.getElementById('p-cat-id').value = p.category_id || '';
   const catBtn = document.getElementById('p-cat-btn');
   if (p.category_id) { catBtn.textContent = categoryBreadcrumb(p.category_id); catBtn.classList.add('filled'); }
@@ -386,6 +388,7 @@ function renderAdminProductList() {
   const q = (document.getElementById('pf-search')?.value || '').trim().toLowerCase();
   const genderF = document.getElementById('pf-gender')?.value || '';
   const statusF = document.getElementById('pf-status')?.value || '';
+  const supplierF = document.getElementById('pf-supplier')?.value || '';
   const sortF = document.getElementById('pf-sort')?.value || 'newest';
 
   let list = adminProductsData.filter(p => {
@@ -394,6 +397,7 @@ function renderAdminProductList() {
     if (statusF === 'active' && !p.is_active) return false;
     if (statusF === 'inactive' && p.is_active) return false;
     if (statusF === 'lowstock' && productLowestStock(p) > LOW_STOCK_THRESHOLD) return false;
+    if (supplierF && p.supplier_id !== supplierF) return false;
     return true;
   });
 
@@ -401,7 +405,7 @@ function renderAdminProductList() {
   else if (sortF === 'stock-asc') list = list.slice().sort((a,b)=>productTotalStock(a)-productTotalStock(b));
   else if (sortF === 'stock-desc') list = list.slice().sort((a,b)=>productTotalStock(b)-productTotalStock(a));
   else if (sortF === 'sold-desc') list = list.slice().sort((a,b)=>(productSalesMap[b.id]||0)-(productSalesMap[a.id]||0));
-  else if (sortF === 'supplier') list = list.slice().sort((a,b)=>(a.supplier||'').localeCompare(b.supplier||''));
+  else if (sortF === 'supplier') list = list.slice().sort((a,b)=>supplierName(a.supplier_id).localeCompare(supplierName(b.supplier_id)));
   // 'newest' sudah urutan default dari query (created_at desc)
 
   if (!list.length) { el.innerHTML='<tr><td colspan="9" style="color:var(--muted);font-size:13px;padding:20px">Nggak ada produk yang cocok dengan filter.</td></tr>'; updateBulkBar(); return; }
@@ -433,7 +437,7 @@ function renderAdminProductList() {
       <td>${hasDiscount?`<span class="prod-price-old">${jualStr}</span>`:''}<span class="prod-price-net">${netStr}</span></td>
       <td class="prod-stock-num">${productTotalStock(p)}</td>
       <td class="prod-sold-num">${sold}</td>
-      <td>${p.supplier||'-'}</td>
+      <td>${p.supplier_id ? supplierName(p.supplier_id) : (p.supplier || '-')}</td>
       <td><span class="prod-status-badge ${p.is_active?'on':'off'}">${p.is_active?'Aktif':'Nonaktif'}</span></td>
       <td>
         <button class="btn-edit" onclick="editProduct('${p.id}')">Edit</button>
