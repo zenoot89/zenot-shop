@@ -185,6 +185,7 @@ async function saveProduct() {
   const category_id = document.getElementById('p-cat-id').value || null;
   const category = category_id ? catName(category_id) : null; // nama leaf, buat kompatibilitas filter toko lama
   const gender = document.getElementById('p-gender').value;
+  const supplier = document.getElementById('p-supplier').value.trim() || null;
   const description = document.getElementById('p-desc').value.trim();
   if (!name) { showToast('Nama produk wajib diisi'); return; }
   if (!category_id) { showToast('Kategori wajib dipilih'); return; }
@@ -206,13 +207,13 @@ async function saveProduct() {
 
   let prod;
   if (editingProductId) {
-    const payload = {name,category,category_id,gender,description,image_url,image_urls};
+    const payload = {name,category,category_id,gender,supplier,description,image_url,image_urls};
     const { data, error } = await sb.from('products').update(payload).eq('id',editingProductId).select().single();
     if (error) { console.error('Update produk gagal:', error); showToast('Gagal update: ' + error.message); return; }
     prod = data;
     await sb.from('variants').delete().eq('product_id', prod.id);
   } else {
-    const { data, error } = await sb.from('products').insert({name,category,category_id,gender,description,image_url,image_urls}).select().single();
+    const { data, error } = await sb.from('products').insert({name,category,category_id,gender,supplier,description,image_url,image_urls}).select().single();
     if (error) { console.error('Insert produk gagal:', error); showToast('Gagal simpan: ' + error.message); return; }
     prod = data;
   }
@@ -261,6 +262,7 @@ async function saveProduct() {
 function resetProductForm() {
   document.getElementById('p-name').value='';
   document.getElementById('p-desc').value='';
+  document.getElementById('p-supplier').value='';
   document.getElementById('p-cat-id').value='';
   const catBtn = document.getElementById('p-cat-btn');
   catBtn.textContent = 'Pilih kategori';
@@ -296,6 +298,7 @@ function editProduct(id) {
   if (!p) return;
   editingProductId = id;
   document.getElementById('p-name').value = p.name;
+  document.getElementById('p-supplier').value = p.supplier || '';
   document.getElementById('p-cat-id').value = p.category_id || '';
   const catBtn = document.getElementById('p-cat-btn');
   if (p.category_id) { catBtn.textContent = categoryBreadcrumb(p.category_id); catBtn.classList.add('filled'); }
@@ -334,10 +337,33 @@ function editProduct(id) {
 const LOW_STOCK_THRESHOLD = 5;
 let bulkSelected = new Set();
 let expandedProductId = null;
+let productSalesMap = {};
+
+function fRp(n) { return 'Rp' + Math.round(n).toLocaleString('id-ID'); }
+function priceRangeStr(vars, field) {
+  const vals = vars.map(v => v[field]).filter(v => v !== null && v !== undefined);
+  if (!vals.length) return null;
+  const min = Math.min(...vals), max = Math.max(...vals);
+  return min === max ? fRp(min) : `${fRp(min)}–${fRp(max)}`;
+}
+
+async function loadProductSales() {
+  const { data } = await sb.from('orders').select('items');
+  productSalesMap = {};
+  (data || []).forEach(o => {
+    (o.items || []).forEach(it => {
+      if (!it.productId) return;
+      productSalesMap[it.productId] = (productSalesMap[it.productId] || 0) + (it.qty || 0);
+    });
+  });
+}
 
 async function loadAdminProducts() {
-  const { data } = await sb.from('products').select('*,variants(*)').order('created_at', {ascending:false});
-  adminProductsData = data || [];
+  const [prodRes] = await Promise.all([
+    sb.from('products').select('*,variants(*)').order('created_at', {ascending:false}),
+    loadProductSales()
+  ]);
+  adminProductsData = prodRes.data || [];
   bulkSelected.clear();
   renderAdminProductList();
 }
@@ -382,13 +408,21 @@ function renderAdminProductList() {
     const isLow = vars.length && lowest <= LOW_STOCK_THRESHOLD;
     const isOpen = expandedProductId === p.id;
     const breakdown = vars.map(v => `<span class="variant-breakdown-chip ${(v.stock??0)<=LOW_STOCK_THRESHOLD?'low':''}">${v.color_name} · ${v.size}: ${v.stock??0}</span>`).join('');
+    const hasDiscount = vars.some(v => v.original_price != null);
+    const netStr = priceRangeStr(vars, 'price');
+    const jualStr = hasDiscount ? priceRangeStr(vars, 'original_price') : null;
+    const priceLine = netStr ? (hasDiscount
+      ? `<span style="text-decoration:line-through;color:var(--muted)">${jualStr}</span> → <span style="color:#2a7a2a;font-weight:600">${netStr}</span>`
+      : `<span>${netStr}</span>`) : '';
+    const sold = productSalesMap[p.id] || 0;
     return `
     <div class="admin-product-item" style="align-items:flex-start;flex-wrap:wrap">
       <input type="checkbox" class="prod-check" ${bulkSelected.has(p.id)?'checked':''} onchange="toggleBulkCheck('${p.id}',this.checked)"/>
       <div class="admin-product-img">${p.image_url?`<img src="${p.image_url}"/>`:`<div style="width:100%;height:100%;background:#f0ede8"></div>`}</div>
       <div class="admin-product-info">
         <p class="admin-product-name">${p.name}${isLow?`<span class="badge-lowstock">Stok menipis</span>`:''}</p>
-        <p class="admin-product-meta">${p.gender==='wanita'?'Wanita':'Pria'} · ${p.category||'-'} · ${vars.length} varian · ${p.is_active?'Aktif':'Nonaktif'}</p>
+        <p class="admin-product-meta">${p.gender==='wanita'?'Wanita':'Pria'} · ${p.category||'-'} · ${vars.length} varian · ${p.is_active?'Aktif':'Nonaktif'}${p.supplier?` · Supplier: ${p.supplier}`:''}</p>
+        <p class="admin-product-meta" style="font-family:'IBM Plex Mono',monospace;margin-top:4px">${priceLine}${priceLine?' · ':''}Stok: ${productTotalStock(p)} · Terjual: ${sold}</p>
         ${vars.length ? `<button class="variant-toggle" onclick="toggleVariantBreakdown('${p.id}')">${isOpen?'Sembunyikan stok per varian':'Lihat stok per varian'}</button>` : ''}
         ${isOpen ? `<div class="variant-breakdown">${breakdown}</div>` : ''}
       </div>
