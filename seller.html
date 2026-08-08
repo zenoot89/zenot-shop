@@ -243,6 +243,33 @@
     .var-tag-dot{width:12px;height:12px;border-radius:50%;flex-shrink:0}
     .var-tag-remove{background:none;border:none;cursor:pointer;color:var(--muted);font-size:14px;line-height:1;padding:0 0 0 2px}
     .btn-add-variant{background:none;border:1px dashed var(--border);border-radius:var(--radius-sm);padding:8px;width:100%;font-size:13px;color:var(--sec);cursor:pointer;margin-top:8px}
+
+    /* ===== CATEGORY TREE (3 kolom) ===== */
+    .cat-tree{display:flex;border:1px solid var(--border);border-radius:var(--radius-sm);overflow:hidden}
+    .cat-col{flex:1;min-width:0;border-right:1px solid var(--border);display:flex;flex-direction:column;max-height:380px}
+    .cat-col:last-child{border-right:none}
+    .cat-col-list{flex:1;overflow-y:auto}
+    .cat-item{display:flex;align-items:center;justify-content:space-between;gap:6px;padding:10px 12px;font-size:13px;cursor:pointer;border-bottom:1px solid var(--border)}
+    .cat-item:hover{background:var(--bg)}
+    .cat-item.active{background:var(--bg);color:var(--accent);font-weight:600}
+    .cat-item-name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .cat-item-del{background:none;border:none;color:var(--muted);cursor:pointer;font-size:13px;padding:2px 4px;flex-shrink:0;line-height:1}
+    .cat-item-del:hover{color:#c0392b}
+    .cat-item-arrow{color:var(--muted);font-size:12px;flex-shrink:0}
+    .cat-add-row{display:flex;gap:6px;padding:8px;border-top:1px solid var(--border);background:var(--bg)}
+    .cat-add-row input{flex:1;border:1px solid var(--border);border-radius:6px;padding:7px 9px;font-size:12px;outline:none;font-family:'Inter',sans-serif;min-width:0}
+    .cat-add-row button{background:var(--accent);color:#fff;border:none;border-radius:6px;width:28px;flex-shrink:0;font-size:16px;cursor:pointer}
+    .cat-empty-hint{padding:14px 12px;font-size:12px;color:var(--muted);font-style:italic}
+
+    /* ===== CATEGORY PICKER (dipakai di form produk) ===== */
+    .catpick-btn{width:100%;text-align:left;padding:10px 14px;border:1px solid var(--border);border-radius:var(--radius-sm);background:#fff;font-size:14px;cursor:pointer;color:var(--muted)}
+    .catpick-btn.filled{color:var(--text)}
+    .catpick-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:300;align-items:center;justify-content:center;padding:16px}
+    .catpick-overlay.open{display:flex}
+    .catpick-modal{background:var(--surface);border-radius:var(--radius);padding:22px;width:100%;max-width:760px;max-height:88vh;display:flex;flex-direction:column}
+    .catpick-modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+    .catpick-breadcrumb{font-size:12px;color:var(--muted);margin-bottom:14px;min-height:16px}
+    .catpick-modal-footer{display:flex;justify-content:flex-end;gap:10px;margin-top:16px}
     .btn-add-variant:hover{border-color:var(--sep)}
     .upload-area{border:2px dashed var(--border);border-radius:var(--radius-sm);padding:24px;text-align:center;cursor:pointer;transition:border-color .2s}
     .upload-area:hover{border-color:var(--sep)}
@@ -403,7 +430,8 @@
               </div>
               <div class="form-group">
                 <label class="form-label">Kategori</label>
-                <select class="form-input" id="p-cat"><option>Memuat...</option></select>
+                <button type="button" class="catpick-btn" id="p-cat-btn" onclick="openCategoryPicker()">Pilih kategori</button>
+                <input type="hidden" id="p-cat-id" value=""/>
               </div>
               <div class="form-group">
                 <label class="form-label">Deskripsi Produk</label>
@@ -605,11 +633,21 @@
         <div class="admin-section" id="tab-categories">
           <div class="admin-card">
             <h3 class="admin-card-title">Kelola Kategori</h3>
-            <div style="display:flex;gap:10px;margin-bottom:16px">
-              <input class="form-input" id="new-category-input" placeholder="Nama kategori baru" onkeydown="if(event.key==='Enter')saveCategory()"/>
-              <button class="btn-primary" style="width:auto;padding:10px 20px" onclick="saveCategory()">Tambah</button>
+            <p style="font-size:12px;color:var(--muted);margin-bottom:14px">Klik kategori di kolom kiri untuk lihat/tambah sub-kategorinya di kolom sebelah kanan. Level 3 opsional.</p>
+            <div class="cat-tree">
+              <div class="cat-col">
+                <div class="cat-col-list" id="catcol-1"></div>
+                <div class="cat-add-row"><input id="catnew-1" placeholder="Kategori utama (Pria/Wanita)" onkeydown="if(event.key==='Enter')addCategory(1)"/><button onclick="addCategory(1)">+</button></div>
+              </div>
+              <div class="cat-col">
+                <div class="cat-col-list" id="catcol-2"></div>
+                <div class="cat-add-row"><input id="catnew-2" placeholder="Sub-kategori" onkeydown="if(event.key==='Enter')addCategory(2)"/><button onclick="addCategory(2)">+</button></div>
+              </div>
+              <div class="cat-col">
+                <div class="cat-col-list" id="catcol-3"></div>
+                <div class="cat-add-row"><input id="catnew-3" placeholder="Sub-kategori (opsional)" onkeydown="if(event.key==='Enter')addCategory(3)"/><button onclick="addCategory(3)">+</button></div>
+              </div>
             </div>
-            <div id="categories-render"></div>
           </div>
         </div>
 
@@ -635,6 +673,26 @@
         </div>
 
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- CATEGORY PICKER MODAL (dipakai di form produk) -->
+<div class="catpick-overlay" id="catpick-overlay">
+  <div class="catpick-modal">
+    <div class="catpick-modal-header">
+      <h3 class="admin-card-title" style="margin-bottom:0">Pilih Kategori</h3>
+      <button class="admin-close" style="font-size:18px" onclick="closeCategoryPicker()">✕</button>
+    </div>
+    <div class="catpick-breadcrumb" id="catpick-breadcrumb">Belum ada yang dipilih</div>
+    <div class="cat-tree">
+      <div class="cat-col"><div class="cat-col-list" id="catpickcol-1"></div></div>
+      <div class="cat-col"><div class="cat-col-list" id="catpickcol-2"></div></div>
+      <div class="cat-col"><div class="cat-col-list" id="catpickcol-3"></div></div>
+    </div>
+    <div class="catpick-modal-footer">
+      <button class="btn-edit" onclick="closeCategoryPicker()">Batal</button>
+      <button class="btn-primary" style="width:auto;padding:10px 20px" onclick="confirmCategoryPicker()">Pilih</button>
     </div>
   </div>
 </div>
@@ -842,19 +900,23 @@ async function deleteVoucher(id) {
   showToast('Voucher dihapus');
   loadAdminVouchers();
 }
-// ===================== CATEGORIES =====================
+// ===================== CATEGORIES (hierarki 3 level) =====================
+// allCategories: flat list {id, name, parent_id}
+function catChildren(parentId) {
+  return allCategories.filter(c => (c.parent_id || null) === (parentId || null)).sort((a,b)=>a.name.localeCompare(b.name));
+}
+function catName(id) { const c = allCategories.find(x=>x.id===id); return c ? c.name : ''; }
+function catPath(id) { // [rootId, ..., leafId]
+  const path = [];
+  let cur = allCategories.find(x=>x.id===id);
+  while (cur) { path.unshift(cur.id); cur = cur.parent_id ? allCategories.find(x=>x.id===cur.parent_id) : null; }
+  return path;
+}
+function categoryBreadcrumb(id) { return catPath(id).map(catName).join(' > '); }
+
 async function loadCategories() {
   const { data } = await sb.from('categories').select('*').order('name');
   allCategories = data || [];
-  // Update filter tabs
-  const tabs = document.getElementById('filter-tabs');
-  if (tabs) {
-    tabs.innerHTML = `<button class="filter-tab active" onclick="setFilter('all',this)">Semua</button>` +
-      allCategories.map(c => `<button class="filter-tab" onclick="setFilter('${c.name}',this)">${c.name}</button>`).join('');
-  }
-  // Update dropdown di form produk
-  const sel = document.getElementById('p-cat');
-  if (sel) sel.innerHTML = allCategories.map(c => `<option value="${c.name}">${c.name}</option>`).join('');
   // Update dropdown di promosi
   ['promo-product-id','flash-product-id'].forEach(id => {
     const el = document.getElementById(id);
@@ -865,35 +927,102 @@ async function loadCategories() {
   });
 }
 
-async function loadAdminCategories() {
-  const el = document.getElementById('categories-render');
+// ---- Kelola Kategori tab (admin: tambah/hapus) ----
+let catTreeSelected = [null, null]; // [id terpilih di kolom 1, id terpilih di kolom 2]
+
+function loadAdminCategories() {
+  catTreeSelected = [null, null];
+  renderCatCol(1); renderCatCol(2); renderCatCol(3);
+}
+
+function renderCatCol(colNum) {
+  const el = document.getElementById(`catcol-${colNum}`);
   if (!el) return;
-  if (!allCategories.length) { el.innerHTML = '<p style="font-size:13px;color:var(--muted)">Belum ada kategori.</p>'; return; }
-  el.innerHTML = allCategories.map(c => `
-    <div class="admin-product-item">
-      <div class="admin-product-info"><p class="admin-product-name">${c.name}</p></div>
-      <button class="btn-danger" onclick="deleteCategory('${c.id}','${c.name}')">Hapus</button>
+  const parentId = colNum === 1 ? null : catTreeSelected[colNum-2];
+  if (colNum > 1 && !parentId) { el.innerHTML = `<div class="cat-empty-hint">Pilih kategori di kolom ${colNum-1} dulu</div>`; return; }
+  const items = catChildren(parentId);
+  if (!items.length) { el.innerHTML = `<div class="cat-empty-hint">Belum ada kategori</div>`; return; }
+  el.innerHTML = items.map(c => `
+    <div class="cat-item ${catTreeSelected[colNum-1]===c.id?'active':''}" onclick="selectCatCol(${colNum},'${c.id}')">
+      <span class="cat-item-name">${c.name}</span>
+      <button class="cat-item-del" onclick="event.stopPropagation();deleteCategory('${c.id}','${c.name}')" title="Hapus">✕</button>
     </div>`).join('');
 }
 
-async function saveCategory() {
-  const input = document.getElementById('new-category-input');
+function selectCatCol(colNum, id) {
+  if (colNum === 3) return; // level 3 leaf, tidak ada kolom lanjutan
+  catTreeSelected[colNum-1] = id;
+  if (colNum === 1) catTreeSelected[1] = null;
+  renderCatCol(colNum); renderCatCol(colNum+1); renderCatCol(colNum+2);
+}
+
+async function addCategory(level) {
+  const input = document.getElementById(`catnew-${level}`);
   const name = input.value.trim();
   if (!name) return;
-  const { error } = await sb.from('categories').insert({name});
-  if (error) { showToast(error.message.includes('unique') ? 'Kategori sudah ada' : 'Gagal tambah kategori'); return; }
+  let parent_id = null;
+  if (level === 2) { parent_id = catTreeSelected[0]; if (!parent_id) { showToast('Pilih kategori level 1 dulu'); return; } }
+  if (level === 3) { parent_id = catTreeSelected[1]; if (!parent_id) { showToast('Pilih kategori level 2 dulu'); return; } }
+  const { error } = await sb.from('categories').insert({name, parent_id});
+  if (error) { showToast(error.message.includes('duplicate') || error.message.includes('unique') ? 'Kategori ini sudah ada' : 'Gagal tambah: ' + error.message); return; }
   input.value = '';
-  showToast(`Kategori "${name}" ditambahkan ✓`);
+  showToast(`"${name}" ditambahkan ✓`);
   await loadCategories();
-  loadAdminCategories();
+  renderCatCol(level);
 }
 
 async function deleteCategory(id, name) {
-  if (!confirm(`Hapus kategori "${name}"? Produk dengan kategori ini tidak terhapus.`)) return;
+  if (!confirm(`Hapus kategori "${name}"? Sub-kategori di bawahnya ikut terhapus. Produk dengan kategori ini tidak terhapus.`)) return;
   await sb.from('categories').delete().eq('id', id);
   showToast('Kategori dihapus');
+  if (catTreeSelected[0] === id) catTreeSelected = [null, null];
+  else if (catTreeSelected[1] === id) catTreeSelected[1] = null;
   await loadCategories();
-  loadAdminCategories();
+  renderCatCol(1); renderCatCol(2); renderCatCol(3);
+}
+
+// ---- Category picker modal (dipakai saat pilih kategori produk) ----
+let pickSelected = [null, null, null];
+
+function openCategoryPicker() {
+  const currentId = document.getElementById('p-cat-id').value;
+  pickSelected = currentId ? [...catPath(currentId), null, null].slice(0,3) : [null, null, null];
+  renderPickCol(1); renderPickCol(2); renderPickCol(3);
+  updatePickBreadcrumb();
+  document.getElementById('catpick-overlay').classList.add('open');
+}
+function closeCategoryPicker() {
+  document.getElementById('catpick-overlay').classList.remove('open');
+}
+function renderPickCol(colNum) {
+  const el = document.getElementById(`catpickcol-${colNum}`);
+  const parentId = colNum === 1 ? null : pickSelected[colNum-2];
+  if (colNum > 1 && !parentId) { el.innerHTML = `<div class="cat-empty-hint">Pilih kolom ${colNum-1} dulu</div>`; return; }
+  const items = catChildren(parentId);
+  if (!items.length) { el.innerHTML = colNum===1 ? `<div class="cat-empty-hint">Belum ada kategori. Tambah dulu di tab Kategori.</div>` : `<div class="cat-empty-hint">Tidak ada sub-kategori</div>`; return; }
+  el.innerHTML = items.map(c => `
+    <div class="cat-item ${pickSelected[colNum-1]===c.id?'active':''}" onclick="selectPickCol(${colNum},'${c.id}')">
+      <span class="cat-item-name">${c.name}</span>
+    </div>`).join('');
+}
+function selectPickCol(colNum, id) {
+  pickSelected[colNum-1] = id;
+  for (let i = colNum; i < 3; i++) pickSelected[i] = null;
+  renderPickCol(1); renderPickCol(2); renderPickCol(3);
+  updatePickBreadcrumb();
+}
+function updatePickBreadcrumb() {
+  const ids = pickSelected.filter(Boolean);
+  document.getElementById('catpick-breadcrumb').textContent = ids.length ? ids.map(catName).join(' > ') : 'Belum ada yang dipilih';
+}
+function confirmCategoryPicker() {
+  const finalId = pickSelected[2] || pickSelected[1] || pickSelected[0];
+  if (!finalId) { showToast('Pilih kategori dulu'); return; }
+  document.getElementById('p-cat-id').value = finalId;
+  const btn = document.getElementById('p-cat-btn');
+  btn.textContent = categoryBreadcrumb(finalId);
+  btn.classList.add('filled');
+  closeCategoryPicker();
 }
 // ===================== PROMOTIONS =====================
 async function applyProductDiscount() {

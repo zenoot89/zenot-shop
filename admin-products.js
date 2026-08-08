@@ -182,10 +182,12 @@ let adminProductsData = [];
 
 async function saveProduct() {
   const name = document.getElementById('p-name').value.trim();
-  const category = document.getElementById('p-cat').value;
+  const category_id = document.getElementById('p-cat-id').value || null;
+  const category = category_id ? catName(category_id) : null; // nama leaf, buat kompatibilitas filter toko lama
   const gender = document.getElementById('p-gender').value;
   const description = document.getElementById('p-desc').value.trim();
   if (!name) { showToast('Nama produk wajib diisi'); return; }
+  if (!category_id) { showToast('Kategori wajib dipilih'); return; }
 
   // Upload foto produk (dikompres dulu, gabung sama foto lama yang dipertahankan)
   let newUrls = [];
@@ -204,13 +206,13 @@ async function saveProduct() {
 
   let prod;
   if (editingProductId) {
-    const payload = {name,category,gender,description,image_url,image_urls};
+    const payload = {name,category,category_id,gender,description,image_url,image_urls};
     const { data, error } = await sb.from('products').update(payload).eq('id',editingProductId).select().single();
-    if (error) { showToast('Gagal update produk'); return; }
+    if (error) { console.error('Update produk gagal:', error); showToast('Gagal update: ' + error.message); return; }
     prod = data;
     await sb.from('variants').delete().eq('product_id', prod.id);
   } else {
-    const { data, error } = await sb.from('products').insert({name,category,gender,description,image_url,image_urls}).select().single();
+    const { data, error } = await sb.from('products').insert({name,category,category_id,gender,description,image_url,image_urls}).select().single();
     if (error) { console.error('Insert produk gagal:', error); showToast('Gagal simpan: ' + error.message); return; }
     prod = data;
   }
@@ -259,7 +261,10 @@ async function saveProduct() {
 function resetProductForm() {
   document.getElementById('p-name').value='';
   document.getElementById('p-desc').value='';
-  document.getElementById('p-cat').value='Cardigan';
+  document.getElementById('p-cat-id').value='';
+  const catBtn = document.getElementById('p-cat-btn');
+  catBtn.textContent = 'Pilih kategori';
+  catBtn.classList.remove('filled');
   document.getElementById('p-gender').value='pria';
   uploadedFiles=[];
   existingPhotoUrls=[];
@@ -291,7 +296,10 @@ function editProduct(id) {
   if (!p) return;
   editingProductId = id;
   document.getElementById('p-name').value = p.name;
-  document.getElementById('p-cat').value = p.category;
+  document.getElementById('p-cat-id').value = p.category_id || '';
+  const catBtn = document.getElementById('p-cat-btn');
+  if (p.category_id) { catBtn.textContent = categoryBreadcrumb(p.category_id); catBtn.classList.add('filled'); }
+  else { catBtn.textContent = p.category || 'Pilih kategori'; catBtn.classList.remove('filled'); }
   document.getElementById('p-gender').value = p.gender || 'pria';
   document.getElementById('p-desc').value = p.description || '';
   uploadedFiles = [];
