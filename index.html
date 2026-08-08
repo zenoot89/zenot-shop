@@ -177,13 +177,17 @@
     .spec-row{display:flex;justify-content:space-between;gap:16px;padding:10px 0;border-bottom:1px solid var(--border);font-size:13px}
     .spec-row-label{color:var(--muted);flex-shrink:0}
     .spec-row-val{text-align:right;color:var(--text)}
-    .modal-related{margin-top:24px;padding-top:20px;border-top:1px solid var(--border)}
-    .modal-related h4{font-size:13px;letter-spacing:.04em;margin-bottom:12px}
+    .modal-related{margin-top:36px;padding-top:24px;border-top:1px solid var(--border)}
+    .modal-related-header{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:6px 14px;margin-bottom:14px}
+    .modal-related-header h4{font-size:13px;letter-spacing:.04em;margin:0}
+    .modal-related-all-link{font-size:12px;color:var(--sec);text-decoration:underline;white-space:nowrap;cursor:pointer;background:none;border:none;padding:0}
     .modal-related-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
     .modal-related-card{cursor:pointer}
     .modal-related-card img{width:100%;aspect-ratio:1/1;object-fit:cover;border-radius:var(--radius-sm);background:#f0ede8;margin-bottom:6px}
     .modal-related-card p{font-size:12px;line-height:1.4}
     .modal-related-card .rel-price{font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600;margin-top:2px}
+    .modal-related-colors{display:flex;gap:4px;margin-bottom:6px}
+    .modal-related-colors .color-dot{width:12px;height:12px}
     @media(min-width:600px){.modal{border-radius:var(--radius)}}
     .modal-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px}
     .modal-header-actions{display:flex;align-items:center;gap:6px;flex-shrink:0}
@@ -1250,19 +1254,30 @@ function renderModalRelated(p) {
   related = related.slice(0, 4);
   if (!related.length) { el.innerHTML = ''; return; }
   el.innerHTML = `
-    <h4>Mungkin kamu suka</h4>
+    <div class="modal-related-header">
+      <h4>Mungkin kamu suka</h4>
+      <button class="modal-related-all-link" onclick="goToAllProducts()">Semua Koleksi</button>
+    </div>
     <div class="modal-related-grid">
       ${related.map(r => {
         const vars = r.variants || [];
         const minPrice = vars.length ? Math.min(...vars.map(v=>v.price)) : 0;
+        const relColors = [...new Map(vars.map(v=>[v.color_name,v.color_hex])).entries()];
         return `
         <div class="modal-related-card" onclick="openProduct('${r.id}')">
           ${r.image_url ? `<img src="${r.image_url}" alt="${r.name}"/>` : `<div style="width:100%;aspect-ratio:1/1;background:#f0ede8;border-radius:var(--radius-sm);margin-bottom:6px"></div>`}
+          <div class="modal-related-colors">${relColors.map(([n,h])=>`<span class="color-dot" style="background:${h}" title="${n}"></span>`).join('')}</div>
           <p>${r.name}</p>
           <p class="rel-price">${fRp(minPrice)}</p>
         </div>`;
       }).join('')}
     </div>`;
+}
+
+function goToAllProducts() {
+  closeProductModal();
+  setFilterGender('all','all');
+  setTimeout(() => document.getElementById('product-grid').scrollIntoView({behavior:'smooth', block:'start'}), 150);
 }
 
 function changeQty(d) {
@@ -1298,9 +1313,9 @@ async function loadReviews(productId) {
   const reviews = data || [];
   const avg = reviews.length ? (reviews.reduce((s,r)=>s+r.rating,0)/reviews.length).toFixed(1) : null;
   
-  document.getElementById('modal-reviews').innerHTML = `
+  document.getElementById('modal-reviews').innerHTML = reviews.length ? `
     <h4 style="font-family:'Source Serif 4',serif;font-size:16px;font-weight:600;margin-bottom:12px">
-      Ulasan ${avg ? `⭐ ${avg} (${reviews.length})` : '(belum ada)'}
+      Ulasan ⭐ ${avg} (${reviews.length})
     </h4>
     ${reviews.map(r=>`
       <div class="review-item">
@@ -1310,7 +1325,7 @@ async function loadReviews(productId) {
         </div>
         <p class="review-comment">${r.comment||''}</p>
       </div>`).join('')}
-    ${!reviews.length ? '<p style="font-size:13px;color:var(--muted);font-style:italic">Belum ada ulasan untuk produk ini.</p>' : ''}`;
+  ` : '';
   reviewRating = 0;
 }
 
