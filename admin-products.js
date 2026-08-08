@@ -188,6 +188,11 @@ async function saveProduct() {
   const supplier_id = document.getElementById('p-supplier').value || null;
   const supplier = supplier_id ? supplierName(supplier_id) : null; // nama supplier, buat kompatibilitas legacy
   const description = document.getElementById('p-desc').value.trim();
+  const bahan = document.getElementById('p-bahan').value.trim() || null;
+  const tipe_cutting = document.getElementById('p-tipe-cutting').value.trim() || null;
+  const ketebalan = document.getElementById('p-ketebalan').value.trim() || null;
+  const motif = document.getElementById('p-motif').value.trim() || null;
+  const dipakai_model = document.getElementById('p-dipakai-model').value.trim() || null;
   if (!name) { showToast('Nama produk wajib diisi'); return; }
   if (!category_id) { showToast('Kategori wajib dipilih'); return; }
 
@@ -208,13 +213,13 @@ async function saveProduct() {
 
   let prod;
   if (editingProductId) {
-    const payload = {name,category,category_id,gender,supplier,supplier_id,description,image_url,image_urls};
+    const payload = {name,category,category_id,gender,supplier,supplier_id,description,bahan,tipe_cutting,ketebalan,motif,dipakai_model,image_url,image_urls};
     const { data, error } = await sb.from('products').update(payload).eq('id',editingProductId).select().single();
     if (error) { console.error('Update produk gagal:', error); showToast('Gagal update: ' + error.message); return; }
     prod = data;
     await sb.from('variants').delete().eq('product_id', prod.id);
   } else {
-    const { data, error } = await sb.from('products').insert({name,category,category_id,gender,supplier,supplier_id,description,image_url,image_urls}).select().single();
+    const { data, error } = await sb.from('products').insert({name,category,category_id,gender,supplier,supplier_id,description,bahan,tipe_cutting,ketebalan,motif,dipakai_model,image_url,image_urls}).select().single();
     if (error) { console.error('Insert produk gagal:', error); showToast('Gagal simpan: ' + error.message); return; }
     prod = data;
   }
@@ -263,6 +268,11 @@ async function saveProduct() {
 function resetProductForm() {
   document.getElementById('p-name').value='';
   document.getElementById('p-desc').value='';
+  document.getElementById('p-bahan').value='';
+  document.getElementById('p-tipe-cutting').value='';
+  document.getElementById('p-ketebalan').value='';
+  document.getElementById('p-motif').value='';
+  document.getElementById('p-dipakai-model').value='';
   document.getElementById('p-supplier').value='';
   document.getElementById('p-cat-id').value='';
   const catBtn = document.getElementById('p-cat-btn');
@@ -306,6 +316,11 @@ function editProduct(id) {
   else { catBtn.textContent = p.category || 'Pilih kategori'; catBtn.classList.remove('filled'); }
   document.getElementById('p-gender').value = p.gender || 'pria';
   document.getElementById('p-desc').value = p.description || '';
+  document.getElementById('p-bahan').value = p.bahan || '';
+  document.getElementById('p-tipe-cutting').value = p.tipe_cutting || '';
+  document.getElementById('p-ketebalan').value = p.ketebalan || '';
+  document.getElementById('p-motif').value = p.motif || '';
+  document.getElementById('p-dipakai-model').value = p.dipakai_model || '';
   uploadedFiles = [];
   existingPhotoUrls = (p.image_urls && p.image_urls.length) ? [...p.image_urls] : (p.image_url ? [p.image_url] : []);
   renderUploadPreview();

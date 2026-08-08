@@ -49,6 +49,9 @@
     .search-input:focus{border-color:var(--sep)}
     .site-footer{background:var(--ink);color:rgba(244,239,228,.75);margin-top:60px;padding:48px 24px 28px}
     .footer-inner{max-width:1100px;margin:0 auto}
+    .footer-tagline{margin-bottom:36px;padding-bottom:32px;border-bottom:1px solid rgba(244,239,228,.14)}
+    .footer-brand-name{font-family:'Space Grotesk',sans-serif;font-weight:700;letter-spacing:.08em;color:#fff;font-size:20px;margin-bottom:8px}
+    .footer-tagline-text{font-family:'Source Serif 4',serif;font-size:18px;color:rgba(244,239,228,.85);max-width:480px;line-height:1.5}
     .footer-cols{display:flex;flex-wrap:wrap;gap:40px;margin-bottom:36px}
     .footer-col h4{color:#fff;font-size:12px;letter-spacing:.1em;text-transform:uppercase;margin-bottom:14px;font-weight:600}
     .footer-col a{display:block;color:rgba(244,239,228,.68);font-size:13px;text-decoration:none;margin-bottom:10px}
@@ -163,7 +166,24 @@
     .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;align-items:flex-end;justify-content:center}
     .modal-overlay.open{display:flex}
     @media(min-width:600px){.modal-overlay{align-items:center}}
-    .modal{background:var(--surface);border-radius:var(--radius) var(--radius) 0 0;padding:28px 24px 32px;width:100%;max-width:480px;max-height:90vh;overflow-y:auto}
+    .modal{background:var(--surface);border-radius:var(--radius) var(--radius) 0 0;width:100%;max-width:480px;max-height:90vh;display:flex;flex-direction:column;overflow:hidden}
+    .modal-scroll{overflow-y:auto;padding:28px 24px 24px;flex:1;min-height:0}
+    .modal-sticky-bar{border-top:1px solid var(--border);background:var(--surface);padding:14px 24px;padding-bottom:calc(14px + env(safe-area-inset-bottom));flex-shrink:0}
+    .modal-sticky-total{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px;font-size:13px;color:var(--sec)}
+    .modal-sticky-total-val{font-family:'IBM Plex Mono',monospace;font-size:18px;font-weight:600;color:var(--text)}
+    .trust-badges{margin:18px 0;display:flex;flex-direction:column;gap:6px}
+    .trust-badge{font-size:12.5px;color:var(--sec)}
+    .modal-specs{margin-top:6px}
+    .spec-row{display:flex;justify-content:space-between;gap:16px;padding:10px 0;border-bottom:1px solid var(--border);font-size:13px}
+    .spec-row-label{color:var(--muted);flex-shrink:0}
+    .spec-row-val{text-align:right;color:var(--text)}
+    .modal-related{margin-top:24px;padding-top:20px;border-top:1px solid var(--border)}
+    .modal-related h4{font-size:13px;letter-spacing:.04em;margin-bottom:12px}
+    .modal-related-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .modal-related-card{cursor:pointer}
+    .modal-related-card img{width:100%;aspect-ratio:1/1;object-fit:cover;border-radius:var(--radius-sm);background:#f0ede8;margin-bottom:6px}
+    .modal-related-card p{font-size:12px;line-height:1.4}
+    .modal-related-card .rel-price{font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600;margin-top:2px}
     @media(min-width:600px){.modal{border-radius:var(--radius)}}
     .modal-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px}
     .modal-title{font-family:'Source Serif 4',serif;font-size:22px;font-weight:600;line-height:1.2}
@@ -434,18 +454,31 @@
 <!-- FOOTER -->
 <footer class="site-footer">
   <div class="footer-inner">
+    <div class="footer-tagline">
+      <p class="footer-brand-name">ZENOT</p>
+      <p class="footer-tagline-text">Rajutan yang tetap nyaman dipakai seharian, dari kerja sampai jalan-jalan.</p>
+    </div>
     <div class="footer-cols">
       <div class="footer-col">
-        <h4>Terhubung</h4>
-        <a href="#" target="_blank" rel="noopener">Instagram</a>
-        <a href="#" target="_blank" rel="noopener">TikTok</a>
-        <a href="#" id="footer-wa-link" target="_blank" rel="noopener">WhatsApp</a>
+        <h4>Belanja</h4>
+        <div id="footer-belanja-links"><a href="#" onclick="return false">Memuat...</a></div>
+      </div>
+      <div class="footer-col">
+        <h4>Koleksi</h4>
+        <a href="#" onclick="return false">Rekomendasi Terbaru</a>
+        <a href="#" onclick="return false">Lagi Diskon</a>
       </div>
       <div class="footer-col">
         <h4>Bantuan</h4>
         <a href="#" onclick="return false">Panduan Ukuran</a>
         <a href="#" onclick="return false">Pengiriman</a>
         <a href="#" onclick="return false">Lacak Pesanan</a>
+      </div>
+      <div class="footer-col">
+        <h4>Terhubung</h4>
+        <a href="#" target="_blank" rel="noopener">Instagram</a>
+        <a href="#" target="_blank" rel="noopener">TikTok</a>
+        <a href="#" id="footer-wa-link" target="_blank" rel="noopener">WhatsApp</a>
       </div>
     </div>
     <div class="footer-bottom">
@@ -461,33 +494,50 @@
 <!-- PRODUCT MODAL -->
 <div class="modal-overlay" id="product-modal" onclick="closeModalBg(event)">
   <div class="modal">
-    <div class="modal-header">
-      <h2 class="modal-title" id="modal-name"></h2>
-      <button class="modal-close" onclick="closeProductModal()">✕</button>
+    <div class="modal-scroll">
+      <div class="modal-header">
+        <h2 class="modal-title" id="modal-name"></h2>
+        <button class="modal-close" onclick="closeProductModal()">✕</button>
+      </div>
+      <div class="modal-img" id="modal-img-wrap"></div>
+      <div class="modal-gallery" id="modal-gallery"></div>
+      <div class="modal-price-row">
+        <span class="modal-price-final" id="modal-price-final"></span>
+        <span class="modal-price-orig" id="modal-price-orig"></span>
+      </div>
+      <div id="modal-disc-label"></div>
+      <p class="modal-sec-label">Warna</p>
+      <div class="modal-colors" id="modal-colors"></div>
+      <p class="modal-sec-label">Ukuran</p>
+      <div class="modal-sizes" id="modal-sizes"></div>
+      <p class="modal-sec-label" id="stok-label">Stok: -</p>
+      <p class="modal-sec-label" style="margin-top:16px">Jumlah</p>
+      <div class="modal-qty">
+        <button class="qty-btn" onclick="changeQty(-1)">−</button>
+        <span class="qty-val" id="qty-val">1</span>
+        <button class="qty-btn" onclick="changeQty(1)">+</button>
+      </div>
+      <!-- Trust badges -->
+      <div class="trust-badges">
+        <div class="trust-badge">✓ Rajutan kualitas premium, dicek sebelum dikirim</div>
+        <div class="trust-badge">✓ Pengiriman ke seluruh Indonesia</div>
+      </div>
+      <!-- Spesifikasi terstruktur -->
+      <div id="modal-specs"></div>
+      <!-- Deskripsi Produk -->
+      <div id="modal-description" style="margin-top:20px;padding-top:20px;border-top:1px solid var(--border)"></div>
+      <!-- Reviews -->
+      <div class="modal-reviews" id="modal-reviews"></div>
+      <!-- Related products -->
+      <div id="modal-related"></div>
     </div>
-    <div class="modal-img" id="modal-img-wrap"></div>
-    <div class="modal-gallery" id="modal-gallery"></div>
-    <div class="modal-price-row">
-      <span class="modal-price-final" id="modal-price-final"></span>
-      <span class="modal-price-orig" id="modal-price-orig"></span>
+    <div class="modal-sticky-bar">
+      <div class="modal-sticky-total">
+        <span class="modal-sticky-total-label">Total</span>
+        <span class="modal-sticky-total-val" id="modal-sticky-total">Rp 0</span>
+      </div>
+      <button class="btn-add-cart" id="btn-add-cart" onclick="addToCart()" disabled>Tambah ke Keranjang</button>
     </div>
-    <div id="modal-disc-label"></div>
-    <p class="modal-sec-label">Warna</p>
-    <div class="modal-colors" id="modal-colors"></div>
-    <p class="modal-sec-label">Ukuran</p>
-    <div class="modal-sizes" id="modal-sizes"></div>
-    <p class="modal-sec-label" id="stok-label">Stok: -</p>
-    <p class="modal-sec-label" style="margin-top:16px">Jumlah</p>
-    <div class="modal-qty">
-      <button class="qty-btn" onclick="changeQty(-1)">−</button>
-      <span class="qty-val" id="qty-val">1</span>
-      <button class="qty-btn" onclick="changeQty(1)">+</button>
-    </div>
-    <button class="btn-add-cart" id="btn-add-cart" onclick="addToCart()" disabled>Tambah ke Keranjang</button>
-    <!-- Deskripsi Produk -->
-    <div id="modal-description" style="margin-top:20px;padding-top:20px;border-top:1px solid var(--border)"></div>
-    <!-- Reviews -->
-    <div class="modal-reviews" id="modal-reviews"></div>
   </div>
 </div>
 
@@ -693,13 +743,32 @@ function toggleSearchOverlay(force) {
   el.classList.toggle('open', open);
   if (open) setTimeout(()=>document.getElementById('search-input').focus(), 150);
 }
+function categoryLeavesForGender(gender) {
+  const top = allCategories.find(c => !c.parent_id && c.name.toLowerCase() === gender);
+  if (!top) return [];
+  const level2 = allCategories.filter(c => c.parent_id === top.id);
+  const level2Ids = new Set(level2.map(c=>c.id));
+  const level3 = allCategories.filter(c => level2Ids.has(c.parent_id));
+  const seen = new Set();
+  return [...level2, ...level3].filter(c => { if (seen.has(c.name)) return false; seen.add(c.name); return true; });
+}
 function renderDrawerCategories() {
   ['pria','wanita'].forEach(gender => {
     const el = document.getElementById(`drawer-sub-${gender}`);
     if (!el) return;
+    const leaves = categoryLeavesForGender(gender);
     el.innerHTML = `<button class="drawer-sub-item" onclick="setFilterGender('${gender}','all',this);toggleDrawer(false)">Semua ${gender==='pria'?'Pria':'Wanita'}</button>` +
-      allCategories.map(c => `<button class="drawer-sub-item" onclick="setFilterGender('${gender}','${c.name}',this);toggleDrawer(false)">${c.name}</button>`).join('');
+      leaves.map(c => `<button class="drawer-sub-item" onclick="setFilterGender('${gender}','${c.name}',this);toggleDrawer(false)">${c.name}</button>`).join('');
   });
+  const belanjaEl = document.getElementById('footer-belanja-links');
+  if (belanjaEl) {
+    const allLeaves = [...categoryLeavesForGender('pria'), ...categoryLeavesForGender('wanita')];
+    const seen = new Set();
+    const uniqueLeaves = allLeaves.filter(c => { if (seen.has(c.name)) return false; seen.add(c.name); return true; });
+    belanjaEl.innerHTML = uniqueLeaves.length
+      ? uniqueLeaves.map(c => `<a href="#" onclick="event.preventDefault();setFilterGender('all','${c.name}');document.getElementById('product-grid').scrollIntoView({behavior:'smooth'})">${c.name}</a>`).join('')
+      : `<a href="#" onclick="return false">Semua Produk</a>`;
+  }
 }
 
 // ===================== SIDE PANEL (Wishlist / Akun) =====================
@@ -977,6 +1046,9 @@ async function openProduct(id) {
   document.getElementById('qty-val').textContent = 1;
   document.getElementById('btn-add-cart').disabled = true;
   document.getElementById('stok-label').textContent = 'Stok: pilih varian dulu';
+  updateStickyTotal();
+  renderModalSpecs(activeProduct);
+  renderModalRelated(activeProduct);
 
   // Deskripsi
   const descEl = document.getElementById('modal-description');
@@ -1010,6 +1082,8 @@ async function openProduct(id) {
 
   document.getElementById('product-modal').classList.add('open');
   document.body.style.overflow = 'hidden';
+  const scrollEl = document.querySelector('.modal-scroll');
+  if (scrollEl) scrollEl.scrollTop = 0;
 }
 
 function renderModalGallery() {
@@ -1078,12 +1152,59 @@ function updateModalPrice(v) {
     origEl.textContent = '';
     discEl.innerHTML = '';
   }
+  updateStickyTotal();
+}
+
+function updateStickyTotal() {
+  const el = document.getElementById('modal-sticky-total');
+  if (!el) return;
+  el.textContent = selectedVariant ? fRp(selectedVariant.price * qty) : 'Rp 0';
+}
+
+function renderModalSpecs(p) {
+  const el = document.getElementById('modal-specs');
+  if (!el) return;
+  const rows = [
+    ['Bahan', p.bahan],
+    ['Tipe Cutting', p.tipe_cutting],
+    ['Ketebalan', p.ketebalan],
+    ['Motif', p.motif],
+    ['Dipakai Model', p.dipakai_model],
+  ].filter(([,v]) => v && v.trim());
+  if (!rows.length) { el.innerHTML = ''; return; }
+  el.innerHTML = `
+    <p style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:20px 0 4px">Detail</p>
+    ${rows.map(([label,val]) => `<div class="spec-row"><span class="spec-row-label">${label}</span><span class="spec-row-val">${val}</span></div>`).join('')}`;
+}
+
+function renderModalRelated(p) {
+  const el = document.getElementById('modal-related');
+  if (!el) return;
+  let related = products.filter(x => x.id !== p.id && x.gender === p.gender && x.category === p.category);
+  if (related.length < 4) related = related.concat(products.filter(x => x.id !== p.id && x.gender === p.gender && !related.includes(x)));
+  related = related.slice(0, 4);
+  if (!related.length) { el.innerHTML = ''; return; }
+  el.innerHTML = `
+    <h4>Mungkin kamu suka</h4>
+    <div class="modal-related-grid">
+      ${related.map(r => {
+        const vars = r.variants || [];
+        const minPrice = vars.length ? Math.min(...vars.map(v=>v.price)) : 0;
+        return `
+        <div class="modal-related-card" onclick="openProduct('${r.id}')">
+          ${r.image_url ? `<img src="${r.image_url}" alt="${r.name}"/>` : `<div style="width:100%;aspect-ratio:1/1;background:#f0ede8;border-radius:var(--radius-sm);margin-bottom:6px"></div>`}
+          <p>${r.name}</p>
+          <p class="rel-price">${fRp(minPrice)}</p>
+        </div>`;
+      }).join('')}
+    </div>`;
 }
 
 function changeQty(d) {
   const max = selectedVariant ? selectedVariant.stock : 99;
   qty = Math.max(1, Math.min(max, qty + d));
   document.getElementById('qty-val').textContent = qty;
+  updateStickyTotal();
 }
 
 function closeModalBg(e) { if(e.target===document.getElementById('product-modal')) closeProductModal(); }

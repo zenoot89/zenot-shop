@@ -231,6 +231,7 @@
     .form-row-2col{display:flex;gap:16px;align-items:stretch}
     .form-col-left{flex:1;min-width:0;display:flex;flex-direction:column;gap:16px}
     .form-col-right{flex:1;min-width:0;display:flex}
+    .spec-fields-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
     .btn-primary{padding:12px 24px;background:var(--accent);color:#fff;border:none;border-radius:var(--radius-sm);font-size:14px;font-weight:500;cursor:pointer;width:100%}
     .btn-danger{padding:8px 16px;background:#c0392b;color:#fff;border:none;border-radius:var(--radius-sm);font-size:12px;cursor:pointer}
     .btn-edit{padding:8px 16px;background:#f0ede8;color:var(--text);border:none;border-radius:var(--radius-sm);font-size:12px;cursor:pointer;margin-right:6px}
@@ -528,6 +529,16 @@
                   <label class="form-label">Deskripsi Produk</label>
                   <textarea class="form-input" id="p-desc" placeholder="Jelaskan produkmu: bahan, ukuran, keunggulan, cara pakai, dll." style="resize:vertical;height:calc(100% - 26px);min-height:220px;line-height:1.6"></textarea>
                 </div>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Spesifikasi Produk <span style="text-transform:none;font-weight:400">(opsional, tampil terstruktur di halaman produk)</span></label>
+              <div class="spec-fields-grid">
+                <input class="form-input" id="p-bahan" placeholder="Bahan (cth: Acrylic)"/>
+                <input class="form-input" id="p-tipe-cutting" placeholder="Tipe Cutting (cth: Regular fit)"/>
+                <input class="form-input" id="p-ketebalan" placeholder="Ketebalan (cth: Sedang)"/>
+                <input class="form-input" id="p-motif" placeholder="Motif (cth: Polos)"/>
+                <input class="form-input" id="p-dipakai-model" placeholder="Dipakai Model (cth: Ukuran L, Tinggi 170)"/>
               </div>
             </div>
             <div class="form-group">
