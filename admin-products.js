@@ -338,6 +338,7 @@ const LOW_STOCK_THRESHOLD = 5;
 let bulkSelected = new Set();
 let expandedProductId = null;
 let productSalesMap = {};
+let lastRenderedIds = [];
 
 function fRp(n) { return 'Rp' + Math.round(n).toLocaleString('id-ID'); }
 function priceRangeStr(vars, field) {
@@ -380,7 +381,7 @@ function productTotalStock(p) {
 function renderAdminProductList() {
   const el = document.getElementById('admin-products-render');
   if (!el) return;
-  if (!adminProductsData.length) { el.innerHTML='<p style="color:var(--muted);font-size:13px">Belum ada produk.</p>'; updateBulkBar(); return; }
+  if (!adminProductsData.length) { el.innerHTML='<tr><td colspan="9" style="color:var(--muted);font-size:13px;padding:20px">Belum ada produk.</td></tr>'; updateBulkBar(); return; }
 
   const q = (document.getElementById('pf-search')?.value || '').trim().toLowerCase();
   const genderF = document.getElementById('pf-gender')?.value || '';
@@ -398,9 +399,12 @@ function renderAdminProductList() {
 
   if (sortF === 'name') list = list.slice().sort((a,b)=>a.name.localeCompare(b.name));
   else if (sortF === 'stock-asc') list = list.slice().sort((a,b)=>productTotalStock(a)-productTotalStock(b));
+  else if (sortF === 'stock-desc') list = list.slice().sort((a,b)=>productTotalStock(b)-productTotalStock(a));
+  else if (sortF === 'sold-desc') list = list.slice().sort((a,b)=>(productSalesMap[b.id]||0)-(productSalesMap[a.id]||0));
+  else if (sortF === 'supplier') list = list.slice().sort((a,b)=>(a.supplier||'').localeCompare(b.supplier||''));
   // 'newest' sudah urutan default dari query (created_at desc)
 
-  if (!list.length) { el.innerHTML='<p style="color:var(--muted);font-size:13px">Nggak ada produk yang cocok dengan filter.</p>'; updateBulkBar(); return; }
+  if (!list.length) { el.innerHTML='<tr><td colspan="9" style="color:var(--muted);font-size:13px;padding:20px">Nggak ada produk yang cocok dengan filter.</td></tr>'; updateBulkBar(); return; }
 
   el.innerHTML = list.map(p => {
     const vars = p.variants || [];
@@ -409,30 +413,44 @@ function renderAdminProductList() {
     const isOpen = expandedProductId === p.id;
     const breakdown = vars.map(v => `<span class="variant-breakdown-chip ${(v.stock??0)<=LOW_STOCK_THRESHOLD?'low':''}">${v.color_name} · ${v.size}: ${v.stock??0}</span>`).join('');
     const hasDiscount = vars.some(v => v.original_price != null);
-    const netStr = priceRangeStr(vars, 'price');
+    const netStr = priceRangeStr(vars, 'price') || '-';
     const jualStr = hasDiscount ? priceRangeStr(vars, 'original_price') : null;
-    const priceLine = netStr ? (hasDiscount
-      ? `<span style="text-decoration:line-through;color:var(--muted)">${jualStr}</span> → <span style="color:#2a7a2a;font-weight:600">${netStr}</span>`
-      : `<span>${netStr}</span>`) : '';
     const sold = productSalesMap[p.id] || 0;
-    return `
-    <div class="admin-product-item" style="align-items:flex-start;flex-wrap:wrap">
-      <input type="checkbox" class="prod-check" ${bulkSelected.has(p.id)?'checked':''} onchange="toggleBulkCheck('${p.id}',this.checked)"/>
-      <div class="admin-product-img">${p.image_url?`<img src="${p.image_url}"/>`:`<div style="width:100%;height:100%;background:#f0ede8"></div>`}</div>
-      <div class="admin-product-info">
-        <p class="admin-product-name">${p.name}${isLow?`<span class="badge-lowstock">Stok menipis</span>`:''}</p>
-        <p class="admin-product-meta">${p.gender==='wanita'?'Wanita':'Pria'} · ${p.category||'-'} · ${vars.length} varian · ${p.is_active?'Aktif':'Nonaktif'}${p.supplier?` · Supplier: ${p.supplier}`:''}</p>
-        <p class="admin-product-meta" style="font-family:'IBM Plex Mono',monospace;margin-top:4px">${priceLine}${priceLine?' · ':''}Stok: ${productTotalStock(p)} · Terjual: ${sold}</p>
-        ${vars.length ? `<button class="variant-toggle" onclick="toggleVariantBreakdown('${p.id}')">${isOpen?'Sembunyikan stok per varian':'Lihat stok per varian'}</button>` : ''}
-        ${isOpen ? `<div class="variant-breakdown">${breakdown}</div>` : ''}
-      </div>
-      <div class="admin-product-actions">
+    const row = `
+    <tr>
+      <td><input type="checkbox" class="prod-check" ${bulkSelected.has(p.id)?'checked':''} onchange="toggleBulkCheck('${p.id}',this.checked)"/></td>
+      <td>
+        <div class="prod-cell-main">
+          <div class="admin-product-img">${p.image_url?`<img src="${p.image_url}"/>`:`<div style="width:100%;height:100%;background:#f0ede8"></div>`}</div>
+          <div>
+            <div class="prod-name">${p.name}${isLow?`<span class="badge-lowstock">Stok menipis</span>`:''}</div>
+            <div class="prod-sub">${p.gender==='wanita'?'Wanita':'Pria'} · ${vars.length} varian</div>
+            ${vars.length ? `<button class="variant-toggle" onclick="toggleVariantBreakdown('${p.id}')">${isOpen?'Sembunyikan varian':'Lihat stok per varian'}</button>` : ''}
+          </div>
+        </div>
+      </td>
+      <td>${p.category||'-'}</td>
+      <td>${hasDiscount?`<span class="prod-price-old">${jualStr}</span>`:''}<span class="prod-price-net">${netStr}</span></td>
+      <td class="prod-stock-num">${productTotalStock(p)}</td>
+      <td class="prod-sold-num">${sold}</td>
+      <td>${p.supplier||'-'}</td>
+      <td><span class="prod-status-badge ${p.is_active?'on':'off'}">${p.is_active?'Aktif':'Nonaktif'}</span></td>
+      <td>
         <button class="btn-edit" onclick="editProduct('${p.id}')">Edit</button>
         <button class="btn-danger" onclick="deleteProduct('${p.id}')">Hapus</button>
-      </div>
-    </div>`;
+      </td>
+    </tr>`;
+    const variantRow = isOpen ? `<tr class="variant-row"><td></td><td colspan="8"><div class="variant-breakdown">${breakdown}</div></td></tr>` : '';
+    return row + variantRow;
   }).join('');
+  lastRenderedIds = list.map(p => p.id);
   updateBulkBar();
+}
+
+function toggleSelectAll(checked) {
+  if (checked) lastRenderedIds.forEach(id => bulkSelected.add(id));
+  else bulkSelected.clear();
+  renderAdminProductList();
 }
 
 function toggleVariantBreakdown(id) {
