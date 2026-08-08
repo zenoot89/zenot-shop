@@ -211,7 +211,7 @@ async function saveProduct() {
     await sb.from('variants').delete().eq('product_id', prod.id);
   } else {
     const { data, error } = await sb.from('products').insert({name,category,gender,description,image_url,image_urls}).select().single();
-    if (error) { showToast('Gagal simpan produk'); return; }
+    if (error) { console.error('Insert produk gagal:', error); showToast('Gagal simpan: ' + error.message); return; }
     prod = data;
   }
 
