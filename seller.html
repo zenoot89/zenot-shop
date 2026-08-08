@@ -228,6 +228,9 @@
     .form-input{width:100%;padding:10px 14px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:14px;font-family:'Inter',sans-serif;outline:none}
     .form-input:focus{border-color:var(--sep)}
     .form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .form-row-2col{display:flex;gap:16px;align-items:stretch}
+    .form-col-left{flex:1;min-width:0;display:flex;flex-direction:column;gap:16px}
+    .form-col-right{flex:1;min-width:0;display:flex}
     .btn-primary{padding:12px 24px;background:var(--accent);color:#fff;border:none;border-radius:var(--radius-sm);font-size:14px;font-weight:500;cursor:pointer;width:100%}
     .btn-danger{padding:8px 16px;background:#c0392b;color:#fff;border:none;border-radius:var(--radius-sm);font-size:12px;cursor:pointer}
     .btn-edit{padding:8px 16px;background:#f0ede8;color:var(--text);border:none;border-radius:var(--radius-sm);font-size:12px;cursor:pointer;margin-right:6px}
@@ -501,30 +504,30 @@
               <label class="form-label">Nama Produk</label>
               <input class="form-input" id="p-name" placeholder="Stripe Collar Knit"/>
             </div>
-            <div class="form-row">
-              <div class="form-group">
-                <label class="form-label">Gender</label>
-                <select class="form-input" id="p-gender">
-                  <option value="pria">Pria</option>
-                  <option value="wanita">Wanita</option>
-                </select>
-              </div>
-              <div class="form-group">
-                <label class="form-label">Kategori</label>
-                <button type="button" class="catpick-btn" id="p-cat-btn" onclick="openCategoryPicker()">Pilih kategori</button>
-                <input type="hidden" id="p-cat-id" value=""/>
-              </div>
-              <div class="form-group">
-                <label class="form-label">Supplier <span style="text-transform:none;font-weight:400">(khusus admin, nggak tampil di toko)</span></label>
-                <select class="form-input" id="p-supplier"><option value="">-- Pilih Supplier --</option></select>
-                <div id="p-supplier-quickadd" style="display:flex;gap:6px;margin-top:6px">
-                  <input class="form-input" id="p-supplier-new" placeholder="+ Supplier baru..." style="font-size:12px;padding:7px 10px" onkeydown="if(event.key==='Enter'){event.preventDefault();quickAddSupplier();}"/>
-                  <button type="button" class="btn-edit" style="margin-right:0" onclick="quickAddSupplier()">Tambah</button>
+            <div class="form-row-2col">
+              <div class="form-col-left">
+                <div class="form-group">
+                  <label class="form-label">Gender</label>
+                  <select class="form-input" id="p-gender">
+                    <option value="pria">Pria</option>
+                    <option value="wanita">Wanita</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Kategori</label>
+                  <button type="button" class="catpick-btn" id="p-cat-btn" onclick="openCategoryPicker()">Pilih kategori</button>
+                  <input type="hidden" id="p-cat-id" value=""/>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Supplier <span style="text-transform:none;font-weight:400">(khusus admin, nggak tampil di toko)</span></label>
+                  <select class="form-input" id="p-supplier"><option value="">-- Pilih Supplier --</option></select>
                 </div>
               </div>
-              <div class="form-group">
-                <label class="form-label">Deskripsi Produk</label>
-                <textarea class="form-input" id="p-desc" placeholder="Jelaskan produkmu: bahan, ukuran, keunggulan, cara pakai, dll." rows="8" style="resize:vertical;min-height:160px;line-height:1.6"></textarea>
+              <div class="form-col-right">
+                <div class="form-group" style="height:100%">
+                  <label class="form-label">Deskripsi Produk</label>
+                  <textarea class="form-input" id="p-desc" placeholder="Jelaskan produkmu: bahan, ukuran, keunggulan, cara pakai, dll." style="resize:vertical;height:calc(100% - 26px);min-height:220px;line-height:1.6"></textarea>
+                </div>
               </div>
             </div>
             <div class="form-group">
@@ -1190,19 +1193,6 @@ async function deleteSupplier(id, name) {
   showToast('Supplier dihapus');
   await loadSuppliers();
   loadAdminSuppliers();
-}
-
-// Tambah cepat dari dalam form produk (nggak perlu pindah ke tab Data Master)
-async function quickAddSupplier() {
-  const input = document.getElementById('p-supplier-new');
-  const name = input.value.trim();
-  if (!name) return;
-  const { data, error } = await sb.from('suppliers').insert({name}).select().single();
-  if (error) { showToast(error.message.includes('duplicate')||error.message.includes('unique') ? 'Supplier ini sudah ada' : 'Gagal tambah: ' + error.message); return; }
-  input.value = '';
-  await loadSuppliers();
-  document.getElementById('p-supplier').value = data.id;
-  showToast(`Supplier "${name}" ditambahkan & dipilih ✓`);
 }
 
 // ===================== PROMOTIONS =====================

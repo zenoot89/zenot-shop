@@ -264,7 +264,6 @@ function resetProductForm() {
   document.getElementById('p-name').value='';
   document.getElementById('p-desc').value='';
   document.getElementById('p-supplier').value='';
-  document.getElementById('p-supplier-new').value='';
   document.getElementById('p-cat-id').value='';
   const catBtn = document.getElementById('p-cat-btn');
   catBtn.textContent = 'Pilih kategori';
