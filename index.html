@@ -186,6 +186,11 @@
     .modal-related-card .rel-price{font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600;margin-top:2px}
     @media(min-width:600px){.modal{border-radius:var(--radius)}}
     .modal-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px}
+    .modal-header-actions{display:flex;align-items:center;gap:6px;flex-shrink:0}
+    .modal-icon-btn{background:none;border:none;cursor:pointer;padding:4px;display:flex;color:var(--sec)}
+    .modal-icon-btn svg{width:19px;height:19px;stroke-width:1.8}
+    #modal-wish-btn svg{fill:none;stroke:var(--sec);stroke-width:1.8}
+    #modal-wish-btn.active svg{fill:#e0472e;stroke:#e0472e}
     .modal-title{font-family:'Source Serif 4',serif;font-size:22px;font-weight:600;line-height:1.2}
     .modal-close{background:none;border:none;cursor:pointer;color:var(--muted);padding:4px;font-size:20px}
     .modal-img{aspect-ratio:1/1;background:#f0ede8;border-radius:var(--radius-sm);overflow:hidden;margin-bottom:20px}
@@ -497,7 +502,15 @@
     <div class="modal-scroll">
       <div class="modal-header">
         <h2 class="modal-title" id="modal-name"></h2>
-        <button class="modal-close" onclick="closeProductModal()">✕</button>
+        <div class="modal-header-actions">
+          <button class="modal-icon-btn" id="modal-share-btn" onclick="shareProduct()" aria-label="Bagikan">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 10.5l6.8-3.9M8.6 13.5l6.8 3.9"/></svg>
+          </button>
+          <button class="modal-icon-btn" id="modal-wish-btn" onclick="toggleWishlist(activeProduct.id, this)" aria-label="Wishlist">
+            <svg viewBox="0 0 24 24"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg>
+          </button>
+          <button class="modal-close" onclick="closeProductModal()">✕</button>
+        </div>
       </div>
       <div class="modal-img" id="modal-img-wrap"></div>
       <div class="modal-gallery" id="modal-gallery"></div>
@@ -650,6 +663,8 @@ async function loadProducts() {
   if (error) { console.error(error); return; }
   products = data || [];
   renderProducts();
+  const sharedId = new URLSearchParams(location.search).get('p');
+  if (sharedId && products.some(p=>p.id===sharedId)) openProduct(sharedId);
 }
 
 function getProductImage(p) {
@@ -1043,6 +1058,8 @@ async function openProduct(id) {
   qty = 1;
 
   document.getElementById('modal-name').textContent = activeProduct.name;
+  document.getElementById('modal-wish-btn').classList.toggle('active', wishlistIds.has(activeProduct.id));
+  history.replaceState(null, '', '?p=' + activeProduct.id);
   document.getElementById('qty-val').textContent = 1;
   document.getElementById('btn-add-cart').disabled = true;
   document.getElementById('stok-label').textContent = 'Stok: pilih varian dulu';
@@ -1181,7 +1198,14 @@ function renderModalRelated(p) {
   const el = document.getElementById('modal-related');
   if (!el) return;
   let related = products.filter(x => x.id !== p.id && x.gender === p.gender && x.category === p.category);
-  if (related.length < 4) related = related.concat(products.filter(x => x.id !== p.id && x.gender === p.gender && !related.includes(x)));
+  if (related.length < 4) {
+    const more = products.filter(x => x.id !== p.id && x.gender === p.gender && !related.includes(x));
+    related = related.concat(more);
+  }
+  if (related.length < 4) {
+    const rest = products.filter(x => x.id !== p.id && !related.includes(x));
+    related = related.concat(rest);
+  }
   related = related.slice(0, 4);
   if (!related.length) { el.innerHTML = ''; return; }
   el.innerHTML = `
@@ -1211,6 +1235,20 @@ function closeModalBg(e) { if(e.target===document.getElementById('product-modal'
 function closeProductModal() {
   document.getElementById('product-modal').classList.remove('open');
   document.body.style.overflow = '';
+  history.replaceState(null, '', location.pathname);
+}
+
+function shareProduct() {
+  if (!activeProduct) return;
+  const url = location.origin + location.pathname + '?p=' + activeProduct.id;
+  const shareData = { title: activeProduct.name, text: `${activeProduct.name} - Zenoot`, url };
+  if (navigator.share) {
+    navigator.share(shareData).catch(()=>{});
+  } else if (navigator.clipboard) {
+    navigator.clipboard.writeText(url).then(()=>showToast('Link produk disalin ✓'));
+  } else {
+    showToast(url);
+  }
 }
 
 // ===================== REVIEWS =====================
