@@ -352,7 +352,7 @@ function editProduct(id) {
   document.getElementById('product-list-view').classList.add('hidden');
   document.getElementById('product-form-card').classList.remove('hidden');
   document.getElementById('edit-actions-extra')?.classList.remove('hidden');
-  document.getElementById('status-toggle-btn').textContent = productStatus(p) === 'nonaktif' ? 'Aktifkan' : 'Nonaktifkan';
+  document.getElementById('status-toggle-btn').textContent = productStatus(p) === 'nonaktif' ? 'Aktifkan' : 'Arsipkan';
   window.scrollTo({top:0, behavior:'smooth'});
 }
 
@@ -393,7 +393,7 @@ function renderStatusTabs() {
   const tabs = [
     ['semua', 'Semua'],
     ['aktif', 'Aktif'],
-    ['nonaktif', 'Belum Ditampilkan'],
+    ['nonaktif', 'Di Arsipkan'],
   ];
   el.innerHTML = tabs.map(([key,label]) =>
     `<button class="pstab ${productStatusTab===key?'active':''}" onclick="setProductStatusTab('${key}')">${label} (${counts[key]})</button>`
@@ -426,7 +426,17 @@ async function loadAdminProducts() {
   ]);
   adminProductsData = prodRes.data || [];
   bulkSelected.clear();
+  populateCategoryFilter();
   renderAdminProductList();
+}
+
+function populateCategoryFilter() {
+  const sel = document.getElementById('pf-category');
+  if (!sel) return;
+  const cur = sel.value;
+  const names = [...new Set(adminProductsData.map(p => p.category).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
+  sel.innerHTML = '<option value="">Kategori</option>' + names.map(n => `<option value="${n}">${n}</option>`).join('');
+  if (cur) sel.value = cur;
 }
 
 function productLowestStock(p) {
@@ -447,6 +457,7 @@ function renderAdminProductList() {
   const q = (document.getElementById('pf-search')?.value || '').trim().toLowerCase();
   const genderF = document.getElementById('pf-gender')?.value || '';
   const supplierF = document.getElementById('pf-supplier')?.value || '';
+  const categoryF = document.getElementById('pf-category')?.value || '';
   const sortF = document.getElementById('pf-sort')?.value || 'newest';
 
   let list = adminProductsData.filter(p => {
@@ -456,6 +467,7 @@ function renderAdminProductList() {
     if (lowStockOnly && productLowestStock(p) > LOW_STOCK_THRESHOLD) return false;
     if (noPromoOnly && productHasPromo(p)) return false;
     if (supplierF && p.supplier_id !== supplierF) return false;
+    if (categoryF && p.category !== categoryF) return false;
     return true;
   });
 
@@ -496,7 +508,7 @@ function renderAdminProductList() {
       <td class="prod-stock-num">${productTotalStock(p)}</td>
       <td class="prod-sold-num">${sold}</td>
       <td>${p.supplier_id ? supplierName(p.supplier_id) : (p.supplier || '-')}</td>
-      <td>${(() => { const s = productStatus(p); const cls = s==='aktif'?'on':'off'; const label = s==='aktif'?'Aktif':'Belum Ditampilkan'; return `<span class="prod-status-badge ${cls}">${label}</span>`; })()}</td>
+      <td>${(() => { const s = productStatus(p); const cls = s==='aktif'?'on':'off'; const label = s==='aktif'?'Aktif':'Di Arsipkan'; return `<span class="prod-status-badge ${cls}">${label}</span>`; })()}</td>
       <td>
         <button class="btn-edit" onclick="editProduct('${p.id}')">Edit</button>
       </td>
@@ -537,7 +549,7 @@ function updateBulkBar() {
 async function bulkSetActive(active) {
   if (!bulkSelected.size) return;
   await sb.from('products').update({is_active: active, status: active ? 'aktif' : 'nonaktif'}).in('id', [...bulkSelected]);
-  showToast(`${bulkSelected.size} produk di${active?'aktifkan':'nonaktifkan'} ✓`);
+  showToast(`${bulkSelected.size} produk di${active?'aktifkan':'arsipkan'} ✓`);
   loadAdminProducts();
 }
 async function bulkDelete() {
@@ -601,7 +613,7 @@ async function toggleActiveCurrent() {
   const isActive = productStatus(p) === 'aktif';
   const newStatus = isActive ? 'nonaktif' : 'aktif';
   await sb.from('products').update({status: newStatus, is_active: newStatus === 'aktif'}).eq('id', editingProductId);
-  showToast(isActive ? 'Produk dinonaktifkan (belum ditampilkan) ✓' : 'Produk diaktifkan ✓');
+  showToast(isActive ? 'Produk diarsipkan ✓' : 'Produk diaktifkan ✓');
   closeProductForm();
   loadAdminProducts();
 }

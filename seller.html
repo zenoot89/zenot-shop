@@ -269,11 +269,13 @@
     .confirm-modal{background:var(--surface);border-radius:var(--radius);padding:24px;width:100%;max-width:380px}
     .confirm-modal-footer{display:flex;justify-content:flex-end;gap:10px;margin-top:18px}
     .variant-row td{padding:0 14px 14px;border-bottom:1px solid var(--border)}
-    .prod-status-tabs{display:flex;gap:24px;border-bottom:1px solid var(--border);margin:14px 0 14px;overflow-x:auto}
+    .prod-tabrow{display:flex;align-items:center;gap:22px;border-bottom:1px solid var(--border);margin:14px 0 14px;flex-wrap:wrap;row-gap:8px}
+    .prod-status-tabs{display:flex;gap:22px}
     .pstab{padding:10px 2px;font-size:14px;color:var(--muted);cursor:pointer;border:none;background:none;border-bottom:2px solid transparent;white-space:nowrap;font-family:inherit}
     .pstab.active{color:var(--text);font-weight:600;border-bottom-color:var(--text)}
-    .prod-lowstock-chip{padding:9px 16px;border-radius:8px;border:1px solid var(--border);background:#fff;font-size:13px;color:var(--sec);cursor:pointer;white-space:nowrap}
-    .prod-lowstock-chip.active{background:#fdecec;border-color:#d9534f;color:#c0392b}
+    .prod-tabrow-right{margin-left:auto;display:flex;gap:10px;padding-bottom:8px}
+    .prod-pill-select{padding:8px 14px;border-radius:50px;border:1px solid var(--border);background:#fff;font-size:13px;color:var(--sec);cursor:pointer}
+    .prod-toolbar-bottom{display:flex;gap:12px;flex-wrap:wrap;justify-content:flex-start}
 
     /* ===== DATA MASTER SUB-TABS ===== */
     .dm-subtabs{display:flex;gap:6px;margin-bottom:14px;border-bottom:1px solid var(--border)}
@@ -450,25 +452,32 @@
           <div id="product-list-view">
           <div class="admin-list-header">
             <h3 class="admin-card-title" style="margin-bottom:0">Kelola Produk</h3>
-            <button class="btn-primary" style="width:auto;padding:10px 18px" onclick="openProductForm()">+ Tambah Produk Baru</button>
+            <button class="btn-primary" style="width:auto;padding:10px 18px" onclick="openProductForm()">+ Produk</button>
           </div>
 
-          <div class="prod-status-tabs" id="prod-status-tabs"></div>
+          <div class="prod-tabrow">
+            <div class="prod-status-tabs" id="prod-status-tabs"></div>
+            <button class="pstab" id="pf-lowstock-chip" onclick="toggleLowStockFilter()">Stok Menipis</button>
+            <button class="pstab" id="pf-nopromo-chip" onclick="toggleNoPromoFilter()">Belum Ada Promo</button>
+            <div class="prod-tabrow-right">
+              <select class="prod-pill-select" id="pf-supplier" onchange="renderAdminProductList()">
+                <option value="">Suplier</option>
+              </select>
+              <select class="prod-pill-select" id="pf-category" onchange="renderAdminProductList()">
+                <option value="">Kategori</option>
+              </select>
+            </div>
+          </div>
 
           <div class="admin-card" style="margin-bottom:14px">
-            <div class="prod-toolbar">
-              <input class="form-input" id="pf-search" placeholder="Cari nama produk..." oninput="renderAdminProductList()" style="flex:2;min-width:160px"/>
-              <select class="form-input" id="pf-gender" onchange="renderAdminProductList()" style="flex:1;min-width:110px">
+            <div class="prod-toolbar-bottom">
+              <input class="form-input" id="pf-search" placeholder="Cari nama produk..." oninput="renderAdminProductList()" style="flex:0 1 240px"/>
+              <select class="form-input" id="pf-gender" onchange="renderAdminProductList()" style="flex:0 1 140px">
                 <option value="">Semua Gender</option>
                 <option value="pria">Pria</option>
                 <option value="wanita">Wanita</option>
               </select>
-              <button class="prod-lowstock-chip" id="pf-lowstock-chip" onclick="toggleLowStockFilter()">Stok Menipis</button>
-              <button class="prod-lowstock-chip" id="pf-nopromo-chip" onclick="toggleNoPromoFilter()">Belum Ada Promo</button>
-              <select class="form-input" id="pf-supplier" onchange="renderAdminProductList()" style="flex:1;min-width:130px">
-                <option value="">Semua Supplier</option>
-              </select>
-              <select class="form-input" id="pf-sort" onchange="renderAdminProductList()" style="flex:1;min-width:130px">
+              <select class="form-input" id="pf-sort" onchange="renderAdminProductList()" style="flex:0 1 160px">
                 <option value="newest">Terbaru</option>
                 <option value="name">Nama A-Z</option>
                 <option value="stock-asc">Stok Tersedikit</option>
@@ -480,7 +489,7 @@
             <div class="prod-bulkbar hidden" id="prod-bulkbar">
               <span id="prod-bulk-count">0 dipilih</span>
               <button class="btn-edit" onclick="bulkSetActive(true)">Aktifkan</button>
-              <button class="btn-edit" onclick="bulkSetActive(false)">Nonaktifkan</button>
+              <button class="btn-edit" onclick="bulkSetActive(false)">Arsipkan</button>
               <button class="btn-danger" onclick="bulkDelete()">Hapus</button>
               <button class="btn-edit" onclick="clearBulkSelection()" style="margin-left:auto">Batal</button>
             </div>
@@ -622,7 +631,7 @@
               <button class="btn-edit" id="cancel-product-btn" onclick="closeProductForm()" style="padding:12px 24px;font-size:14px">Batal</button>
             </div>
             <div style="display:flex;gap:10px;margin-top:10px" class="hidden" id="edit-actions-extra">
-              <button class="btn-edit" id="status-toggle-btn" onclick="toggleActiveCurrent()" style="flex:1">Nonaktifkan</button>
+              <button class="btn-edit" id="status-toggle-btn" onclick="toggleActiveCurrent()" style="flex:1">Arsipkan</button>
               <button class="btn-danger" onclick="deleteProductFromForm()" style="flex:1">Hapus Produk</button>
             </div>
           </div>
@@ -1195,7 +1204,7 @@ async function loadSuppliers() {
   const filt = document.getElementById('pf-supplier');
   if (filt) {
     const cur = filt.value;
-    filt.innerHTML = '<option value="">Semua Supplier</option>' + allSuppliers.map(s=>`<option value="${s.id}">${s.name}</option>`).join('');
+    filt.innerHTML = '<option value="">Suplier</option>' + allSuppliers.map(s=>`<option value="${s.id}">${s.name}</option>`).join('');
     if (cur) filt.value = cur;
   }
 }
