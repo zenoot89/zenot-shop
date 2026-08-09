@@ -289,9 +289,8 @@ function cancelEdit() {
   editingProductId = null;
   resetProductForm();
   document.getElementById('form-mode-title').textContent = 'Tambah Produk';
-  document.getElementById('save-product-btn').textContent = 'Simpan Produk';
-  document.getElementById('cancel-product-btn').textContent = 'Batal';
   document.getElementById('edit-actions-extra')?.classList.add('hidden');
+  if (typeof pfResetTabs === 'function') pfResetTabs();
 }
 
 function openProductForm() {
@@ -347,12 +346,11 @@ function editProduct(id) {
   renderColorTags();
   renderSizeTags();
   document.getElementById('form-mode-title').textContent = `Edit Produk: ${p.name}`;
-  document.getElementById('save-product-btn').textContent = 'Update Produk';
-  document.getElementById('cancel-product-btn').textContent = 'Batal Perubahan';
   document.getElementById('product-list-view').classList.add('hidden');
   document.getElementById('product-form-card').classList.remove('hidden');
   document.getElementById('edit-actions-extra')?.classList.remove('hidden');
   document.getElementById('status-toggle-btn').textContent = productStatus(p) === 'nonaktif' ? 'Aktifkan' : 'Arsipkan';
+  if (typeof pfResetTabs === 'function') pfResetTabs();
   window.scrollTo({top:0, behavior:'smooth'});
 }
 

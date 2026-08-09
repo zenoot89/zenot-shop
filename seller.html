@@ -320,6 +320,28 @@
     .btn-add-variant:hover{border-color:var(--sep)}
     .upload-area{border:2px dashed var(--border);border-radius:var(--radius-sm);padding:24px;text-align:center;cursor:pointer;transition:border-color .2s}
     .upload-area:hover{border-color:var(--sep)}
+
+    /* ===== PRODUCT FORM MULTI-TAB ===== */
+    .pf-tabs{display:flex;border-bottom:1px solid var(--border);margin-bottom:0;overflow-x:auto;gap:0;background:var(--bg);border-radius:var(--radius) var(--radius) 0 0;flex-shrink:0}
+    .pf-tab{padding:12px 18px;font-size:13px;font-weight:500;color:var(--muted);cursor:pointer;border:none;background:none;border-bottom:2px solid transparent;white-space:nowrap;transition:color .15s,border-color .15s;display:flex;align-items:center;gap:7px;font-family:'Inter',sans-serif}
+    .pf-tab:hover{color:var(--text)}
+    .pf-tab.active{color:var(--accent);border-bottom-color:var(--accent);font-weight:600}
+    .pf-tab-num{width:20px;height:20px;border-radius:50%;background:var(--border);color:var(--muted);font-size:11px;font-family:'IBM Plex Mono',monospace;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .15s,color .15s}
+    .pf-tab.active .pf-tab-num{background:var(--accent);color:#fff}
+    .pf-tab.done .pf-tab-num{background:#1a7a3c;color:#fff}
+    .pf-tab.done{color:var(--text)}
+    .pf-panel{display:none;padding:24px 0 0}
+    .pf-panel.active{display:block}
+    .pf-footer{display:flex;justify-content:space-between;align-items:center;padding:20px 0 4px;border-top:1px solid var(--border);margin-top:24px;gap:10px}
+    .pf-footer-right{display:flex;gap:10px;align-items:center}
+    .btn-pf-next{padding:11px 24px;background:var(--accent);color:#fff;border:none;border-radius:var(--radius-sm);font-size:13px;font-weight:500;cursor:pointer}
+    .btn-pf-next:hover{background:#333}
+    .btn-pf-back{padding:11px 20px;background:none;color:var(--sec);border:1px solid var(--border);border-radius:var(--radius-sm);font-size:13px;cursor:pointer}
+    .btn-pf-back:hover{border-color:var(--sep);color:var(--text)}
+    .pf-shipping-placeholder{text-align:center;padding:60px 20px;color:var(--muted)}
+    .pf-shipping-placeholder svg{width:48px;height:48px;opacity:.3;margin-bottom:12px}
+    .pf-shipping-placeholder p{font-size:13px;margin-bottom:4px}
+    .pf-shipping-placeholder small{font-size:12px;opacity:.7}
     .upload-preview{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
     .upload-preview img{width:80px;height:80px;object-fit:cover;border-radius:var(--radius-sm)}
     .upload-thumb{position:relative;width:80px;height:80px}
@@ -516,125 +538,205 @@
           </div>
           </div>
 
-          <div class="admin-card hidden" id="product-form-card">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">
+          <div class="admin-card hidden" id="product-form-card" style="padding:0;overflow:hidden">
+
+            <!-- Header -->
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:18px 24px 0">
               <h3 class="admin-card-title" id="form-mode-title" style="margin-bottom:0">Tambah Produk</h3>
               <button class="admin-close" style="font-size:18px" onclick="closeProductForm()">✕</button>
             </div>
-            <div class="form-group">
-              <label class="form-label">Foto Produk (maks. 9)</label>
-              <div class="upload-area" onclick="document.getElementById('p-photos').click()">
-                <p style="font-size:13px;color:var(--muted)">Klik untuk upload foto (bisa pilih beberapa sekaligus)</p>
-                <input type="file" id="p-photos" multiple accept="image/*" style="display:none" onchange="previewPhotos(this)"/>
-              </div>
-              <div class="upload-preview" id="upload-preview"></div>
+
+            <!-- Tab Nav -->
+            <div class="pf-tabs" id="pf-tabs" style="margin-top:16px">
+              <button class="pf-tab active" id="pf-tab-0" onclick="pfSwitchTab(0)"><span class="pf-tab-num">1</span>Informasi Produk</button>
+              <button class="pf-tab" id="pf-tab-1" onclick="pfSwitchTab(1)"><span class="pf-tab-num">2</span>Spesifikasi</button>
+              <button class="pf-tab" id="pf-tab-2" onclick="pfSwitchTab(2)"><span class="pf-tab-num">3</span>Deskripsi</button>
+              <button class="pf-tab" id="pf-tab-3" onclick="pfSwitchTab(3)"><span class="pf-tab-num">4</span>Informasi Penjualan</button>
+              <button class="pf-tab" id="pf-tab-4" onclick="pfSwitchTab(4)"><span class="pf-tab-num">5</span>Pengiriman</button>
             </div>
-            <div class="form-group">
-              <label class="form-label">Nama Produk</label>
-              <input class="form-input" id="p-name" placeholder="Stripe Collar Knit"/>
-            </div>
-            <div class="form-row-2col">
-              <div class="form-col-left">
+
+            <div style="padding:0 24px 24px">
+
+              <!-- ===== TAB 1: INFORMASI PRODUK ===== -->
+              <div class="pf-panel active" id="pf-panel-0">
                 <div class="form-group">
-                  <label class="form-label">Gender</label>
-                  <select class="form-input" id="p-gender">
-                    <option value="pria">Pria</option>
-                    <option value="wanita">Wanita</option>
-                  </select>
+                  <label class="form-label">Foto Produk <span style="text-transform:none;font-weight:400">(maks. 9, pertama jadi cover)</span></label>
+                  <div class="upload-area" onclick="document.getElementById('p-photos').click()">
+                    <p style="font-size:13px;color:var(--muted)">Klik untuk upload foto (bisa pilih beberapa sekaligus)</p>
+                    <input type="file" id="p-photos" multiple accept="image/*" style="display:none" onchange="previewPhotos(this)"/>
+                  </div>
+                  <div class="upload-preview" id="upload-preview"></div>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Nama Produk</label>
+                  <input class="form-input" id="p-name" placeholder="Stripe Collar Knit"/>
+                </div>
+                <div class="form-row">
+                  <div class="form-group" style="margin-bottom:0">
+                    <label class="form-label">Gender</label>
+                    <select class="form-input" id="p-gender">
+                      <option value="pria">Pria</option>
+                      <option value="wanita">Wanita</option>
+                    </select>
+                  </div>
+                  <div class="form-group" style="margin-bottom:0">
+                    <label class="form-label">Supplier <span style="text-transform:none;font-weight:400">(admin only)</span></label>
+                    <select class="form-input" id="p-supplier"><option value="">-- Pilih Supplier --</option></select>
+                  </div>
                 </div>
                 <div class="form-group">
                   <label class="form-label">Kategori</label>
                   <button type="button" class="catpick-btn" id="p-cat-btn" onclick="openCategoryPicker()">Pilih kategori</button>
                   <input type="hidden" id="p-cat-id" value=""/>
                 </div>
+                <div class="pf-footer">
+                  <button class="btn-pf-back" onclick="closeProductForm()">Batal</button>
+                  <div class="pf-footer-right">
+                    <button class="btn-primary" id="save-product-btn" onclick="saveProduct()" style="padding:11px 24px">Simpan &amp; Tampilkan</button>
+                    <button class="btn-pf-next" onclick="pfSwitchTab(1)">Selanjutnya →</button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- ===== TAB 2: SPESIFIKASI ===== -->
+              <div class="pf-panel" id="pf-panel-1">
+                <p style="font-size:12px;color:var(--muted);margin-bottom:16px">Lengkapi spesifikasi agar produk mudah dicari dan tampil lebih informatif di halaman produk.</p>
+                <div class="spec-fields-grid" style="gap:14px">
+                  <div class="form-group" style="margin-bottom:0">
+                    <label class="form-label">Bahan</label>
+                    <input class="form-input" id="p-bahan" placeholder="cth: Acrylic, Rajut Tebal"/>
+                  </div>
+                  <div class="form-group" style="margin-bottom:0">
+                    <label class="form-label">Tipe Cutting</label>
+                    <input class="form-input" id="p-tipe-cutting" placeholder="cth: Regular fit, Oversize"/>
+                  </div>
+                  <div class="form-group" style="margin-bottom:0">
+                    <label class="form-label">Ketebalan</label>
+                    <input class="form-input" id="p-ketebalan" placeholder="cth: Tipis, Sedang, Tebal"/>
+                  </div>
+                  <div class="form-group" style="margin-bottom:0">
+                    <label class="form-label">Motif</label>
+                    <input class="form-input" id="p-motif" placeholder="cth: Polos, Stripe, Cable Knit"/>
+                  </div>
+                  <div class="form-group" style="margin-bottom:0;grid-column:1/-1">
+                    <label class="form-label">Dipakai Model</label>
+                    <input class="form-input" id="p-dipakai-model" placeholder="cth: Ukuran L, Tinggi 170 cm, Berat 60 kg"/>
+                  </div>
+                </div>
+                <div class="pf-footer">
+                  <button class="btn-pf-back" onclick="pfSwitchTab(0)">← Kembali</button>
+                  <div class="pf-footer-right">
+                    <button class="btn-primary" onclick="saveProduct()" style="padding:11px 24px">Simpan &amp; Tampilkan</button>
+                    <button class="btn-pf-next" onclick="pfSwitchTab(2)">Selanjutnya →</button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- ===== TAB 3: DESKRIPSI ===== -->
+              <div class="pf-panel" id="pf-panel-2">
                 <div class="form-group">
-                  <label class="form-label">Supplier <span style="text-transform:none;font-weight:400">(khusus admin, nggak tampil di toko)</span></label>
-                  <select class="form-input" id="p-supplier"><option value="">-- Pilih Supplier --</option></select>
-                </div>
-              </div>
-              <div class="form-col-right">
-                <div class="form-group" style="height:100%">
                   <label class="form-label">Deskripsi Produk</label>
-                  <textarea class="form-input" id="p-desc" placeholder="Jelaskan produkmu: bahan, ukuran, keunggulan, cara pakai, dll." style="resize:vertical;height:calc(100% - 26px);min-height:220px;line-height:1.6"></textarea>
+                  <p style="font-size:12px;color:var(--muted);margin-bottom:10px">Jelaskan detail produk: keunggulan, cara pakai, panduan ukuran, bahan, dll.</p>
+                  <textarea class="form-input" id="p-desc" placeholder="Jelaskan produkmu: bahan, ukuran, keunggulan, cara pakai, dll." style="resize:vertical;min-height:280px;line-height:1.7"></textarea>
                 </div>
-              </div>
-            </div>
-            <div class="form-group">
-              <label class="form-label">Spesifikasi Produk <span style="text-transform:none;font-weight:400">(opsional, tampil terstruktur di halaman produk)</span></label>
-              <div class="spec-fields-grid">
-                <input class="form-input" id="p-bahan" placeholder="Bahan (cth: Acrylic)"/>
-                <input class="form-input" id="p-tipe-cutting" placeholder="Tipe Cutting (cth: Regular fit)"/>
-                <input class="form-input" id="p-ketebalan" placeholder="Ketebalan (cth: Sedang)"/>
-                <input class="form-input" id="p-motif" placeholder="Motif (cth: Polos)"/>
-                <input class="form-input" id="p-dipakai-model" placeholder="Dipakai Model (cth: Ukuran L, Tinggi 170)"/>
-              </div>
-            </div>
-            <div class="form-group">
-              <label class="form-label">Variasi</label>
-
-              <!-- Variasi 1: Warna -->
-              <div class="var-section" style="border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px;margin-bottom:10px">
-                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
-                  <span style="font-size:13px;font-weight:600">Variasi 1 — Warna</span>
-                </div>
-                <div class="var-tag-row" id="v1-tags" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px"></div>
-                <div style="display:flex;gap:8px">
-                  <input class="form-input" id="v1-input" placeholder="Tambah warna (Enter)" style="flex:1" onkeydown="addColorTag(event)"/>
-                  <input type="color" id="v1-color-picker" value="#1a1a1a" style="width:40px;height:40px;border:1px solid var(--border);border-radius:var(--radius-sm);cursor:pointer;padding:2px"/>
+                <div class="pf-footer">
+                  <button class="btn-pf-back" onclick="pfSwitchTab(1)">← Kembali</button>
+                  <div class="pf-footer-right">
+                    <button class="btn-primary" onclick="saveProduct()" style="padding:11px 24px">Simpan &amp; Tampilkan</button>
+                    <button class="btn-pf-next" onclick="pfSwitchTab(3)">Selanjutnya →</button>
+                  </div>
                 </div>
               </div>
 
-              <!-- Variasi 2: Ukuran -->
-              <div class="var-section" style="border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px;margin-bottom:14px">
-                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
-                  <span style="font-size:13px;font-weight:600">Variasi 2 — Ukuran</span>
+              <!-- ===== TAB 4: INFORMASI PENJUALAN ===== -->
+              <div class="pf-panel" id="pf-panel-3">
+                <div class="form-group">
+                  <label class="form-label">Variasi</label>
+
+                  <!-- Variasi 1: Warna -->
+                  <div class="var-section" style="border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px;margin-bottom:10px">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+                      <span style="font-size:13px;font-weight:600">Variasi 1 — Warna</span>
+                    </div>
+                    <div class="var-tag-row" id="v1-tags" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px"></div>
+                    <div style="display:flex;gap:8px">
+                      <input class="form-input" id="v1-input" placeholder="Tambah warna (Enter)" style="flex:1" onkeydown="addColorTag(event)"/>
+                      <input type="color" id="v1-color-picker" value="#1a1a1a" style="width:40px;height:40px;border:1px solid var(--border);border-radius:var(--radius-sm);cursor:pointer;padding:2px"/>
+                    </div>
+                  </div>
+
+                  <!-- Variasi 2: Ukuran -->
+                  <div class="var-section" style="border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px;margin-bottom:14px">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+                      <span style="font-size:13px;font-weight:600">Variasi 2 — Ukuran</span>
+                    </div>
+                    <div class="var-tag-row" id="v2-tags" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px"></div>
+                    <div style="display:flex;gap:8px;flex-wrap:wrap">
+                      <button class="filter-tab" onclick="addSizePreset('S')">S</button>
+                      <button class="filter-tab" onclick="addSizePreset('M')">M</button>
+                      <button class="filter-tab" onclick="addSizePreset('L')">L</button>
+                      <button class="filter-tab" onclick="addSizePreset('XL')">XL</button>
+                      <button class="filter-tab" onclick="addSizePreset('XXL')">XXL</button>
+                      <button class="filter-tab" onclick="addSizePreset('All Size')">All Size</button>
+                      <input class="form-input" id="v2-input" placeholder="Ukuran custom (Enter)" style="flex:1;min-width:140px" onkeydown="addSizeTag(event)"/>
+                    </div>
+                  </div>
+
+                  <!-- Tabel varian otomatis -->
+                  <div id="variant-table-wrap" style="display:none">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+                      <span style="font-size:13px;font-weight:600">Daftar Varian</span>
+                      <button class="btn-edit" onclick="applyToAll()">Terapkan ke Semua</button>
+                    </div>
+                    <div style="display:flex;gap:8px;margin-bottom:12px;align-items:center">
+                      <input class="form-input" id="bulk-price" type="number" placeholder="Harga (terapkan semua)"/>
+                      <input class="form-input" id="bulk-stock" type="number" placeholder="Stok (terapkan semua)"/>
+                    </div>
+                    <div style="overflow-x:auto">
+                      <table style="width:100%;border-collapse:collapse;font-size:13px" id="variant-table">
+                        <thead>
+                          <tr style="border-bottom:2px solid var(--border);text-align:left">
+                            <th style="padding:8px 6px;color:var(--muted)">Warna</th>
+                            <th style="padding:8px 6px;color:var(--muted)">Ukuran</th>
+                            <th style="padding:8px 6px;color:var(--muted)">Foto</th>
+                            <th style="padding:8px 6px;color:var(--muted)">Harga</th>
+                            <th style="padding:8px 6px;color:var(--muted)">Stok</th>
+                          </tr>
+                        </thead>
+                        <tbody id="variant-tbody"></tbody>
+                      </table>
+                    </div>
+                  </div>
                 </div>
-                <div class="var-tag-row" id="v2-tags" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px"></div>
-                <div style="display:flex;gap:8px;flex-wrap:wrap">
-                  <button class="filter-tab" onclick="addSizePreset('S')">S</button>
-                  <button class="filter-tab" onclick="addSizePreset('M')">M</button>
-                  <button class="filter-tab" onclick="addSizePreset('L')">L</button>
-                  <button class="filter-tab" onclick="addSizePreset('XL')">XL</button>
-                  <button class="filter-tab" onclick="addSizePreset('XXL')">XXL</button>
-                  <button class="filter-tab" onclick="addSizePreset('All Size')">All Size</button>
-                  <input class="form-input" id="v2-input" placeholder="Ukuran custom (Enter)" style="flex:1;min-width:140px" onkeydown="addSizeTag(event)"/>
+                <div class="pf-footer">
+                  <button class="btn-pf-back" onclick="pfSwitchTab(2)">← Kembali</button>
+                  <div class="pf-footer-right">
+                    <button class="btn-primary" onclick="saveProduct()" style="padding:11px 24px">Simpan &amp; Tampilkan</button>
+                    <button class="btn-pf-next" onclick="pfSwitchTab(4)">Selanjutnya →</button>
+                  </div>
                 </div>
               </div>
 
-              <!-- Tabel varian otomatis -->
-              <div id="variant-table-wrap" style="display:none">
-                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
-                  <span style="font-size:13px;font-weight:600">Daftar Varian</span>
-                  <button class="btn-edit" onclick="applyToAll()">Terapkan ke Semua</button>
+              <!-- ===== TAB 5: PENGIRIMAN ===== -->
+              <div class="pf-panel" id="pf-panel-4">
+                <div class="pf-shipping-placeholder">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 17H3a2 2 0 01-2-2V5a2 2 0 012-2h11a2 2 0 012 2v3m-4 12H9m10-12h2l3 4v4h-5m0 0a2 2 0 100 4 2 2 0 000-4zM9 17a2 2 0 100 4 2 2 0 000-4z"/></svg>
+                  <p style="font-weight:600;color:var(--text)">Fitur Pengiriman segera hadir</p>
+                  <small>Ongkir, resi, jasa kirim, berat & dimensi paket akan diatur di sini.</small>
                 </div>
-                <div style="display:flex;gap:8px;margin-bottom:12px;align-items:center">
-                  <input class="form-input" id="bulk-price" type="number" placeholder="Harga"/>
-                  <input class="form-input" id="bulk-stock" type="number" placeholder="Stok"/>
-                </div>
-                <div style="overflow-x:auto">
-                  <table style="width:100%;border-collapse:collapse;font-size:13px" id="variant-table">
-                    <thead>
-                      <tr style="border-bottom:2px solid var(--border);text-align:left">
-                        <th style="padding:8px 6px;color:var(--muted)">Warna</th>
-                        <th style="padding:8px 6px;color:var(--muted)">Ukuran</th>
-                        <th style="padding:8px 6px;color:var(--muted)">Foto</th>
-                        <th style="padding:8px 6px;color:var(--muted)">Harga</th>
-                        <th style="padding:8px 6px;color:var(--muted)">Stok</th>
-                      </tr>
-                    </thead>
-                    <tbody id="variant-tbody"></tbody>
-                  </table>
+                <div class="pf-footer">
+                  <button class="btn-pf-back" onclick="pfSwitchTab(3)">← Kembali</button>
+                  <div class="pf-footer-right">
+                    <div style="display:flex;gap:10px" id="edit-actions-extra" class="hidden">
+                      <button class="btn-edit" id="status-toggle-btn" onclick="toggleActiveCurrent()">Arsipkan</button>
+                      <button class="btn-danger" onclick="deleteProductFromForm()">Hapus Produk</button>
+                    </div>
+                    <button class="btn-primary" id="save-product-btn-final" onclick="saveProduct()" style="padding:11px 28px">Simpan &amp; Tampilkan</button>
+                  </div>
                 </div>
               </div>
-            </div>
-            <div style="display:flex;gap:10px;margin-top:4px">
-              <button class="btn-primary" id="save-product-btn" onclick="saveProduct()" style="flex:1">Simpan Produk</button>
-              <button class="btn-edit" id="cancel-product-btn" onclick="closeProductForm()" style="padding:12px 24px;font-size:14px">Batal</button>
-            </div>
-            <div style="display:flex;gap:10px;margin-top:10px" class="hidden" id="edit-actions-extra">
-              <button class="btn-edit" id="status-toggle-btn" onclick="toggleActiveCurrent()" style="flex:1">Arsipkan</button>
-              <button class="btn-danger" onclick="deleteProductFromForm()" style="flex:1">Hapus Produk</button>
-            </div>
+
+            </div><!-- end padding wrapper -->
           </div>
         </div>
 
@@ -864,6 +966,29 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 let adminUser = null;
 let allCategories = [];
 let allSuppliers = [];
+
+// ===================== PRODUCT FORM TABS =====================
+let pfCurrentTab = 0;
+const PF_TAB_COUNT = 5;
+
+function pfSwitchTab(idx) {
+  pfCurrentTab = idx;
+  for (let i = 0; i < PF_TAB_COUNT; i++) {
+    const tab = document.getElementById(`pf-tab-${i}`);
+    const panel = document.getElementById(`pf-panel-${i}`);
+    if (!tab || !panel) continue;
+    tab.classList.toggle('active', i === idx);
+    panel.classList.toggle('active', i === idx);
+  }
+  // scroll form back to top
+  const card = document.getElementById('product-form-card');
+  if (card) card.scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+function pfResetTabs() {
+  pfCurrentTab = 0;
+  pfSwitchTab(0);
+}
 
 // ===================== TOAST =====================
 function showToast(msg) {
