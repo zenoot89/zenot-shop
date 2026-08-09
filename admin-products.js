@@ -379,8 +379,8 @@ function toggleLowStockFilter() {
 function renderStatusTabs() {
   const el = document.getElementById('prod-status-tabs');
   if (!el) return;
-  const counts = { semua: adminProductsData.length, aktif: 0, nonaktif: 0, arsip: 0 };
-  adminProductsData.forEach(p => { const s = productStatus(p); if (counts[s] !== undefined) counts[s]++; });
+  const counts = { semua: 0, aktif: 0, nonaktif: 0, arsip: 0 };
+  adminProductsData.forEach(p => { const s = productStatus(p); if (counts[s] !== undefined) counts[s]++; if (s !== 'arsip') counts.semua++; });
   const tabs = [
     ['semua', 'Semua'],
     ['aktif', 'Aktif'],
@@ -444,6 +444,7 @@ function renderAdminProductList() {
   let list = adminProductsData.filter(p => {
     if (q && !p.name.toLowerCase().includes(q)) return false;
     if (genderF && p.gender !== genderF) return false;
+    if (productStatusTab === 'semua' && productStatus(p) === 'arsip') return false;
     if (productStatusTab !== 'semua' && productStatus(p) !== productStatusTab) return false;
     if (lowStockOnly && productLowestStock(p) > LOW_STOCK_THRESHOLD) return false;
     if (supplierF && p.supplier_id !== supplierF) return false;

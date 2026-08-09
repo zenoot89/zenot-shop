@@ -507,6 +507,14 @@
               <button class="admin-close" style="font-size:18px" onclick="closeProductForm()">✕</button>
             </div>
             <div class="form-group">
+              <label class="form-label">Foto Produk (maks. 9)</label>
+              <div class="upload-area" onclick="document.getElementById('p-photos').click()">
+                <p style="font-size:13px;color:var(--muted)">Klik untuk upload foto (bisa pilih beberapa sekaligus)</p>
+                <input type="file" id="p-photos" multiple accept="image/*" style="display:none" onchange="previewPhotos(this)"/>
+              </div>
+              <div class="upload-preview" id="upload-preview"></div>
+            </div>
+            <div class="form-group">
               <label class="form-label">Nama Produk</label>
               <input class="form-input" id="p-name" placeholder="Stripe Collar Knit"/>
             </div>
@@ -545,14 +553,6 @@
                 <input class="form-input" id="p-motif" placeholder="Motif (cth: Polos)"/>
                 <input class="form-input" id="p-dipakai-model" placeholder="Dipakai Model (cth: Ukuran L, Tinggi 170)"/>
               </div>
-            </div>
-            <div class="form-group">
-              <label class="form-label">Foto Produk (maks. 9)</label>
-              <div class="upload-area" onclick="document.getElementById('p-photos').click()">
-                <p style="font-size:13px;color:var(--muted)">Klik untuk upload foto (bisa pilih beberapa sekaligus)</p>
-                <input type="file" id="p-photos" multiple accept="image/*" style="display:none" onchange="previewPhotos(this)"/>
-              </div>
-              <div class="upload-preview" id="upload-preview"></div>
             </div>
             <div class="form-group">
               <label class="form-label">Variasi</label>
