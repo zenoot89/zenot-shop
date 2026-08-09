@@ -363,9 +363,13 @@ let productSalesMap = {};
 let lastRenderedIds = [];
 let productStatusTab = 'semua';
 let lowStockOnly = false;
+let noPromoOnly = false;
 
 function productStatus(p) {
   return p.status || (p.is_active ? 'aktif' : 'nonaktif');
+}
+function productHasPromo(p) {
+  return (p.variants || []).some(v => v.original_price != null);
 }
 function setProductStatusTab(tab) {
   productStatusTab = tab;
@@ -374,6 +378,11 @@ function setProductStatusTab(tab) {
 function toggleLowStockFilter() {
   lowStockOnly = !lowStockOnly;
   document.getElementById('pf-lowstock-chip')?.classList.toggle('active', lowStockOnly);
+  renderAdminProductList();
+}
+function toggleNoPromoFilter() {
+  noPromoOnly = !noPromoOnly;
+  document.getElementById('pf-nopromo-chip')?.classList.toggle('active', noPromoOnly);
   renderAdminProductList();
 }
 function renderStatusTabs() {
@@ -447,6 +456,7 @@ function renderAdminProductList() {
     if (productStatusTab === 'semua' && productStatus(p) === 'arsip') return false;
     if (productStatusTab !== 'semua' && productStatus(p) !== productStatusTab) return false;
     if (lowStockOnly && productLowestStock(p) > LOW_STOCK_THRESHOLD) return false;
+    if (noPromoOnly && productHasPromo(p)) return false;
     if (supplierF && p.supplier_id !== supplierF) return false;
     return true;
   });
@@ -477,7 +487,7 @@ function renderAdminProductList() {
         <div class="prod-cell-main">
           <div class="admin-product-img">${p.image_url?`<img src="${p.image_url}"/>`:`<div style="width:100%;height:100%;background:#f0ede8"></div>`}</div>
           <div>
-            <div class="prod-name">${p.name}${isLow?`<span class="badge-lowstock">Stok menipis</span>`:''}</div>
+            <div class="prod-name">${p.name}${isLow?`<span class="badge-lowstock">Stok menipis</span>`:''}${productHasPromo(p)?`<span class="badge-promo">Promo</span>`:''}</div>
             <div class="prod-sub">${p.gender==='wanita'?'Wanita':'Pria'} · ${vars.length} varian</div>
             ${vars.length ? `<button class="variant-toggle" onclick="toggleVariantBreakdown('${p.id}')">${isOpen?'Sembunyikan varian':'Lihat stok per varian'}</button>` : ''}
           </div>
@@ -534,10 +544,56 @@ async function bulkSetActive(active) {
 }
 async function bulkDelete() {
   if (!bulkSelected.size) return;
-  if (!confirm(`Hapus ${bulkSelected.size} produk terpilih? Tindakan ini tidak bisa dibatalkan.`)) return;
-  await sb.from('products').delete().in('id', [...bulkSelected]);
-  showToast('Produk terpilih dihapus');
-  loadAdminProducts();
+  const n = bulkSelected.size;
+  showConfirmDialog(`Apakah kamu yakin ingin menghapus ${n} produk terpilih? Semua data termasuk foto bakal terhapus permanen dan nggak bisa dikembalikan.`, async () => {
+    for (const id of [...bulkSelected]) {
+      await deleteProductCascade(id);
+    }
+    showToast(`${n} produk & semua datanya dihapus`);
+    loadAdminProducts();
+  });
+}
+
+let _confirmCallback = null;
+function showConfirmDialog(message, onConfirm) {
+  document.getElementById('confirm-message').textContent = message;
+  _confirmCallback = onConfirm;
+  document.getElementById('confirm-overlay').classList.add('open');
+}
+function closeConfirmDialog() {
+  document.getElementById('confirm-overlay').classList.remove('open');
+  _confirmCallback = null;
+}
+async function confirmDialogProceed() {
+  const cb = _confirmCallback;
+  document.getElementById('confirm-overlay').classList.remove('open');
+  _confirmCallback = null;
+  if (cb) await cb();
+}
+
+function extractStoragePath(url) {
+  if (!url) return null;
+  const marker = '/product-photos/';
+  const idx = url.indexOf(marker);
+  if (idx === -1) return null;
+  return url.slice(idx + marker.length);
+}
+
+async function deleteProductCascade(id) {
+  const p = adminProductsData.find(x => x.id === id);
+  const vars = p?.variants || [];
+  // Kumpulin semua url foto (produk + tiap varian warna), unik, biar sekali hapus aja
+  const urls = new Set();
+  (p?.image_urls || (p?.image_url ? [p.image_url] : [])).forEach(u => urls.add(u));
+  vars.forEach(v => { if (v.image_url) urls.add(v.image_url); });
+  const paths = [...urls].map(extractStoragePath).filter(Boolean);
+  if (paths.length) {
+    const { error: storageErr } = await sb.storage.from('product-photos').remove(paths);
+    if (storageErr) console.error('Gagal hapus foto di storage:', storageErr);
+  }
+  await sb.from('wishlists').delete().eq('product_id', id);
+  await sb.from('variants').delete().eq('product_id', id);
+  await sb.from('products').delete().eq('id', id);
 }
 
 async function toggleArchiveCurrent() {
@@ -554,9 +610,10 @@ async function toggleArchiveCurrent() {
 
 async function deleteProductFromForm() {
   if (!editingProductId) return;
-  if (!confirm('Hapus produk ini? Tindakan ini tidak bisa dibatalkan.')) return;
-  await sb.from('products').delete().eq('id', editingProductId);
-  showToast('Produk dihapus');
-  closeProductForm();
-  loadAdminProducts();
+  showConfirmDialog('Apakah kamu yakin ingin menghapus produk ini? Semua data termasuk foto bakal terhapus permanen dan nggak bisa dikembalikan.', async () => {
+    await deleteProductCascade(editingProductId);
+    showToast('Produk & semua datanya dihapus');
+    closeProductForm();
+    loadAdminProducts();
+  });
 }

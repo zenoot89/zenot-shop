@@ -264,6 +264,11 @@
     .prod-status-badge.on{background:#e6f6ea;color:#1a7a3c}
     .prod-status-badge.off{background:#f0ede8;color:var(--muted)}
     .prod-status-badge.archived{background:#f3e8e0;color:#8a5a2e}
+    .badge-promo{display:inline-block;background:#fff0e6;color:#c2540a;font-size:11px;font-family:'IBM Plex Mono',monospace;padding:2px 7px;border-radius:4px;margin-left:6px}
+    .confirm-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:600;align-items:center;justify-content:center;padding:16px}
+    .confirm-overlay.open{display:flex}
+    .confirm-modal{background:var(--surface);border-radius:var(--radius);padding:24px;width:100%;max-width:380px}
+    .confirm-modal-footer{display:flex;justify-content:flex-end;gap:10px;margin-top:18px}
     .variant-row td{padding:0 14px 14px;border-bottom:1px solid var(--border)}
     .prod-status-tabs{display:flex;gap:24px;border-bottom:1px solid var(--border);margin:14px 0 14px;overflow-x:auto}
     .pstab{padding:10px 2px;font-size:14px;color:var(--muted);cursor:pointer;border:none;background:none;border-bottom:2px solid transparent;white-space:nowrap;font-family:inherit}
@@ -460,6 +465,7 @@
                 <option value="wanita">Wanita</option>
               </select>
               <button class="prod-lowstock-chip" id="pf-lowstock-chip" onclick="toggleLowStockFilter()">Stok Menipis</button>
+              <button class="prod-lowstock-chip" id="pf-nopromo-chip" onclick="toggleNoPromoFilter()">Belum Ada Promo</button>
               <select class="form-input" id="pf-supplier" onchange="renderAdminProductList()" style="flex:1;min-width:130px">
                 <option value="">Semua Supplier</option>
               </select>
@@ -800,6 +806,17 @@
         </div>
 
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- CONFIRM DIALOG (generic, dipakai buat aksi hapus dkk) -->
+<div class="confirm-overlay" id="confirm-overlay">
+  <div class="confirm-modal">
+    <p id="confirm-message" style="font-size:14px;line-height:1.6"></p>
+    <div class="confirm-modal-footer">
+      <button class="btn-edit" onclick="closeConfirmDialog()">Batal</button>
+      <button class="btn-danger" onclick="confirmDialogProceed()">Hapus</button>
     </div>
   </div>
 </div>
