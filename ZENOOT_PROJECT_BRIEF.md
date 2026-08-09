@@ -64,6 +64,7 @@ Voucher aktif: `ZENOOT10` (10% min 100rb), `ZENOOT15` (15% min 200rb)
 - Footer gelap ala gomuda.id (kolom Terhubung, Bantuan, copyright — sebagian link masih placeholder)
 - Login/Daftar buyer via Google OAuth (Client ID/Secret sudah dipasang di Supabase, app masih status "testing" — cuma Test User yang terdaftar di Google Cloud Console yang bisa login sementara)
 - Login admin, Tab Pelanggan (Admin Terdaftar + Data Pelanggan buyer + Export CSV)
+- Homepage toko (index.html) dibikin clean: judul "Katalog/Semua Koleksi", tab kategori pills, dan tombol Filter dihapus dari tampilan default — langsung ke grid produk. Section itu (sisa: heading "Semua Koleksi" + counter produk) di-hide (`display:none`) dan cuma muncul via `showControls()` kalau buyer klik "Semua Koleksi" di modal produk / kategori footer / tab Beranda-Pria-Wanita bottom nav. Filter kategori sekarang murni lewat hamburger drawer (nggak ada UI filter terpisah lagi). Tombol quick-add "+" di kartu produk dihapus karena 100% duplikat sama klik kartu produk.
 
 **Belum/kandidat next steps:**
 - Wordmark "ZENOT" → "Zenoot" (koreksi brand, belum dikerjain)
@@ -71,6 +72,7 @@ Voucher aktif: `ZENOOT10` (10% min 100rb), `ZENOOT15` (15% min 200rb)
 - Filter kategori di halaman toko (index.html drawer/search) masih pakai sistem lama (flat per gender) — BELUM ikut struktur hierarki 3-level yang baru dibangun di admin
 - BUG AKTIF (per 7 Agustus 2026, belum dikonfirmasi kelar): setelah login Google, redirect balik ke "localhost". Root cause: Site URL di Supabase Authentication > URL Configuration masih default localhost. Fix: ganti ke `https://zenoot89.github.io/zenot-shop/index.html` + tambah Redirect URL `https://zenoot89.github.io/zenot-shop/**`
 - Scope Program Bundling belum dibahas detail
+- CATATAN INSIDEN (9 Agu 2026): sempat muncul "Produk tidak ditemukan" di homepage — dari console ketauan 401 Unauthorized ke endpoint Supabase (bukan RLS/data kosong). Sudah teratasi, tapi root cause pastinya (anon key di-rotate vs cuma cache browser) belum dikonfirmasi user — kalau kejadian lagi, cek dulu apakah `SUPABASE_KEY` di index.html masih sama dengan anon public key aktif di Supabase Settings > API
 - Program Reseller: harga khusus (bukan retail), verifikasi keanggotaan kirim PDF, transaksi lewat WA
 - Program Dropshipper: beli minimal 12 pcs/paket, harga grosir diatur admin
 
