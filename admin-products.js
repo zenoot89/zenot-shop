@@ -539,7 +539,8 @@ function resetProductForm() {
   const catBtn = document.getElementById('p-cat-btn');
   catBtn.textContent = 'Pilih kategori';
   catBtn.classList.remove('filled');
-  document.getElementById('p-gender').value='pria';
+  const genderSel = document.getElementById('p-gender');
+  if (genderSel && genderSel.options.length) genderSel.selectedIndex = 0;
   resetUploadState();
   resetVariantSystem();
 }
@@ -753,7 +754,7 @@ function renderAdminProductList() {
           <div class="admin-product-img">${p.image_url?`<img src="${p.image_url}"/>`:`<div style="width:100%;height:100%;background:#f0ede8"></div>`}</div>
           <div>
             <div class="prod-name">${p.name}${isLow?`<span class="badge-lowstock">Stok menipis</span>`:''}${productHasPromo(p)?`<span class="badge-promo">Promo</span>`:''}</div>
-            <div class="prod-sub">${p.gender==='wanita'?'Wanita':'Pria'} · ${vars.length} varian</div>
+            <div class="prod-sub">${capitalize(p.gender)} · ${vars.length} varian</div>
             ${vars.length ? `<button class="variant-toggle" onclick="toggleVariantBreakdown('${p.id}')">${isOpen?'Sembunyikan varian':'Lihat stok per varian'}</button>` : ''}
           </div>
         </div>

@@ -433,14 +433,7 @@
   </div>
   <div class="drawer-items">
     <button class="drawer-item" onclick="setFilterGender('all','all');toggleDrawer(false)">Semua Produk</button>
-    <button class="drawer-item drawer-item-expand" onclick="toggleDrawerSub('pria')">
-      Pria <span class="drawer-chevron" id="pria-chevron">⌄</span>
-    </button>
-    <div class="drawer-sub" id="drawer-sub-pria"></div>
-    <button class="drawer-item drawer-item-expand" onclick="toggleDrawerSub('wanita')">
-      Wanita <span class="drawer-chevron" id="wanita-chevron">⌄</span>
-    </button>
-    <div class="drawer-sub" id="drawer-sub-wanita"></div>
+    <div id="drawer-gender-sections"></div>
     <button class="drawer-item" onclick="openWishlist()">Wishlist</button>
     <button class="drawer-item" onclick="openCart();toggleDrawer(false)" style="display:flex;justify-content:space-between;align-items:center">
       Keranjang <span class="cart-count hidden" id="cart-count" style="position:static">0</span>
@@ -646,14 +639,7 @@
       <svg viewBox="0 0 24 24"><path d="M3 11.5L12 4l9 7.5"/><path d="M5 10v10h14V10"/></svg>
       <span>Beranda</span>
     </button>
-    <button class="bottom-nav-item" id="bn-pria" onclick="bottomNavGo('pria',this)">
-      <svg viewBox="0 0 24 24"><path d="M12 2a3 3 0 100 6 3 3 0 000-6z"/><path d="M6 22l1.5-9h9L18 22"/><path d="M9 13l3-2 3 2"/></svg>
-      <span>Pria</span>
-    </button>
-    <button class="bottom-nav-item" id="bn-wanita" onclick="bottomNavGo('wanita',this)">
-      <svg viewBox="0 0 24 24"><path d="M12 2a3 3 0 100 6 3 3 0 000-6z"/><path d="M8 22l1-8-3-3 2-3h8l2 3-3 3 1 8z"/></svg>
-      <span>Wanita</span>
-    </button>
+    <div id="bottom-nav-genders" style="display:contents"></div>
     <button class="bottom-nav-item" onclick="openAccount()">
       <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/></svg>
       <span>Akun</span>
@@ -692,6 +678,7 @@ let allCategories = [];
 // ===================== FORMAT =====================
 const fRp = n => 'Rp ' + Number(n).toLocaleString('id-ID');
 const discPct = (o,f) => Math.round((1-f/o)*100);
+const capitalize = s => s ? s.charAt(0).toUpperCase() + s.slice(1).toLowerCase() : '';
 
 // ===================== LOAD PRODUCTS =====================
 async function loadProducts() {
@@ -750,7 +737,7 @@ function renderProducts() {
             <svg viewBox="0 0 24 24"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg>
           </button>
         </div>
-        <p class="card-cat">${p.gender==='wanita'?'Wanita':'Pria'} · ${p.category}</p>
+        <p class="card-cat">${capitalize(p.gender)} · ${p.category}</p>
         <h3 class="card-name">${p.name}</h3>
         <div class="card-price-row">
           <span class="price-final">${fRp(minPrice)}</span>
@@ -765,9 +752,7 @@ function showControls() {
   document.getElementById('controls').classList.add('show');
 }
 function bottomNavGo(target, el) {
-  if (target === 'home') setFilterGender('all','all');
-  else if (target === 'pria') setFilterGender('pria','all');
-  else if (target === 'wanita') setFilterGender('wanita','all');
+  setFilterGender(target === 'home' ? 'all' : target, 'all');
   showControls();
   document.getElementById('controls').scrollIntoView({behavior:'smooth', block:'start'});
 }
@@ -777,7 +762,7 @@ function setFilterGender(gender, category, el) {
   document.querySelectorAll('.drawer-sub-item').forEach(t=>t.classList.remove('active'));
   if (el) el.classList.add('active');
   document.querySelectorAll('.bottom-nav-item').forEach(b=>b.classList.remove('active'));
-  const bnId = gender==='pria' ? 'bn-pria' : gender==='wanita' ? 'bn-wanita' : 'bn-home';
+  const bnId = gender === 'all' ? 'bn-home' : `bn-${gender}`;
   const bnEl = document.getElementById(bnId);
   if (bnEl) bnEl.classList.add('active');
   renderProducts();
@@ -808,17 +793,54 @@ function categoryLeavesForGender(gender) {
   const seen = new Set();
   return [...level2, ...level3].filter(c => { if (seen.has(c.name)) return false; seen.add(c.name); return true; });
 }
+// Ikon khusus buat gender yang udah dikenal (Pria/Wanita) di bottom nav.
+// Gender baru (mis. "Anak") otomatis pakai GENDER_ICON_DEFAULT — nggak perlu edit kode lagi tiap nambah gender baru dari Kelola Kategori.
+const GENDER_ICONS = {
+  pria: '<path d="M12 2a3 3 0 100 6 3 3 0 000-6z"/><path d="M6 22l1.5-9h9L18 22"/><path d="M9 13l3-2 3 2"/>',
+  wanita: '<path d="M12 2a3 3 0 100 6 3 3 0 000-6z"/><path d="M8 22l1-8-3-3 2-3h8l2 3-3 3 1 8z"/>'
+};
+const GENDER_ICON_DEFAULT = '<path d="M20 12l-8 8-9-9V4h7l10 8z"/><circle cx="7.5" cy="7.5" r="1.5" fill="currentColor" stroke="none"/>';
+
 function renderDrawerCategories() {
-  ['pria','wanita'].forEach(gender => {
-    const el = document.getElementById(`drawer-sub-${gender}`);
+  const topCats = allCategories.filter(c => !c.parent_id).sort((a,b)=>a.name.localeCompare(b.name));
+
+  // Drawer: satu section expand per kategori level-1 (dinamis, bukan cuma Pria/Wanita)
+  const drawerWrap = document.getElementById('drawer-gender-sections');
+  if (drawerWrap) {
+    drawerWrap.innerHTML = topCats.map(top => {
+      const gKey = top.name.toLowerCase();
+      return `<button class="drawer-item drawer-item-expand" onclick="toggleDrawerSub('${gKey}')">
+        ${capitalize(top.name)} <span class="drawer-chevron" id="${gKey}-chevron">⌄</span>
+      </button>
+      <div class="drawer-sub" id="drawer-sub-${gKey}"></div>`;
+    }).join('');
+  }
+  topCats.forEach(top => {
+    const gKey = top.name.toLowerCase();
+    const el = document.getElementById(`drawer-sub-${gKey}`);
     if (!el) return;
-    const leaves = categoryLeavesForGender(gender);
-    el.innerHTML = `<button class="drawer-sub-item" onclick="setFilterGender('${gender}','all',this);toggleDrawer(false)">Semua ${gender==='pria'?'Pria':'Wanita'}</button>` +
-      leaves.map(c => `<button class="drawer-sub-item" onclick="setFilterGender('${gender}','${c.name}',this);toggleDrawer(false)">${c.name}</button>`).join('');
+    const leaves = categoryLeavesForGender(gKey);
+    el.innerHTML = `<button class="drawer-sub-item" onclick="setFilterGender('${gKey}','all',this);toggleDrawer(false)">Semua ${capitalize(top.name)}</button>` +
+      leaves.map(c => `<button class="drawer-sub-item" onclick="setFilterGender('${gKey}','${c.name}',this);toggleDrawer(false)">${c.name}</button>`).join('');
   });
+
+  // Bottom nav: satu tab per kategori level-1 (dinamis)
+  const bnWrap = document.getElementById('bottom-nav-genders');
+  if (bnWrap) {
+    bnWrap.innerHTML = topCats.map(top => {
+      const gKey = top.name.toLowerCase();
+      const icon = GENDER_ICONS[gKey] || GENDER_ICON_DEFAULT;
+      return `<button class="bottom-nav-item" id="bn-${gKey}" onclick="bottomNavGo('${gKey}',this)">
+        <svg viewBox="0 0 24 24">${icon}</svg>
+        <span>${capitalize(top.name)}</span>
+      </button>`;
+    }).join('');
+  }
+
+  // Footer "Belanja": gabungan sub-kategori dari semua gender
   const belanjaEl = document.getElementById('footer-belanja-links');
   if (belanjaEl) {
-    const allLeaves = [...categoryLeavesForGender('pria'), ...categoryLeavesForGender('wanita')];
+    const allLeaves = topCats.flatMap(top => categoryLeavesForGender(top.name.toLowerCase()));
     const seen = new Set();
     const uniqueLeaves = allLeaves.filter(c => { if (seen.has(c.name)) return false; seen.add(c.name); return true; });
     belanjaEl.innerHTML = uniqueLeaves.length

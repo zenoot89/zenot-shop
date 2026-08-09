@@ -324,11 +324,13 @@
     .photo-item:active{cursor:grabbing}
     .photo-item-inner{width:96px;height:96px;border-radius:8px;overflow:hidden;border:1.5px solid var(--border)}
     .photo-item-inner img{width:100%;height:100%;object-fit:cover;display:block;pointer-events:none}
-    .photo-item-cover{position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,.55);color:#fff;font-size:9px;text-align:center;padding:3px 0;font-family:'IBM Plex Mono',monospace;letter-spacing:.06em;border-radius:0 0 6px 6px}
-    .photo-item-actions{position:absolute;inset:0;background:rgba(0,0,0,.42);display:flex;align-items:center;justify-content:center;gap:8px;opacity:0;transition:opacity .15s;border-radius:8px}
+    .photo-item-cover{position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,.55);color:#fff;font-size:9px;text-align:center;padding:3px 0;font-family:'IBM Plex Mono',monospace;letter-spacing:.06em;border-radius:0 0 6px 6px;transition:opacity .15s}
+    .photo-item:hover .photo-item-cover{opacity:0}
+    .photo-item-actions{position:absolute;left:0;right:0;bottom:0;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;gap:0;opacity:0;transition:opacity .15s;border-radius:0 0 8px 8px}
     .photo-item:hover .photo-item-actions{opacity:1}
-    .photo-action-btn{background:rgba(255,255,255,.92);border:none;border-radius:6px;width:30px;height:30px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#1a1a1a;font-size:13px;flex-shrink:0}
-    .photo-action-btn:hover{background:#fff}
+    .photo-action-btn{background:transparent;border:none;border-right:1px solid rgba(255,255,255,.25);flex:1;height:24px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;line-height:1}
+    .photo-action-btn:last-child{border-right:none}
+    .photo-action-btn:hover{background:rgba(255,255,255,.15)}
     .photo-item.dragging{opacity:.3;cursor:grabbing}
     .photo-item.drag-over .photo-item-inner{border:2px dashed var(--accent)}
     .photo-add-btn{width:96px;height:96px;border-radius:8px;border:2px dashed var(--border);background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;cursor:pointer;color:var(--muted);flex-shrink:0;transition:border-color .2s;padding:0}
@@ -524,8 +526,6 @@
               <input class="form-input" id="pf-search" placeholder="Cari nama produk..." oninput="renderAdminProductList()" style="flex:0 1 240px"/>
               <select class="form-input" id="pf-gender" onchange="renderAdminProductList()" style="flex:0 1 140px">
                 <option value="">Semua Gender</option>
-                <option value="pria">Pria</option>
-                <option value="wanita">Wanita</option>
               </select>
               <select class="form-input" id="pf-sort" onchange="renderAdminProductList()" style="flex:0 1 160px">
                 <option value="newest">Terbaru</option>
@@ -602,10 +602,7 @@
                 <div class="form-row">
                   <div class="form-group" style="margin-bottom:0">
                     <label class="form-label">Gender</label>
-                    <select class="form-input" id="p-gender">
-                      <option value="pria">Pria</option>
-                      <option value="wanita">Wanita</option>
-                    </select>
+                    <select class="form-input" id="p-gender"></select>
                   </div>
                   <div class="form-group" style="margin-bottom:0">
                     <label class="form-label">Supplier <span style="text-transform:none;font-weight:400">(admin only)</span></label>
@@ -620,7 +617,6 @@
                 <div class="pf-footer">
                   <button class="btn-pf-back" onclick="closeProductForm()">Batal</button>
                   <div class="pf-footer-right">
-                    <button class="btn-primary" id="save-product-btn" onclick="saveProduct()" style="padding:11px 24px">Simpan &amp; Tampilkan</button>
                     <button class="btn-pf-next" onclick="pfSwitchTab(1)">Selanjutnya →</button>
                   </div>
                 </div>
@@ -654,7 +650,6 @@
                 <div class="pf-footer">
                   <button class="btn-pf-back" onclick="pfSwitchTab(0)">← Kembali</button>
                   <div class="pf-footer-right">
-                    <button class="btn-primary" onclick="saveProduct()" style="padding:11px 24px">Simpan &amp; Tampilkan</button>
                     <button class="btn-pf-next" onclick="pfSwitchTab(2)">Selanjutnya →</button>
                   </div>
                 </div>
@@ -670,7 +665,6 @@
                 <div class="pf-footer">
                   <button class="btn-pf-back" onclick="pfSwitchTab(1)">← Kembali</button>
                   <div class="pf-footer-right">
-                    <button class="btn-primary" onclick="saveProduct()" style="padding:11px 24px">Simpan &amp; Tampilkan</button>
                     <button class="btn-pf-next" onclick="pfSwitchTab(3)">Selanjutnya →</button>
                   </div>
                 </div>
@@ -739,7 +733,6 @@
                 <div class="pf-footer">
                   <button class="btn-pf-back" onclick="pfSwitchTab(2)">← Kembali</button>
                   <div class="pf-footer-right">
-                    <button class="btn-primary" onclick="saveProduct()" style="padding:11px 24px">Simpan &amp; Tampilkan</button>
                     <button class="btn-pf-next" onclick="pfSwitchTab(4)">Selanjutnya →</button>
                   </div>
                 </div>
@@ -994,6 +987,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 let adminUser = null;
 let allCategories = [];
 let allSuppliers = [];
+const capitalize = s => s ? s.charAt(0).toUpperCase() + s.slice(1).toLowerCase() : '';
 
 // ===================== PRODUCT FORM TABS =====================
 let pfCurrentTab = 0;
@@ -1225,6 +1219,7 @@ async function loadCategories() {
   const { data } = await sb.from('categories').select('*').order('name');
   allCategories = data || [];
   populateCategoryFilter();
+  populateGenderOptions();
   // Update dropdown di promosi
   ['promo-product-id','flash-product-id'].forEach(id => {
     const el = document.getElementById(id);
@@ -1243,6 +1238,26 @@ function populateCategoryFilter() {
   const opts = leaves.map(c => ({id: c.id, label: categoryBreadcrumb(c.id)})).sort((a,b)=>a.label.localeCompare(b.label));
   sel.innerHTML = '<option value="">Kategori</option>' + opts.map(o => `<option value="${o.id}">${o.label}</option>`).join('');
   if (cur) sel.value = cur;
+}
+
+// Gender = kategori level-1 (Pria/Wanita/Anak/dst) — dinamis, ngikutin apapun yang ada di Kelola Kategori.
+// Nambah gender baru cukup lewat tab Data Master > Kategori, dropdown ini otomatis ke-update, nggak perlu edit kode.
+function populateGenderOptions() {
+  const topCats = allCategories.filter(c => !c.parent_id).sort((a,b)=>a.name.localeCompare(b.name));
+
+  const formSel = document.getElementById('p-gender');
+  if (formSel) {
+    const cur = formSel.value;
+    formSel.innerHTML = topCats.map(c => `<option value="${c.name.toLowerCase()}">${c.name}</option>`).join('');
+    if (cur && topCats.some(c => c.name.toLowerCase() === cur)) formSel.value = cur;
+  }
+
+  const filterSel = document.getElementById('pf-gender');
+  if (filterSel) {
+    const cur = filterSel.value;
+    filterSel.innerHTML = '<option value="">Semua Gender</option>' + topCats.map(c => `<option value="${c.name.toLowerCase()}">${c.name}</option>`).join('');
+    if (cur) filterSel.value = cur;
+  }
 }
 
 // ---- Kelola Kategori tab (admin: tambah/hapus) ----
