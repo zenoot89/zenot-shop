@@ -352,7 +352,7 @@ function editProduct(id) {
   document.getElementById('product-list-view').classList.add('hidden');
   document.getElementById('product-form-card').classList.remove('hidden');
   document.getElementById('edit-actions-extra')?.classList.remove('hidden');
-  document.getElementById('archive-toggle-btn').textContent = productStatus(p) === 'arsip' ? 'Aktifkan Kembali' : 'Arsipkan';
+  document.getElementById('status-toggle-btn').textContent = productStatus(p) === 'nonaktif' ? 'Aktifkan' : 'Nonaktifkan';
   window.scrollTo({top:0, behavior:'smooth'});
 }
 
@@ -388,13 +388,12 @@ function toggleNoPromoFilter() {
 function renderStatusTabs() {
   const el = document.getElementById('prod-status-tabs');
   if (!el) return;
-  const counts = { semua: 0, aktif: 0, nonaktif: 0, arsip: 0 };
-  adminProductsData.forEach(p => { const s = productStatus(p); if (counts[s] !== undefined) counts[s]++; if (s !== 'arsip') counts.semua++; });
+  const counts = { semua: adminProductsData.length, aktif: 0, nonaktif: 0 };
+  adminProductsData.forEach(p => { const s = productStatus(p); if (counts[s] !== undefined) counts[s]++; });
   const tabs = [
     ['semua', 'Semua'],
     ['aktif', 'Aktif'],
     ['nonaktif', 'Belum Ditampilkan'],
-    ['arsip', 'Arsip'],
   ];
   el.innerHTML = tabs.map(([key,label]) =>
     `<button class="pstab ${productStatusTab===key?'active':''}" onclick="setProductStatusTab('${key}')">${label} (${counts[key]})</button>`
@@ -453,7 +452,6 @@ function renderAdminProductList() {
   let list = adminProductsData.filter(p => {
     if (q && !p.name.toLowerCase().includes(q)) return false;
     if (genderF && p.gender !== genderF) return false;
-    if (productStatusTab === 'semua' && productStatus(p) === 'arsip') return false;
     if (productStatusTab !== 'semua' && productStatus(p) !== productStatusTab) return false;
     if (lowStockOnly && productLowestStock(p) > LOW_STOCK_THRESHOLD) return false;
     if (noPromoOnly && productHasPromo(p)) return false;
@@ -498,7 +496,7 @@ function renderAdminProductList() {
       <td class="prod-stock-num">${productTotalStock(p)}</td>
       <td class="prod-sold-num">${sold}</td>
       <td>${p.supplier_id ? supplierName(p.supplier_id) : (p.supplier || '-')}</td>
-      <td>${(() => { const s = productStatus(p); const cls = s==='aktif'?'on':s==='arsip'?'archived':'off'; const label = s==='aktif'?'Aktif':s==='arsip'?'Arsip':'Belum Ditampilkan'; return `<span class="prod-status-badge ${cls}">${label}</span>`; })()}</td>
+      <td>${(() => { const s = productStatus(p); const cls = s==='aktif'?'on':'off'; const label = s==='aktif'?'Aktif':'Belum Ditampilkan'; return `<span class="prod-status-badge ${cls}">${label}</span>`; })()}</td>
       <td>
         <button class="btn-edit" onclick="editProduct('${p.id}')">Edit</button>
       </td>
@@ -596,14 +594,14 @@ async function deleteProductCascade(id) {
   await sb.from('products').delete().eq('id', id);
 }
 
-async function toggleArchiveCurrent() {
+async function toggleActiveCurrent() {
   if (!editingProductId) return;
   const p = adminProductsData.find(x => x.id === editingProductId);
   if (!p) return;
-  const isArchived = productStatus(p) === 'arsip';
-  const newStatus = isArchived ? 'aktif' : 'arsip';
+  const isActive = productStatus(p) === 'aktif';
+  const newStatus = isActive ? 'nonaktif' : 'aktif';
   await sb.from('products').update({status: newStatus, is_active: newStatus === 'aktif'}).eq('id', editingProductId);
-  showToast(isArchived ? 'Produk diaktifkan kembali ✓' : 'Produk diarsipkan ✓');
+  showToast(isActive ? 'Produk dinonaktifkan (belum ditampilkan) ✓' : 'Produk diaktifkan ✓');
   closeProductForm();
   loadAdminProducts();
 }
