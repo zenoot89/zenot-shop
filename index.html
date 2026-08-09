@@ -175,8 +175,13 @@
     .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;align-items:flex-end;justify-content:center}
     .modal-overlay.open{display:flex}
     @media(min-width:600px){.modal-overlay{align-items:center}}
-    .modal{background:var(--surface);border-radius:var(--radius) var(--radius) 0 0;width:100%;max-width:480px;max-height:90vh;display:flex;flex-direction:column;overflow:hidden}
-    .modal-scroll{overflow-y:auto;padding:28px 24px 24px;flex:1;min-height:0}
+    .modal{background:var(--surface);border-radius:var(--radius) var(--radius) 0 0;width:100%;max-width:480px;max-height:90vh;display:flex;flex-direction:column;overflow:hidden;position:relative}
+    .modal-top-bar{position:absolute;top:0;left:0;right:0;z-index:5;display:flex;align-items:center;justify-content:space-between;padding:10px 10px;background:linear-gradient(to bottom, rgba(0,0,0,.28), rgba(0,0,0,0));pointer-events:none}
+    .modal-top-bar .modal-icon-btn{pointer-events:auto;background:rgba(255,255,255,.85);border-radius:50%;width:32px;height:32px;color:var(--text)}
+    .modal-top-bar .modal-icon-btn svg{width:17px;height:17px}
+    .modal-top-bar-brand{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:13px;letter-spacing:.1em;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.4)}
+    .modal-scroll{overflow-y:auto;padding:0 24px 24px;flex:1;min-height:0}
+    .modal-price-actions{display:flex;align-items:center;gap:2px;flex-shrink:0}
     .modal-sticky-bar{border-top:1px solid var(--border);background:var(--surface);padding:14px 24px;padding-bottom:calc(14px + env(safe-area-inset-bottom));flex-shrink:0}
     .modal-sticky-total{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px;font-size:13px;color:var(--sec)}
     .modal-sticky-total-val{font-family:'IBM Plex Mono',monospace;font-size:18px;font-weight:600;color:var(--text)}
@@ -211,9 +216,6 @@
     .modal-carousel::-webkit-scrollbar{display:none}
     .modal-carousel-slide{flex:0 0 100%;scroll-snap-align:start;height:100%}
     .modal-carousel-slide img{width:100%;height:100%;object-fit:cover;display:block}
-    .modal-carousel-topbar{position:absolute;top:12px;left:0;right:0;display:flex;justify-content:flex-end;gap:8px;padding:0 12px}
-    .modal-icon-btn-t{width:32px;height:32px;border-radius:50%;background:rgba(0,0,0,.35);border:none;color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px}
-    .modal-icon-btn-t svg{width:16px;height:16px;stroke:#fff;stroke-width:2}
     .modal-carousel-dots{position:absolute;bottom:10px;left:0;right:0;display:flex;justify-content:center;gap:5px}
     .modal-carousel-dot{width:5px;height:5px;border-radius:50%;background:rgba(255,255,255,.55)}
     .modal-carousel-dot.active{background:#fff;width:14px;border-radius:3px}
@@ -532,15 +534,18 @@
 <!-- PRODUCT MODAL -->
 <div class="modal-overlay" id="product-modal" onclick="closeModalBg(event)">
   <div class="modal">
+    <div class="modal-top-bar">
+      <button class="modal-icon-btn" onclick="closeProductModal()" aria-label="Kembali">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M15 18l-6-6 6-6"/></svg>
+      </button>
+      <span class="modal-top-bar-brand">ZENOOT</span>
+      <button class="modal-icon-btn" onclick="openCart()" aria-label="Keranjang">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 8h12l-1 12H7L6 8z"/><path d="M9 8V6a3 3 0 016 0v2"/></svg>
+      </button>
+    </div>
     <div class="modal-scroll">
       <div class="modal-carousel-wrap" id="modal-carousel-wrap">
         <div class="modal-carousel" id="modal-carousel"></div>
-        <div class="modal-carousel-topbar">
-          <button class="modal-icon-btn-t" onclick="shareProduct()" aria-label="Bagikan">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 10.5l6.8-3.9M8.6 13.5l6.8 3.9"/></svg>
-          </button>
-          <button class="modal-icon-btn-t" onclick="closeProductModal()" aria-label="Tutup">✕</button>
-        </div>
         <div class="modal-carousel-dots" id="modal-carousel-dots"></div>
       </div>
       <div class="modal-title-row">
@@ -552,9 +557,14 @@
           <span class="modal-price-orig" id="modal-price-orig"></span>
           <span class="modal-voucher-badge hidden" id="modal-voucher-badge"></span>
         </div>
-        <button class="modal-icon-btn" id="modal-wish-btn" onclick="toggleWishlist(activeProduct.id, this)" aria-label="Wishlist">
-          <svg viewBox="0 0 24 24"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg>
-        </button>
+        <div class="modal-price-actions">
+          <button class="modal-icon-btn" onclick="shareProduct()" aria-label="Bagikan">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 10.5l6.8-3.9M8.6 13.5l6.8 3.9"/></svg>
+          </button>
+          <button class="modal-icon-btn" id="modal-wish-btn" onclick="toggleWishlist(activeProduct.id, this)" aria-label="Wishlist">
+            <svg viewBox="0 0 24 24"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg>
+          </button>
+        </div>
       </div>
       <div id="modal-disc-label"></div>
       <p class="modal-sec-label">Warna</p>
