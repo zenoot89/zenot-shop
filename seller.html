@@ -485,6 +485,7 @@
                 <option value="sold-desc">Terjual Terbanyak</option>
                 <option value="supplier">Supplier A-Z</option>
               </select>
+              <button class="prod-pill-select" id="pf-selectmode-btn" onclick="toggleSelectMode()" style="margin-left:auto;cursor:pointer">Pilih Produk</button>
             </div>
             <div class="prod-bulkbar hidden" id="prod-bulkbar">
               <span id="prod-bulk-count">0 dipilih</span>
@@ -499,7 +500,7 @@
             <table class="prod-table">
               <thead>
                 <tr>
-                  <th style="width:34px"><input type="checkbox" class="prod-check" onchange="toggleSelectAll(this.checked)"/></th>
+                  <th style="width:34px" class="hidden" id="col-check-th"><input type="checkbox" class="prod-check" onchange="toggleSelectAll(this.checked)"/></th>
                   <th>Produk</th>
                   <th>Kategori</th>
                   <th>Harga</th>
@@ -1070,6 +1071,7 @@ function categoryBreadcrumb(id) { return catPath(id).map(catName).join(' > '); }
 async function loadCategories() {
   const { data } = await sb.from('categories').select('*').order('name');
   allCategories = data || [];
+  populateCategoryFilter();
   // Update dropdown di promosi
   ['promo-product-id','flash-product-id'].forEach(id => {
     const el = document.getElementById(id);
@@ -1078,6 +1080,16 @@ async function loadCategories() {
         adminProductsData.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
     }
   });
+}
+
+function populateCategoryFilter() {
+  const sel = document.getElementById('pf-category');
+  if (!sel || typeof allCategories === 'undefined') return;
+  const cur = sel.value;
+  const leaves = allCategories.filter(c => !allCategories.some(x => x.parent_id === c.id));
+  const opts = leaves.map(c => ({id: c.id, label: categoryBreadcrumb(c.id)})).sort((a,b)=>a.label.localeCompare(b.label));
+  sel.innerHTML = '<option value="">Kategori</option>' + opts.map(o => `<option value="${o.id}">${o.label}</option>`).join('');
+  if (cur) sel.value = cur;
 }
 
 // ---- Kelola Kategori tab (admin: tambah/hapus) ----

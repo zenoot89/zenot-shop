@@ -364,6 +364,16 @@ let lastRenderedIds = [];
 let productStatusTab = 'semua';
 let lowStockOnly = false;
 let noPromoOnly = false;
+let selectModeOn = false;
+
+function toggleSelectMode() {
+  selectModeOn = !selectModeOn;
+  bulkSelected.clear();
+  document.getElementById('col-check-th')?.classList.toggle('hidden', !selectModeOn);
+  const btn = document.getElementById('pf-selectmode-btn');
+  if (btn) { btn.textContent = selectModeOn ? 'Batal Pilih' : 'Pilih Produk'; btn.classList.toggle('active', selectModeOn); }
+  renderAdminProductList();
+}
 
 function productStatus(p) {
   return p.status || (p.is_active ? 'aktif' : 'nonaktif');
@@ -426,17 +436,7 @@ async function loadAdminProducts() {
   ]);
   adminProductsData = prodRes.data || [];
   bulkSelected.clear();
-  populateCategoryFilter();
   renderAdminProductList();
-}
-
-function populateCategoryFilter() {
-  const sel = document.getElementById('pf-category');
-  if (!sel) return;
-  const cur = sel.value;
-  const names = [...new Set(adminProductsData.map(p => p.category).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
-  sel.innerHTML = '<option value="">Kategori</option>' + names.map(n => `<option value="${n}">${n}</option>`).join('');
-  if (cur) sel.value = cur;
 }
 
 function productLowestStock(p) {
@@ -452,7 +452,7 @@ function renderAdminProductList() {
   const el = document.getElementById('admin-products-render');
   if (!el) return;
   renderStatusTabs();
-  if (!adminProductsData.length) { el.innerHTML='<tr><td colspan="9" style="color:var(--muted);font-size:13px;padding:20px">Belum ada produk.</td></tr>'; updateBulkBar(); return; }
+  if (!adminProductsData.length) { el.innerHTML=`<tr><td colspan="${selectModeOn?9:8}" style="color:var(--muted);font-size:13px;padding:20px">Belum ada produk.</td></tr>`; updateBulkBar(); return; }
 
   const q = (document.getElementById('pf-search')?.value || '').trim().toLowerCase();
   const genderF = document.getElementById('pf-gender')?.value || '';
@@ -467,7 +467,7 @@ function renderAdminProductList() {
     if (lowStockOnly && productLowestStock(p) > LOW_STOCK_THRESHOLD) return false;
     if (noPromoOnly && productHasPromo(p)) return false;
     if (supplierF && p.supplier_id !== supplierF) return false;
-    if (categoryF && p.category !== categoryF) return false;
+    if (categoryF && p.category_id !== categoryF) return false;
     return true;
   });
 
@@ -478,7 +478,7 @@ function renderAdminProductList() {
   else if (sortF === 'supplier') list = list.slice().sort((a,b)=>supplierName(a.supplier_id).localeCompare(supplierName(b.supplier_id)));
   // 'newest' sudah urutan default dari query (created_at desc)
 
-  if (!list.length) { el.innerHTML='<tr><td colspan="9" style="color:var(--muted);font-size:13px;padding:20px">Nggak ada produk yang cocok dengan filter.</td></tr>'; updateBulkBar(); return; }
+  if (!list.length) { el.innerHTML=`<tr><td colspan="${selectModeOn?9:8}" style="color:var(--muted);font-size:13px;padding:20px">Nggak ada produk yang cocok dengan filter.</td></tr>`; updateBulkBar(); return; }
 
   el.innerHTML = list.map(p => {
     const vars = p.variants || [];
@@ -492,7 +492,7 @@ function renderAdminProductList() {
     const sold = productSalesMap[p.id] || 0;
     const row = `
     <tr>
-      <td><input type="checkbox" class="prod-check" ${bulkSelected.has(p.id)?'checked':''} onchange="toggleBulkCheck('${p.id}',this.checked)"/></td>
+      ${selectModeOn ? `<td><input type="checkbox" class="prod-check" ${bulkSelected.has(p.id)?'checked':''} onchange="toggleBulkCheck('${p.id}',this.checked)"/></td>` : ''}
       <td>
         <div class="prod-cell-main">
           <div class="admin-product-img">${p.image_url?`<img src="${p.image_url}"/>`:`<div style="width:100%;height:100%;background:#f0ede8"></div>`}</div>
@@ -513,7 +513,7 @@ function renderAdminProductList() {
         <button class="btn-edit" onclick="editProduct('${p.id}')">Edit</button>
       </td>
     </tr>`;
-    const variantRow = isOpen ? `<tr class="variant-row"><td></td><td colspan="8"><div class="variant-breakdown">${breakdown}</div></td></tr>` : '';
+    const variantRow = isOpen ? `<tr class="variant-row">${selectModeOn?'<td></td>':''}<td colspan="8"><div class="variant-breakdown">${breakdown}</div></td></tr>` : '';
     return row + variantRow;
   }).join('');
   lastRenderedIds = list.map(p => p.id);
