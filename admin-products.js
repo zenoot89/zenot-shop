@@ -710,6 +710,7 @@ function editProduct(id) {
   // Prefill variant tag system dari data lama
   resetVariantSystem();
   const vars = p.variants || [];
+  console.log('[editProduct] id:', id, 'variants count:', vars.length, vars);
   // Build unique colors dan sizes
   const seenColors = new Map();
   const seenSizes = new Set();
@@ -732,6 +733,8 @@ function editProduct(id) {
   document.getElementById('edit-actions-extra')?.classList.remove('hidden');
   document.getElementById('status-toggle-btn').textContent = productStatus(p) === 'nonaktif' ? 'Aktifkan' : 'Arsipkan';
   if (typeof pfResetTabs === 'function') pfResetTabs();
+  // render ulang setelah DOM visible dan tab reset ke 1
+  requestAnimationFrame(() => { renderColorTags(); renderSizeTags(); });
   window.scrollTo({top:0, behavior:'smooth'});
 }
 
