@@ -52,6 +52,110 @@ function syncPickerToHex() {
 
 function removeColorTag(i) { colorTags.splice(i,1); renderColorTags(); }
 
+// ===================== SIZE DROPDOWN (Shopee-style) =====================
+const SIZE_OPTIONS = {
+  'Standar': ['XS','S','M','L','XL','XXL','XXXL','XXXXL','XXS'],
+  'Anak': ['Anak 0-6 bln','Anak 6-12 bln','Anak 1-2 thn','Anak 2-3 thn','Anak 3-4 thn','Anak 4-5 thn','Anak 5-6 thn','Anak 6-7 thn','Anak 7-8 thn','Anak 8-9 thn','Anak 9-10 thn','Anak 10-11 thn','Anak 11-12 thn'],
+  'Celana (inch)': ['27','28','29','30','31','32','33','34','36','38','40'],
+  'Lainnya': ['All Size','Free Size','Oversize','Jumbo']
+};
+// flatten for search
+const SIZE_FLAT = Object.entries(SIZE_OPTIONS).flatMap(([cat, items]) => items.map(v => ({cat, v})));
+
+let _sizeDropFocusIdx = -1;
+
+function sizeDropdownShow() {
+  sizeDropdownFilter(document.getElementById('v2-input')?.value || '');
+}
+
+function sizeDropdownFilter(query) {
+  const dd = document.getElementById('size-dropdown');
+  if (!dd) return;
+  const q = query.trim().toLowerCase();
+  // filter
+  const filtered = q
+    ? SIZE_FLAT.filter(s => s.v.toLowerCase().includes(q))
+    : SIZE_FLAT;
+
+  if (filtered.length === 0 && !q) { dd.style.display='none'; return; }
+
+  let html = '';
+  if (!q) {
+    // grouped by category
+    let lastCat = null;
+    SIZE_FLAT.forEach(({cat, v}) => {
+      if (cat !== lastCat) {
+        html += `<div class="size-drop-divider">${cat}</div>`;
+        lastCat = cat;
+      }
+      const sel = sizeTags.includes(v);
+      html += `<div class="size-drop-item${sel?' selected':''}" onmousedown="sizeDropSelect('${v}')">${v}${sel?'<span class="size-check">✓</span>':''}</div>`;
+    });
+  } else {
+    filtered.forEach(({v}) => {
+      const sel = sizeTags.includes(v);
+      html += `<div class="size-drop-item${sel?' selected':''}" onmousedown="sizeDropSelect('${v}')">${v}${sel?'<span class="size-check">✓</span>':''}</div>`;
+    });
+    // jika tidak ada di list, tawarkan "Tambah custom"
+    const exactMatch = SIZE_FLAT.some(s => s.v.toLowerCase() === q);
+    if (!exactMatch) {
+      html += `<div class="size-drop-item" style="color:var(--accent);font-style:italic" onmousedown="sizeDropSelect('${query.trim()}')">+ Tambah "${query.trim()}"</div>`;
+    }
+  }
+
+  dd.innerHTML = html;
+  dd.style.display = 'block';
+  _sizeDropFocusIdx = -1;
+}
+
+function sizeDropSelect(val) {
+  if (!val) return;
+  if (sizeTags.includes(val)) {
+    // toggle off
+    sizeTags.splice(sizeTags.indexOf(val), 1);
+  } else {
+    sizeTags.push(val);
+  }
+  const input = document.getElementById('v2-input');
+  if (input) { input.value = ''; input.focus(); }
+  renderSizeTags();
+  sizeDropdownFilter('');
+}
+
+function sizeInputKeydown(e) {
+  const dd = document.getElementById('size-dropdown');
+  const items = dd ? [...dd.querySelectorAll('.size-drop-item')] : [];
+  if (e.key === 'ArrowDown') {
+    e.preventDefault();
+    _sizeDropFocusIdx = Math.min(_sizeDropFocusIdx + 1, items.length - 1);
+    items.forEach((el,i) => el.classList.toggle('focused', i === _sizeDropFocusIdx));
+    items[_sizeDropFocusIdx]?.scrollIntoView({block:'nearest'});
+  } else if (e.key === 'ArrowUp') {
+    e.preventDefault();
+    _sizeDropFocusIdx = Math.max(_sizeDropFocusIdx - 1, 0);
+    items.forEach((el,i) => el.classList.toggle('focused', i === _sizeDropFocusIdx));
+    items[_sizeDropFocusIdx]?.scrollIntoView({block:'nearest'});
+  } else if (e.key === 'Enter') {
+    e.preventDefault();
+    if (_sizeDropFocusIdx >= 0 && items[_sizeDropFocusIdx]) {
+      items[_sizeDropFocusIdx].dispatchEvent(new MouseEvent('mousedown'));
+    } else {
+      const val = document.getElementById('v2-input')?.value.trim();
+      if (val) sizeDropSelect(val);
+    }
+  } else if (e.key === 'Escape') {
+    if (dd) dd.style.display = 'none';
+  }
+}
+
+// tutup dropdown saat klik di luar
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('#v2-input') && !e.target.closest('#size-dropdown')) {
+    const dd = document.getElementById('size-dropdown');
+    if (dd) dd.style.display = 'none';
+  }
+});
+
 function addSizePreset(s) {
   if (sizeTags.includes(s)) return;
   sizeTags.push(s);

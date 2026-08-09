@@ -357,6 +357,12 @@
     .crop-reset-btn:hover{border-color:var(--sep)}
     .crop-modal-footer{display:flex;justify-content:flex-end;gap:10px;padding:14px 20px;border-top:1px solid var(--border);flex-shrink:0}
 
+    .size-drop-item{padding:9px 14px;font-size:13px;cursor:pointer;color:var(--text);display:flex;align-items:center;justify-content:space-between}
+    .size-drop-item:hover,.size-drop-item.focused{background:var(--bg)}
+    .size-drop-item.selected{color:var(--accent)}
+    .size-drop-item .size-check{font-size:12px;color:var(--accent)}
+    .size-drop-divider{padding:5px 14px 3px;font-size:10px;font-family:'IBM Plex Mono',monospace;letter-spacing:.08em;color:var(--muted);text-transform:uppercase;border-top:1px solid var(--border);margin-top:2px}
+
     /* ===== PRODUCT FORM MULTI-TAB ===== */
     .pf-tabs{display:flex;border-bottom:1px solid var(--border);margin-bottom:0;overflow-x:auto;gap:0;background:var(--bg);border-radius:var(--radius) var(--radius) 0 0;flex-shrink:0}
     .pf-tab{padding:12px 18px;font-size:13px;font-weight:500;color:var(--muted);cursor:pointer;border:none;background:none;border-bottom:2px solid transparent;white-space:nowrap;transition:color .15s,border-color .15s;display:flex;align-items:center;gap:7px;font-family:'Inter',sans-serif}
@@ -694,14 +700,10 @@
                       <span style="font-size:13px;font-weight:600">Variasi 2 — Ukuran</span>
                     </div>
                     <div class="var-tag-row" id="v2-tags" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px"></div>
-                    <div style="display:flex;gap:8px;flex-wrap:wrap">
-                      <button class="filter-tab" onclick="addSizePreset('S')">S</button>
-                      <button class="filter-tab" onclick="addSizePreset('M')">M</button>
-                      <button class="filter-tab" onclick="addSizePreset('L')">L</button>
-                      <button class="filter-tab" onclick="addSizePreset('XL')">XL</button>
-                      <button class="filter-tab" onclick="addSizePreset('XXL')">XXL</button>
-                      <button class="filter-tab" onclick="addSizePreset('All Size')">All Size</button>
-                      <input class="form-input" id="v2-input" placeholder="Ukuran custom (Enter)" style="flex:1;min-width:140px" onkeydown="addSizeTag(event)"/>
+                    <div style="position:relative">
+                      <input class="form-input" id="v2-input" placeholder="Ketik atau pilih ukuran..." autocomplete="off"
+                             oninput="sizeDropdownFilter(this.value)" onkeydown="sizeInputKeydown(event)" onfocus="sizeDropdownShow()" style="width:100%"/>
+                      <div id="size-dropdown" style="display:none;position:absolute;top:calc(100% + 4px);left:0;right:0;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);z-index:200;max-height:200px;overflow-y:auto;box-shadow:0 4px 16px rgba(0,0,0,.1)"></div>
                     </div>
                   </div>
 
