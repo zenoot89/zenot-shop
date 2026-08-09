@@ -35,6 +35,21 @@ function addColorTag(e) {
   renderColorTags();
 }
 
+// Sinkron manual: ketik/paste hex di kotak teks -> update swatch color picker
+function syncHexToPicker() {
+  const hexInput = document.getElementById('v1-color-hex');
+  const picker = document.getElementById('v1-color-picker');
+  let v = hexInput.value.trim();
+  if (v && !v.startsWith('#')) v = '#' + v;
+  if (/^#[0-9A-Fa-f]{6}$/.test(v)) picker.value = v;
+}
+// Sinkron balik: pilih warna lewat swatch -> update kotak teks hex
+function syncPickerToHex() {
+  const hexInput = document.getElementById('v1-color-hex');
+  const picker = document.getElementById('v1-color-picker');
+  if (hexInput) hexInput.value = picker.value.toUpperCase();
+}
+
 function removeColorTag(i) { colorTags.splice(i,1); renderColorTags(); }
 
 function addSizePreset(s) {
@@ -127,6 +142,10 @@ function resetVariantSystem() {
   ['v1-tags','v2-tags'].forEach(id => { const el = document.getElementById(id); if(el) el.innerHTML=''; });
   const wrap = document.getElementById('variant-table-wrap');
   if (wrap) wrap.style.display='none';
+  const picker = document.getElementById('v1-color-picker');
+  const hexInput = document.getElementById('v1-color-hex');
+  if (picker) picker.value = '#1a1a1a';
+  if (hexInput) hexInput.value = '#1A1A1A';
 }
 
 function compressImage(file, maxDim = 1200, quality = 0.82) {

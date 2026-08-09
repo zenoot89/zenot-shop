@@ -801,8 +801,21 @@ const GENDER_ICONS = {
 };
 const GENDER_ICON_DEFAULT = '<path d="M20 12l-8 8-9-9V4h7l10 8z"/><circle cx="7.5" cy="7.5" r="1.5" fill="currentColor" stroke="none"/>';
 
+// Urutan tampil gender yang diminta user: Wanita, Pria, Anak dulu — gender baru yang belum ada di daftar ini
+// otomatis nyusul di belakang (urut alfabet), jadi nggak perlu edit kode tiap nambah gender baru.
+const GENDER_ORDER = ['wanita','pria','anak'];
+function sortByGenderOrder(cats) {
+  return [...cats].sort((a,b) => {
+    const ai = GENDER_ORDER.indexOf(a.name.toLowerCase());
+    const bi = GENDER_ORDER.indexOf(b.name.toLowerCase());
+    const aRank = ai === -1 ? GENDER_ORDER.length : ai;
+    const bRank = bi === -1 ? GENDER_ORDER.length : bi;
+    return aRank !== bRank ? aRank - bRank : a.name.localeCompare(b.name);
+  });
+}
+
 function renderDrawerCategories() {
-  const topCats = allCategories.filter(c => !c.parent_id).sort((a,b)=>a.name.localeCompare(b.name));
+  const topCats = sortByGenderOrder(allCategories.filter(c => !c.parent_id));
 
   // Drawer: satu section expand per kategori level-1 (dinamis, bukan cuma Pria/Wanita)
   const drawerWrap = document.getElementById('drawer-gender-sections');

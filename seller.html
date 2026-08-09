@@ -683,7 +683,8 @@
                     <div class="var-tag-row" id="v1-tags" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px"></div>
                     <div style="display:flex;gap:8px">
                       <input class="form-input" id="v1-input" placeholder="Tambah warna (Enter)" style="flex:1" onkeydown="addColorTag(event)"/>
-                      <input type="color" id="v1-color-picker" value="#1a1a1a" style="width:40px;height:40px;border:1px solid var(--border);border-radius:var(--radius-sm);cursor:pointer;padding:2px"/>
+                      <input type="color" id="v1-color-picker" value="#1a1a1a" oninput="syncPickerToHex()" style="width:40px;height:40px;border:1px solid var(--border);border-radius:var(--radius-sm);cursor:pointer;padding:2px"/>
+                      <input class="form-input" id="v1-color-hex" value="#1A1A1A" placeholder="#000000" maxlength="7" oninput="syncHexToPicker()" style="width:90px;text-transform:uppercase;font-family:'IBM Plex Mono',monospace"/>
                     </div>
                   </div>
 
@@ -1242,8 +1243,20 @@ function populateCategoryFilter() {
 
 // Gender = kategori level-1 (Pria/Wanita/Anak/dst) — dinamis, ngikutin apapun yang ada di Kelola Kategori.
 // Nambah gender baru cukup lewat tab Data Master > Kategori, dropdown ini otomatis ke-update, nggak perlu edit kode.
+// Urutan tampil gender: Wanita, Pria, Anak dulu (samain sama urutan di toko) — gender baru nyusul di belakang alfabet.
+const GENDER_ORDER = ['wanita','pria','anak'];
+function sortByGenderOrder(cats) {
+  return [...cats].sort((a,b) => {
+    const ai = GENDER_ORDER.indexOf(a.name.toLowerCase());
+    const bi = GENDER_ORDER.indexOf(b.name.toLowerCase());
+    const aRank = ai === -1 ? GENDER_ORDER.length : ai;
+    const bRank = bi === -1 ? GENDER_ORDER.length : bi;
+    return aRank !== bRank ? aRank - bRank : a.name.localeCompare(b.name);
+  });
+}
+
 function populateGenderOptions() {
-  const topCats = allCategories.filter(c => !c.parent_id).sort((a,b)=>a.name.localeCompare(b.name));
+  const topCats = sortByGenderOrder(allCategories.filter(c => !c.parent_id));
 
   const formSel = document.getElementById('p-gender');
   if (formSel) {
