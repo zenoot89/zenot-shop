@@ -808,6 +808,7 @@ function renderCatalogTabs() {
   el.innerHTML = `<button class="catalog-tab ${activeFilter==='all'?'active':''}" onclick="setFilterGender('all','all')">Semua</button>` +
     uniqueLeaves.map(c => `<button class="catalog-tab ${activeFilter===c.name?'active':''}" onclick="setFilterGender('all','${c.name}')">${c.name}</button>`).join('');
 }
+function categoryLeavesForGender(gender) {
   const top = allCategories.find(c => !c.parent_id && c.name.toLowerCase() === gender);
   if (!top) return [];
   const level2 = allCategories.filter(c => c.parent_id === top.id);
