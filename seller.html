@@ -263,7 +263,13 @@
     .prod-status-badge{display:inline-block;font-size:11px;font-weight:600;padding:3px 10px;border-radius:50px}
     .prod-status-badge.on{background:#e6f6ea;color:#1a7a3c}
     .prod-status-badge.off{background:#f0ede8;color:var(--muted)}
+    .prod-status-badge.archived{background:#f3e8e0;color:#8a5a2e}
     .variant-row td{padding:0 14px 14px;border-bottom:1px solid var(--border)}
+    .prod-status-tabs{display:flex;gap:24px;border-bottom:1px solid var(--border);margin:14px 0 14px;overflow-x:auto}
+    .pstab{padding:10px 2px;font-size:14px;color:var(--muted);cursor:pointer;border:none;background:none;border-bottom:2px solid transparent;white-space:nowrap;font-family:inherit}
+    .pstab.active{color:var(--text);font-weight:600;border-bottom-color:var(--text)}
+    .prod-lowstock-chip{padding:9px 16px;border-radius:8px;border:1px solid var(--border);background:#fff;font-size:13px;color:var(--sec);cursor:pointer;white-space:nowrap}
+    .prod-lowstock-chip.active{background:#fdecec;border-color:#d9534f;color:#c0392b}
 
     /* ===== DATA MASTER SUB-TABS ===== */
     .dm-subtabs{display:flex;gap:6px;margin-bottom:14px;border-bottom:1px solid var(--border)}
@@ -437,10 +443,13 @@
 
         <!-- TAB: PRODUK -->
         <div class="admin-section active" id="tab-products">
+          <div id="product-list-view">
           <div class="admin-list-header">
             <h3 class="admin-card-title" style="margin-bottom:0">Kelola Produk</h3>
             <button class="btn-primary" style="width:auto;padding:10px 18px" onclick="openProductForm()">+ Tambah Produk Baru</button>
           </div>
+
+          <div class="prod-status-tabs" id="prod-status-tabs"></div>
 
           <div class="admin-card" style="margin-bottom:14px">
             <div class="prod-toolbar">
@@ -450,12 +459,7 @@
                 <option value="pria">Pria</option>
                 <option value="wanita">Wanita</option>
               </select>
-              <select class="form-input" id="pf-status" onchange="renderAdminProductList()" style="flex:1;min-width:110px">
-                <option value="">Semua Status</option>
-                <option value="active">Aktif</option>
-                <option value="inactive">Nonaktif</option>
-                <option value="lowstock">Stok Menipis</option>
-              </select>
+              <button class="prod-lowstock-chip" id="pf-lowstock-chip" onclick="toggleLowStockFilter()">Stok Menipis</button>
               <select class="form-input" id="pf-supplier" onchange="renderAdminProductList()" style="flex:1;min-width:130px">
                 <option value="">Semua Supplier</option>
               </select>
@@ -494,6 +498,7 @@
               </thead>
               <tbody id="admin-products-render"></tbody>
             </table>
+          </div>
           </div>
 
           <div class="admin-card hidden" id="product-form-card">
@@ -610,6 +615,10 @@
             <div style="display:flex;gap:10px;margin-top:4px">
               <button class="btn-primary" id="save-product-btn" onclick="saveProduct()" style="flex:1">Simpan Produk</button>
               <button class="btn-edit" id="cancel-product-btn" onclick="closeProductForm()" style="padding:12px 24px;font-size:14px">Batal</button>
+            </div>
+            <div style="display:flex;gap:10px;margin-top:10px" class="hidden" id="edit-actions-extra">
+              <button class="btn-edit" id="archive-toggle-btn" onclick="toggleArchiveCurrent()" style="flex:1">Arsipkan</button>
+              <button class="btn-danger" onclick="deleteProductFromForm()" style="flex:1">Hapus Produk</button>
             </div>
           </div>
         </div>

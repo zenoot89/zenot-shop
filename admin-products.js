@@ -291,17 +291,20 @@ function cancelEdit() {
   document.getElementById('form-mode-title').textContent = 'Tambah Produk';
   document.getElementById('save-product-btn').textContent = 'Simpan Produk';
   document.getElementById('cancel-product-btn').textContent = 'Batal';
+  document.getElementById('edit-actions-extra')?.classList.add('hidden');
 }
 
 function openProductForm() {
   cancelEdit();
+  document.getElementById('product-list-view').classList.add('hidden');
   document.getElementById('product-form-card').classList.remove('hidden');
-  document.getElementById('product-form-card').scrollIntoView({behavior:'smooth', block:'start'});
+  window.scrollTo({top:0, behavior:'smooth'});
 }
 
 function closeProductForm() {
   cancelEdit();
   document.getElementById('product-form-card').classList.add('hidden');
+  document.getElementById('product-list-view').classList.remove('hidden');
 }
 
 function editProduct(id) {
@@ -346,8 +349,11 @@ function editProduct(id) {
   document.getElementById('form-mode-title').textContent = `Edit Produk: ${p.name}`;
   document.getElementById('save-product-btn').textContent = 'Update Produk';
   document.getElementById('cancel-product-btn').textContent = 'Batal Perubahan';
+  document.getElementById('product-list-view').classList.add('hidden');
   document.getElementById('product-form-card').classList.remove('hidden');
-  document.getElementById('product-form-card').scrollIntoView({behavior:'smooth', block:'start'});
+  document.getElementById('edit-actions-extra')?.classList.remove('hidden');
+  document.getElementById('archive-toggle-btn').textContent = productStatus(p) === 'arsip' ? 'Aktifkan Kembali' : 'Arsipkan';
+  window.scrollTo({top:0, behavior:'smooth'});
 }
 
 const LOW_STOCK_THRESHOLD = 5;
@@ -355,6 +361,36 @@ let bulkSelected = new Set();
 let expandedProductId = null;
 let productSalesMap = {};
 let lastRenderedIds = [];
+let productStatusTab = 'semua';
+let lowStockOnly = false;
+
+function productStatus(p) {
+  return p.status || (p.is_active ? 'aktif' : 'nonaktif');
+}
+function setProductStatusTab(tab) {
+  productStatusTab = tab;
+  renderAdminProductList();
+}
+function toggleLowStockFilter() {
+  lowStockOnly = !lowStockOnly;
+  document.getElementById('pf-lowstock-chip')?.classList.toggle('active', lowStockOnly);
+  renderAdminProductList();
+}
+function renderStatusTabs() {
+  const el = document.getElementById('prod-status-tabs');
+  if (!el) return;
+  const counts = { semua: adminProductsData.length, aktif: 0, nonaktif: 0, arsip: 0 };
+  adminProductsData.forEach(p => { const s = productStatus(p); if (counts[s] !== undefined) counts[s]++; });
+  const tabs = [
+    ['semua', 'Semua'],
+    ['aktif', 'Aktif'],
+    ['nonaktif', 'Belum Ditampilkan'],
+    ['arsip', 'Arsip'],
+  ];
+  el.innerHTML = tabs.map(([key,label]) =>
+    `<button class="pstab ${productStatusTab===key?'active':''}" onclick="setProductStatusTab('${key}')">${label} (${counts[key]})</button>`
+  ).join('');
+}
 
 function fRp(n) { return 'Rp' + Math.round(n).toLocaleString('id-ID'); }
 function priceRangeStr(vars, field) {
@@ -397,20 +433,19 @@ function productTotalStock(p) {
 function renderAdminProductList() {
   const el = document.getElementById('admin-products-render');
   if (!el) return;
+  renderStatusTabs();
   if (!adminProductsData.length) { el.innerHTML='<tr><td colspan="9" style="color:var(--muted);font-size:13px;padding:20px">Belum ada produk.</td></tr>'; updateBulkBar(); return; }
 
   const q = (document.getElementById('pf-search')?.value || '').trim().toLowerCase();
   const genderF = document.getElementById('pf-gender')?.value || '';
-  const statusF = document.getElementById('pf-status')?.value || '';
   const supplierF = document.getElementById('pf-supplier')?.value || '';
   const sortF = document.getElementById('pf-sort')?.value || 'newest';
 
   let list = adminProductsData.filter(p => {
     if (q && !p.name.toLowerCase().includes(q)) return false;
     if (genderF && p.gender !== genderF) return false;
-    if (statusF === 'active' && !p.is_active) return false;
-    if (statusF === 'inactive' && p.is_active) return false;
-    if (statusF === 'lowstock' && productLowestStock(p) > LOW_STOCK_THRESHOLD) return false;
+    if (productStatusTab !== 'semua' && productStatus(p) !== productStatusTab) return false;
+    if (lowStockOnly && productLowestStock(p) > LOW_STOCK_THRESHOLD) return false;
     if (supplierF && p.supplier_id !== supplierF) return false;
     return true;
   });
@@ -452,10 +487,9 @@ function renderAdminProductList() {
       <td class="prod-stock-num">${productTotalStock(p)}</td>
       <td class="prod-sold-num">${sold}</td>
       <td>${p.supplier_id ? supplierName(p.supplier_id) : (p.supplier || '-')}</td>
-      <td><span class="prod-status-badge ${p.is_active?'on':'off'}">${p.is_active?'Aktif':'Nonaktif'}</span></td>
+      <td>${(() => { const s = productStatus(p); const cls = s==='aktif'?'on':s==='arsip'?'archived':'off'; const label = s==='aktif'?'Aktif':s==='arsip'?'Arsip':'Belum Ditampilkan'; return `<span class="prod-status-badge ${cls}">${label}</span>`; })()}</td>
       <td>
         <button class="btn-edit" onclick="editProduct('${p.id}')">Edit</button>
-        <button class="btn-danger" onclick="deleteProduct('${p.id}')">Hapus</button>
       </td>
     </tr>`;
     const variantRow = isOpen ? `<tr class="variant-row"><td></td><td colspan="8"><div class="variant-breakdown">${breakdown}</div></td></tr>` : '';
@@ -493,7 +527,7 @@ function updateBulkBar() {
 }
 async function bulkSetActive(active) {
   if (!bulkSelected.size) return;
-  await sb.from('products').update({is_active: active}).in('id', [...bulkSelected]);
+  await sb.from('products').update({is_active: active, status: active ? 'aktif' : 'nonaktif'}).in('id', [...bulkSelected]);
   showToast(`${bulkSelected.size} produk di${active?'aktifkan':'nonaktifkan'} ✓`);
   loadAdminProducts();
 }
@@ -505,9 +539,23 @@ async function bulkDelete() {
   loadAdminProducts();
 }
 
-async function deleteProduct(id) {
-  if (!confirm('Hapus produk ini?')) return;
-  await sb.from('products').delete().eq('id',id);
+async function toggleArchiveCurrent() {
+  if (!editingProductId) return;
+  const p = adminProductsData.find(x => x.id === editingProductId);
+  if (!p) return;
+  const isArchived = productStatus(p) === 'arsip';
+  const newStatus = isArchived ? 'aktif' : 'arsip';
+  await sb.from('products').update({status: newStatus, is_active: newStatus === 'aktif'}).eq('id', editingProductId);
+  showToast(isArchived ? 'Produk diaktifkan kembali ✓' : 'Produk diarsipkan ✓');
+  closeProductForm();
+  loadAdminProducts();
+}
+
+async function deleteProductFromForm() {
+  if (!editingProductId) return;
+  if (!confirm('Hapus produk ini? Tindakan ini tidak bisa dibatalkan.')) return;
+  await sb.from('products').delete().eq('id', editingProductId);
   showToast('Produk dihapus');
+  closeProductForm();
   loadAdminProducts();
 }
