@@ -149,32 +149,287 @@ function compressImage(file, maxDim = 1200, quality = 0.82) {
   });
 }
 
-let uploadedFiles = [];
-let existingPhotoUrls = [];
+// ===================== PHOTO STRIP SYSTEM =====================
+// photoSlots: array of {type:'url'|'file'|'cropped', url:string, file:File|null, blob:Blob|null}
+let photoSlots = [];
+let cropTargetIdx = null; // index in photoSlots being cropped
 
-function renderUploadPreview() {
-  const prev = document.getElementById('upload-preview');
+// ---- Drag state ----
+let dragSrcIdx = null;
+
+function photoStripRender() {
+  const strip = document.getElementById('photo-strip');
+  if (!strip) return;
+  const total = photoSlots.length;
   let html = '';
-  existingPhotoUrls.forEach((url, i) => {
-    html += `<div class="upload-thumb">${i===0?'<span class="upload-thumb-cover">Cover</span>':''}<img src="${url}"/><button type="button" class="upload-thumb-remove" onclick="removeExistingPhoto(${i})">✕</button></div>`;
+  photoSlots.forEach((slot, i) => {
+    const src = slot.type === 'url' ? slot.url : URL.createObjectURL(slot.blob || slot.file);
+    html += `
+      <div class="photo-item" id="pslot-${i}" draggable="true"
+           ondragstart="photoDragStart(event,${i})" ondragover="photoDragOver(event,${i})"
+           ondrop="photoDrop(event,${i})" ondragleave="photoDragLeave(event,${i})" ondragend="photoDragEnd()">
+        <div class="photo-item-inner">
+          <img src="${src}" alt="foto ${i+1}"/>
+        </div>
+        ${i===0 ? '<div class="photo-item-cover">Cover</div>' : ''}
+        <div class="photo-item-actions">
+          <button class="photo-action-btn" onclick="photoOpenCrop(${i})" title="Crop">✂</button>
+          <button class="photo-action-btn" onclick="photoRemove(${i})" title="Hapus">🗑</button>
+        </div>
+      </div>`;
   });
-  uploadedFiles.forEach((f, i) => {
-    const idx = existingPhotoUrls.length + i;
-    html += `<div class="upload-thumb">${idx===0?'<span class="upload-thumb-cover">Cover</span>':''}<img src="${URL.createObjectURL(f)}"/><button type="button" class="upload-thumb-remove" onclick="removeNewPhoto(${i})">✕</button></div>`;
-  });
-  prev.innerHTML = html;
+  if (total < 9) {
+    html += `
+      <button class="photo-add-btn" onclick="document.getElementById('p-photos').click()" type="button">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M12 8v8M8 12h8"/></svg>
+        <span>Tambahkan<br>Foto (${total}/9)</span>
+      </button>`;
+  }
+  strip.innerHTML = html;
 }
 
-function removeExistingPhoto(i) { existingPhotoUrls.splice(i,1); renderUploadPreview(); }
-function removeNewPhoto(i) { uploadedFiles.splice(i,1); renderUploadPreview(); }
-
-function previewPhotos(input) {
-  const remaining = 9 - existingPhotoUrls.length - uploadedFiles.length;
+function photoStripHandleFiles(input) {
+  const remaining = 9 - photoSlots.length;
   if (remaining <= 0) { showToast('Maksimal 9 foto per produk'); input.value=''; return; }
-  const newFiles = Array.from(input.files).slice(0, remaining);
-  uploadedFiles = uploadedFiles.concat(newFiles);
+  const files = Array.from(input.files).slice(0, remaining);
+  files.forEach(f => photoSlots.push({type:'file', file:f, blob:null, url:null}));
   input.value = '';
-  renderUploadPreview();
+  photoStripRender();
+}
+
+function photoRemove(i) {
+  photoSlots.splice(i, 1);
+  photoStripRender();
+}
+
+// ---- Drag reorder ----
+function photoDragStart(e, i) {
+  dragSrcIdx = i;
+  e.dataTransfer.effectAllowed = 'move';
+  document.getElementById(`pslot-${i}`)?.classList.add('dragging');
+}
+function photoDragOver(e, i) {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  if (i !== dragSrcIdx) document.getElementById(`pslot-${i}`)?.classList.add('drag-over');
+}
+function photoDragLeave(e, i) {
+  document.getElementById(`pslot-${i}`)?.classList.remove('drag-over');
+}
+function photoDrop(e, i) {
+  e.preventDefault();
+  document.getElementById(`pslot-${i}`)?.classList.remove('drag-over');
+  if (dragSrcIdx === null || dragSrcIdx === i) return;
+  const moved = photoSlots.splice(dragSrcIdx, 1)[0];
+  photoSlots.splice(i, 0, moved);
+  photoStripRender();
+}
+function photoDragEnd() {
+  dragSrcIdx = null;
+  document.querySelectorAll('.photo-item').forEach(el => { el.classList.remove('dragging','drag-over'); });
+}
+
+// ---- Legacy compat wrappers (dipakai saveProduct & resetProductForm) ----
+function _photoGetExistingUrls() { return photoSlots.filter(s=>s.type==='url').map(s=>s.url); }
+
+// ===================== CROP ENGINE =====================
+let _cropImg = null;         // HTMLImageElement (source gambar asli)
+let _cropState = {};         // {scale, angle, flipH, flipV, offsetX, offsetY}
+let _cropInitState = {};     // untuk reset
+let _cropCanvas = null;
+let _cropCtx = null;
+let _cropPreviewCanvas = null;
+let _cropPreviewCtx = null;
+let _cropWrapW = 0;
+let _cropWrapH = 0;
+let _cropDragging = false;
+let _cropDragStart = {x:0, y:0};
+
+function photoOpenCrop(idx) {
+  cropTargetIdx = idx;
+  const slot = photoSlots[idx];
+  const overlay = document.getElementById('crop-overlay');
+  overlay.classList.add('open');
+
+  const img = new Image();
+  img.onload = () => {
+    _cropImg = img;
+    _cropCanvas = document.getElementById('crop-canvas');
+    _cropCtx = _cropCanvas.getContext('2d');
+    _cropPreviewCanvas = document.getElementById('crop-preview-canvas');
+    _cropPreviewCtx = _cropPreviewCanvas.getContext('2d');
+
+    const wrap = document.getElementById('crop-canvas-wrap');
+    _cropWrapW = wrap.clientWidth || 460;
+    _cropWrapH = wrap.clientHeight || 380;
+    _cropCanvas.width = _cropWrapW;
+    _cropCanvas.height = _cropWrapH;
+    _cropPreviewCanvas.width = 120;
+    _cropPreviewCanvas.height = 120;
+
+    // Init scale: fit image in canvas, then 1:1 crop box = min(W,H)*0.8
+    const fitScale = Math.min(_cropWrapW / img.naturalWidth, _cropWrapH / img.naturalHeight) * 0.85;
+    _cropState = {scale: fitScale, angle: 0, flipH: false, flipV: false, offsetX: 0, offsetY: 0};
+    _cropInitState = {..._cropState};
+    cropDraw();
+    cropDrawPreview();
+    _cropBindMouse();
+  };
+  const src = slot.type === 'url' ? slot.url : URL.createObjectURL(slot.blob || slot.file);
+  img.crossOrigin = 'anonymous';
+  img.src = src;
+}
+
+function cropDraw() {
+  if (!_cropCtx || !_cropImg) return;
+  const W = _cropWrapW, H = _cropWrapH;
+  const boxSize = Math.min(W, H) * 0.78;
+  const cx = W/2 + _cropState.offsetX;
+  const cy = H/2 + _cropState.offsetY;
+
+  _cropCtx.clearRect(0, 0, W, H);
+
+  // Draw image
+  _cropCtx.save();
+  _cropCtx.translate(cx, cy);
+  _cropCtx.rotate(_cropState.angle * Math.PI / 180);
+  _cropCtx.scale(_cropState.flipH ? -1 : 1, _cropState.flipV ? -1 : 1);
+  _cropCtx.scale(_cropState.scale, _cropState.scale);
+  _cropCtx.drawImage(_cropImg, -_cropImg.naturalWidth/2, -_cropImg.naturalHeight/2);
+  _cropCtx.restore();
+
+  // Dim outside crop box
+  _cropCtx.save();
+  _cropCtx.fillStyle = 'rgba(0,0,0,0.5)';
+  const bx = cx - boxSize/2, by = cy - boxSize/2;
+  _cropCtx.fillRect(0, 0, W, by);
+  _cropCtx.fillRect(0, by+boxSize, W, H - (by+boxSize));
+  _cropCtx.fillRect(0, by, bx, boxSize);
+  _cropCtx.fillRect(bx+boxSize, by, W-(bx+boxSize), boxSize);
+  _cropCtx.restore();
+
+  // Crop border
+  _cropCtx.save();
+  _cropCtx.strokeStyle = 'rgba(100,160,255,0.9)';
+  _cropCtx.lineWidth = 1.5;
+  _cropCtx.strokeRect(bx, by, boxSize, boxSize);
+  // Grid lines (thirds)
+  _cropCtx.strokeStyle = 'rgba(255,255,255,0.25)';
+  _cropCtx.lineWidth = 1;
+  for (let g=1; g<3; g++) {
+    _cropCtx.beginPath();
+    _cropCtx.moveTo(bx + boxSize*g/3, by);
+    _cropCtx.lineTo(bx + boxSize*g/3, by+boxSize);
+    _cropCtx.stroke();
+    _cropCtx.beginPath();
+    _cropCtx.moveTo(bx, by + boxSize*g/3);
+    _cropCtx.lineTo(bx+boxSize, by + boxSize*g/3);
+    _cropCtx.stroke();
+  }
+  _cropCtx.restore();
+
+  cropDrawPreview();
+}
+
+function cropDrawPreview() {
+  if (!_cropPreviewCtx || !_cropImg) return;
+  const W = _cropWrapW, H = _cropWrapH;
+  const boxSize = Math.min(W, H) * 0.78;
+  const cx = W/2 + _cropState.offsetX;
+  const cy = H/2 + _cropState.offsetY;
+  const bx = cx - boxSize/2, by = cy - boxSize/2;
+
+  // offscreen for crop area
+  const off = document.createElement('canvas');
+  off.width = boxSize; off.height = boxSize;
+  const offCtx = off.getContext('2d');
+  offCtx.drawImage(_cropCanvas, bx, by, boxSize, boxSize, 0, 0, boxSize, boxSize);
+
+  _cropPreviewCtx.clearRect(0,0,120,120);
+  _cropPreviewCtx.drawImage(off, 0, 0, boxSize, boxSize, 0, 0, 120, 120);
+}
+
+function _cropBindMouse() {
+  const c = _cropCanvas;
+  c.onmousedown = (e) => {
+    _cropDragging = true;
+    _cropDragStart = {x: e.clientX - _cropState.offsetX, y: e.clientY - _cropState.offsetY};
+    c.style.cursor = 'grabbing';
+  };
+  c.onmousemove = (e) => {
+    if (!_cropDragging) return;
+    _cropState.offsetX = e.clientX - _cropDragStart.x;
+    _cropState.offsetY = e.clientY - _cropDragStart.y;
+    cropDraw();
+  };
+  c.onmouseup = () => { _cropDragging = false; c.style.cursor = 'move'; };
+  c.onmouseleave = () => { _cropDragging = false; };
+  // Touch support
+  c.ontouchstart = (e) => {
+    const t = e.touches[0];
+    _cropDragging = true;
+    _cropDragStart = {x: t.clientX - _cropState.offsetX, y: t.clientY - _cropState.offsetY};
+  };
+  c.ontouchmove = (e) => {
+    e.preventDefault();
+    if (!_cropDragging) return;
+    const t = e.touches[0];
+    _cropState.offsetX = t.clientX - _cropDragStart.x;
+    _cropState.offsetY = t.clientY - _cropDragStart.y;
+    cropDraw();
+  };
+  c.ontouchend = () => { _cropDragging = false; };
+}
+
+function cropZoom(delta) {
+  _cropState.scale = Math.max(0.1, Math.min(8, _cropState.scale + delta * _cropState.scale));
+  cropDraw();
+}
+function cropRotate(deg) { _cropState.angle = (_cropState.angle + deg + 360) % 360; cropDraw(); }
+function cropFlipH() { _cropState.flipH = !_cropState.flipH; cropDraw(); }
+function cropFlipV() { _cropState.flipV = !_cropState.flipV; cropDraw(); }
+function cropReset() { _cropState = {..._cropInitState}; cropDraw(); }
+
+function cropClose() {
+  document.getElementById('crop-overlay').classList.remove('open');
+  _cropImg = null;
+  cropTargetIdx = null;
+  if (_cropCanvas) { _cropCanvas.onmousedown = null; _cropCanvas.onmousemove = null; _cropCanvas.onmouseup = null; }
+}
+
+function cropSave() {
+  if (cropTargetIdx === null || !_cropCanvas) return;
+  const W = _cropWrapW, H = _cropWrapH;
+  const boxSize = Math.min(W, H) * 0.78;
+  const cx = W/2 + _cropState.offsetX;
+  const cy = H/2 + _cropState.offsetY;
+  const bx = cx - boxSize/2, by = cy - boxSize/2;
+
+  // Extract crop area at native resolution
+  const out = document.createElement('canvas');
+  const outSize = 1200; // output square size
+  out.width = outSize; out.height = outSize;
+  const outCtx = out.getContext('2d');
+  outCtx.drawImage(_cropCanvas, bx, by, boxSize, boxSize, 0, 0, outSize, outSize);
+
+  out.toBlob((blob) => {
+    if (!blob) return;
+    photoSlots[cropTargetIdx] = {type:'cropped', blob, file:null, url:null};
+    photoStripRender();
+    cropClose();
+  }, 'image/jpeg', 0.88);
+}
+
+// ===================== RESET / PREFILL HELPERS =====================
+function resetUploadState() {
+  photoSlots = [];
+  photoStripRender();
+}
+
+function prefillPhotosFromProduct(p) {
+  const urls = (p.image_urls && p.image_urls.length) ? p.image_urls : (p.image_url ? [p.image_url] : []);
+  photoSlots = urls.map(url => ({type:'url', url, file:null, blob:null}));
+  photoStripRender();
 }
 
 let editingProductId = null;
@@ -196,18 +451,24 @@ async function saveProduct() {
   if (!name) { showToast('Nama produk wajib diisi'); return; }
   if (!category_id) { showToast('Kategori wajib dipilih'); return; }
 
-  // Upload foto produk (dikompres dulu, gabung sama foto lama yang dipertahankan)
-  let newUrls = [];
-  for (const file of uploadedFiles) {
-    const compressed = await compressImage(file);
-    const path = `${Date.now()}-${Math.random().toString(36).slice(2,7)}.jpg`;
-    const { error: upErr } = await sb.storage.from('product-photos').upload(path, compressed, { contentType: 'image/jpeg' });
-    if (!upErr) {
-      const { data: urlData } = sb.storage.from('product-photos').getPublicUrl(path);
-      newUrls.push(urlData.publicUrl);
+  // Upload foto produk dari photoSlots (url=langsung pakai, file/cropped=upload dulu)
+  const finalUrls = [];
+  for (const slot of photoSlots) {
+    if (slot.type === 'url') {
+      finalUrls.push(slot.url);
+    } else {
+      // file atau cropped blob
+      const raw = slot.blob || slot.file;
+      if (!raw) continue;
+      const compressed = await compressImage(raw);
+      const path = `${Date.now()}-${Math.random().toString(36).slice(2,7)}.jpg`;
+      const { error: upErr } = await sb.storage.from('product-photos').upload(path, compressed, { contentType: 'image/jpeg' });
+      if (!upErr) {
+        const { data: urlData } = sb.storage.from('product-photos').getPublicUrl(path);
+        finalUrls.push(urlData.publicUrl);
+      }
     }
   }
-  const finalUrls = existingPhotoUrls.concat(newUrls);
   const image_urls = finalUrls.length ? finalUrls : null;
   const image_url = finalUrls.length ? finalUrls[0] : null;
 
@@ -279,9 +540,7 @@ function resetProductForm() {
   catBtn.textContent = 'Pilih kategori';
   catBtn.classList.remove('filled');
   document.getElementById('p-gender').value='pria';
-  uploadedFiles=[];
-  existingPhotoUrls=[];
-  document.getElementById('upload-preview').innerHTML='';
+  resetUploadState();
   resetVariantSystem();
 }
 
@@ -323,9 +582,7 @@ function editProduct(id) {
   document.getElementById('p-ketebalan').value = p.ketebalan || '';
   document.getElementById('p-motif').value = p.motif || '';
   document.getElementById('p-dipakai-model').value = p.dipakai_model || '';
-  uploadedFiles = [];
-  existingPhotoUrls = (p.image_urls && p.image_urls.length) ? [...p.image_urls] : (p.image_url ? [p.image_url] : []);
-  renderUploadPreview();
+  prefillPhotosFromProduct(p);
   // Prefill variant tag system dari data lama
   resetVariantSystem();
   const vars = p.variants || [];
