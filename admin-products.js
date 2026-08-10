@@ -574,6 +574,23 @@ async function saveProduct() {
   if (!name) { showToast('Nama produk wajib diisi'); return; }
   if (!category_id) { showToast('Kategori wajib dipilih'); return; }
 
+  // Validasi variant SEBELUM ada write apa pun ke DB: tiap warna wajib punya minimal 1
+  // kombinasi ukuran+harga terisi. Kalau tidak, warna itu bakal diam-diam nggak ke-save
+  // (bug lama) — sekarang di-block + dikasih tau warna mana yang belum diisi harganya.
+  if (colorTags.length) {
+    if (!sizeTags.length) {
+      showToast('Isi minimal 1 ukuran dulu buat variasi warna');
+      return;
+    }
+    const colorsWithNoPrice = colorTags.filter(c =>
+      !sizeTags.some(s => (parseInt((variantData[variantKey(c.name, s)] || {}).price) || 0) > 0)
+    );
+    if (colorsWithNoPrice.length) {
+      showToast(`Isi harga (minimal 1 ukuran) buat warna: ${colorsWithNoPrice.map(c=>c.name).join(', ')} — kalau kosong, warna itu nggak akan tersimpan`);
+      return;
+    }
+  }
+
   // Upload foto produk dari photoSlots (url=langsung pakai, file/cropped=upload dulu)
   const finalUrls = [];
   for (const slot of photoSlots) {
