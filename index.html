@@ -936,6 +936,10 @@ async function removeFromWishlistPanel(productId) {
 let buyerUser = null;
 let buyerProfile = null;
 let accountTab = 'masuk';
+let buyerAddresses = [];
+let editingAddressId = null;
+let wilayahCache = { provinces: null, regencies: {}, districts: {} };
+let _addrSelectedTag = 'Rumah';
 
 async function openAccount() {
   if (buyerUser) renderAccountProfile();
@@ -969,12 +973,6 @@ function renderAccountAuth() {
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px"><div style="flex:1;height:1px;background:var(--border)"></div><span style="font-size:11px;color:var(--muted);text-transform:uppercase">Atau isi manual</span><div style="flex:1;height:1px;background:var(--border)"></div></div>
       <input class="form-input" id="acc-reg-name" placeholder="Nama Lengkap" style="margin-bottom:10px"/>
       <input class="form-input" id="acc-reg-wa" placeholder="No. WhatsApp" style="margin-bottom:10px"/>
-      <textarea class="form-input" id="acc-reg-address" placeholder="Alamat (jalan, no. rumah, RT/RW)" rows="2" style="margin-bottom:10px"></textarea>
-      <div style="display:flex;gap:10px;margin-bottom:10px">
-        <input class="form-input" id="acc-reg-city" placeholder="Kota/Kabupaten" style="flex:1"/>
-        <input class="form-input" id="acc-reg-postal" placeholder="Kode Pos" style="width:100px"/>
-      </div>
-      <input class="form-input" id="acc-reg-province" placeholder="Provinsi" style="margin-bottom:10px"/>
       <input class="form-input" id="acc-reg-email" type="email" placeholder="Email" style="margin-bottom:10px"/>
       <input class="form-input" id="acc-reg-pass" type="password" placeholder="Password (min 6 karakter)" style="margin-bottom:10px"/>
       <p class="hidden" id="acc-reg-err" style="color:#c0392b;font-size:12px;margin-bottom:10px"></p>
@@ -995,20 +993,11 @@ async function renderAccountProfile() {
       </div>
       <label style="font-size:11px;color:var(--muted);text-transform:uppercase">No. WhatsApp</label>
       <input class="form-input" id="acc-p-wa" value="${p.whatsapp || ''}" style="margin:6px 0 14px"/>
-      <label style="font-size:11px;color:var(--muted);text-transform:uppercase">Alamat</label>
-      <textarea class="form-input" id="acc-p-address" rows="3" style="margin:6px 0 14px">${p.address || ''}</textarea>
-      <div style="display:flex;gap:10px;margin:0 0 14px">
-        <div style="flex:1">
-          <label style="font-size:11px;color:var(--muted);text-transform:uppercase">Kota/Kabupaten</label>
-          <input class="form-input" id="acc-p-city" value="${p.city || ''}" style="margin-top:6px"/>
-        </div>
-        <div style="width:110px">
-          <label style="font-size:11px;color:var(--muted);text-transform:uppercase">Kode Pos</label>
-          <input class="form-input" id="acc-p-postal" value="${p.postal_code || ''}" style="margin-top:6px"/>
-        </div>
+      <div style="border:1px solid var(--border);border-radius:8px;padding:14px;margin-bottom:14px">
+        <p style="font-size:11px;color:var(--muted);text-transform:uppercase;margin-bottom:8px">Alamat Tersimpan</p>
+        <div id="acc-default-addr-preview" style="font-size:13px;color:var(--muted)">Memuat...</div>
+        <a href="#" onclick="event.preventDefault();renderAddressList()" style="display:inline-block;margin-top:10px;font-size:13px;font-weight:600;color:var(--ink)">Kelola Alamat →</a>
       </div>
-      <label style="font-size:11px;color:var(--muted);text-transform:uppercase">Provinsi</label>
-      <input class="form-input" id="acc-p-province" value="${p.province || ''}" style="margin:6px 0 14px"/>
       <button class="btn-primary" style="margin-bottom:10px" onclick="saveBuyerProfile()">Simpan Perubahan</button>
       <button style="width:100%;padding:12px;background:none;border:1px solid var(--border);border-radius:8px;cursor:pointer;color:var(--muted)" onclick="doBuyerLogout()">Keluar</button>
       <div style="margin-top:24px;padding-top:18px;border-top:1px solid var(--border)">
@@ -1016,6 +1005,14 @@ async function renderAccountProfile() {
         <div id="order-history-render"><div class="loading-state" style="padding:20px 0">Memuat...</div></div>
       </div>
     </div>`);
+  loadBuyerAddresses().then(() => {
+    const el = document.getElementById('acc-default-addr-preview');
+    if (!el) return;
+    const def = buyerAddresses.find(a=>a.is_default) || buyerAddresses[0];
+    el.innerHTML = def
+      ? `<strong>${def.recipient_name}</strong> (${def.label})<br/>${def.address_detail}, ${def.district}, ${def.city}, ${def.province}`
+      : 'Belum ada alamat tersimpan.';
+  });
   const orders = await loadOrderHistory();
   const el = document.getElementById('order-history-render');
   if (!el) return;
@@ -1076,10 +1073,6 @@ async function doBuyerLogin() {
 async function doBuyerRegister() {
   const name = document.getElementById('acc-reg-name').value.trim();
   const wa = document.getElementById('acc-reg-wa').value.trim();
-  const address = document.getElementById('acc-reg-address').value.trim();
-  const city = document.getElementById('acc-reg-city').value.trim();
-  const province = document.getElementById('acc-reg-province').value.trim();
-  const postal_code = document.getElementById('acc-reg-postal').value.trim();
   const email = document.getElementById('acc-reg-email').value.trim();
   const pass = document.getElementById('acc-reg-pass').value;
   const err = document.getElementById('acc-reg-err');
@@ -1088,7 +1081,7 @@ async function doBuyerRegister() {
   if (pass.length < 6) { err.textContent = 'Password minimal 6 karakter'; err.classList.remove('hidden'); return; }
   const { data, error } = await sb.auth.signUp({email, password: pass});
   if (error) { err.textContent = error.message; err.classList.remove('hidden'); return; }
-  await sb.from('customers').upsert({id: data.user.id, email, name, whatsapp: wa, address, city, province, postal_code, role: 'buyer'});
+  await sb.from('customers').upsert({id: data.user.id, email, name, whatsapp: wa, role: 'buyer'});
   if (data.session) {
     buyerUser = data.user;
     await loadBuyerProfile();
@@ -1108,13 +1101,215 @@ async function loadBuyerProfile() {
 
 async function saveBuyerProfile() {
   const wa = document.getElementById('acc-p-wa').value.trim();
-  const address = document.getElementById('acc-p-address').value.trim();
-  const city = document.getElementById('acc-p-city').value.trim();
-  const province = document.getElementById('acc-p-province').value.trim();
-  const postal_code = document.getElementById('acc-p-postal').value.trim();
-  await sb.from('customers').update({whatsapp: wa, address, city, province, postal_code}).eq('id', buyerUser.id);
-  buyerProfile.whatsapp = wa; buyerProfile.address = address; buyerProfile.city = city; buyerProfile.province = province; buyerProfile.postal_code = postal_code;
+  await sb.from('customers').update({whatsapp: wa}).eq('id', buyerUser.id);
+  buyerProfile.whatsapp = wa;
   showToast('Profil disimpan ✓');
+}
+
+// ===================== ALAMAT (multi-alamat ala Shopee) =====================
+async function fetchProvinces() {
+  if (wilayahCache.provinces) return wilayahCache.provinces;
+  try {
+    const res = await fetch('https://wilayah.id/api/provinces.json');
+    const json = await res.json();
+    wilayahCache.provinces = json.data || [];
+  } catch (e) { wilayahCache.provinces = []; }
+  return wilayahCache.provinces;
+}
+async function fetchRegencies(provinceCode) {
+  if (wilayahCache.regencies[provinceCode]) return wilayahCache.regencies[provinceCode];
+  try {
+    const res = await fetch(`https://wilayah.id/api/regencies/${provinceCode}.json`);
+    const json = await res.json();
+    wilayahCache.regencies[provinceCode] = json.data || [];
+  } catch (e) { wilayahCache.regencies[provinceCode] = []; }
+  return wilayahCache.regencies[provinceCode];
+}
+async function fetchDistricts(regencyCode) {
+  if (wilayahCache.districts[regencyCode]) return wilayahCache.districts[regencyCode];
+  try {
+    const res = await fetch(`https://wilayah.id/api/districts/${regencyCode}.json`);
+    const json = await res.json();
+    wilayahCache.districts[regencyCode] = json.data || [];
+  } catch (e) { wilayahCache.districts[regencyCode] = []; }
+  return wilayahCache.districts[regencyCode];
+}
+
+async function loadBuyerAddresses() {
+  if (!buyerUser) { buyerAddresses = []; return; }
+  const { data } = await sb.from('addresses').select('*').eq('customer_id', buyerUser.id).order('is_default', {ascending:false}).order('created_at');
+  buyerAddresses = data || [];
+}
+
+async function renderAddressList() {
+  openSidePanel('Alamat Saya', `<div class="side-panel-empty" style="padding:20px 0">Memuat...</div>`);
+  await loadBuyerAddresses();
+  const body = document.getElementById('side-panel-body');
+  if (!body) return;
+  const listHtml = buyerAddresses.length ? buyerAddresses.map(a => `
+    <div style="border:1px solid var(--border);border-radius:8px;padding:14px;margin-bottom:12px">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap">
+        <span style="font-size:10px;text-transform:uppercase;letter-spacing:.05em;background:var(--bg);border:1px solid var(--border);border-radius:4px;padding:2px 8px">${a.label}</span>
+        ${a.is_default ? `<span style="font-size:10px;color:var(--accent);font-weight:600">★ Alamat Utama</span>` : ''}
+      </div>
+      <p style="font-weight:600;margin-bottom:2px">${a.recipient_name} · ${a.phone}</p>
+      <p style="font-size:13px;color:var(--muted);line-height:1.5">${a.address_detail}${a.address_note?`, ${a.address_note}`:''}, ${a.district}, ${a.city}, ${a.province}${a.postal_code?' '+a.postal_code:''}</p>
+      <div style="display:flex;gap:14px;margin-top:10px;font-size:12px">
+        <a href="#" onclick="event.preventDefault();openAddressForm('${a.id}')" style="color:var(--ink)">Ubah</a>
+        ${!a.is_default ? `<a href="#" onclick="event.preventDefault();setDefaultAddress('${a.id}')" style="color:var(--ink)">Jadikan Utama</a>` : ''}
+        <a href="#" onclick="event.preventDefault();deleteAddress('${a.id}')" style="color:#c0392b">Hapus</a>
+      </div>
+    </div>
+  `).join('') : `<div class="side-panel-empty" style="padding:20px 0">Belum ada alamat tersimpan.</div>`;
+  body.innerHTML = `
+    <button class="btn-primary" style="margin-bottom:16px" onclick="openAddressForm()">+ Tambah Alamat Baru</button>
+    ${listHtml}
+    <button style="width:100%;padding:10px;background:none;border:1px solid var(--border);border-radius:8px;cursor:pointer;color:var(--muted);margin-top:8px" onclick="renderAccountProfile()">← Kembali ke Akun</button>
+  `;
+}
+
+async function openAddressForm(id = null) {
+  editingAddressId = id;
+  const existing = id ? buyerAddresses.find(a=>a.id===id) : null;
+  openSidePanel(id ? 'Ubah Alamat' : 'Alamat Baru', `
+    <label style="font-size:11px;color:var(--muted);text-transform:uppercase">Nama Lengkap</label>
+    <input class="form-input" id="addr-name" value="${existing?.recipient_name||''}" style="margin:6px 0 14px"/>
+    <label style="font-size:11px;color:var(--muted);text-transform:uppercase">Nomor Telepon</label>
+    <input class="form-input" id="addr-phone" value="${existing?.phone||''}" style="margin:6px 0 14px"/>
+    <label style="font-size:11px;color:var(--muted);text-transform:uppercase">Provinsi</label>
+    <select class="form-input" id="addr-province" style="margin:6px 0 14px"><option value="">Memuat...</option></select>
+    <label style="font-size:11px;color:var(--muted);text-transform:uppercase">Kota/Kabupaten</label>
+    <select class="form-input" id="addr-city" style="margin:6px 0 14px" disabled><option value="">Pilih provinsi dulu</option></select>
+    <label style="font-size:11px;color:var(--muted);text-transform:uppercase">Kecamatan</label>
+    <select class="form-input" id="addr-district" style="margin:6px 0 14px" disabled><option value="">Pilih kota dulu</option></select>
+    <label style="font-size:11px;color:var(--muted);text-transform:uppercase">Kode Pos</label>
+    <input class="form-input" id="addr-postal" value="${existing?.postal_code||''}" maxlength="5" inputmode="numeric" style="margin:6px 0 14px"/>
+    <label style="font-size:11px;color:var(--muted);text-transform:uppercase">Nama Jalan, Gedung, No. Rumah</label>
+    <textarea class="form-input" id="addr-detail" rows="2" style="margin:6px 0 14px">${existing?.address_detail||''}</textarea>
+    <label style="font-size:11px;color:var(--muted);text-transform:uppercase">Detail Lainnya (Blok/Unit, Patokan) — opsional</label>
+    <input class="form-input" id="addr-note" value="${existing?.address_note||''}" style="margin:6px 0 14px"/>
+    <label style="display:flex;align-items:center;gap:8px;margin-bottom:14px;font-size:13px;cursor:pointer">
+      <input type="checkbox" id="addr-default" ${existing?.is_default?'checked':''}/> Atur sebagai Alamat Utama
+    </label>
+    <label style="font-size:11px;color:var(--muted);text-transform:uppercase">Tandai Sebagai</label>
+    <div style="display:flex;gap:8px;margin:6px 0 18px">
+      <button type="button" class="filter-tab" id="addr-tag-rumah" onclick="selectAddrTag('Rumah')">Rumah</button>
+      <button type="button" class="filter-tab" id="addr-tag-kantor" onclick="selectAddrTag('Kantor')">Kantor</button>
+    </div>
+    <button class="btn-primary" style="margin-bottom:10px" onclick="saveAddress()">Simpan</button>
+    <button style="width:100%;padding:12px;background:none;border:1px solid var(--border);border-radius:8px;cursor:pointer;color:var(--muted)" onclick="renderAddressList()">Batal</button>
+  `);
+  selectAddrTag(existing?.label || 'Rumah');
+
+  const provinces = await fetchProvinces();
+  const provSel = document.getElementById('addr-province');
+  if (!provSel) return; // panel udah ditutup/diganti sebelum fetch selesai
+  provSel.innerHTML = '<option value="">Pilih Provinsi</option>' + provinces.map(p=>`<option value="${p.code}" data-name="${p.name}">${p.name}</option>`).join('');
+  provSel.onchange = () => onAddrProvinceChange();
+  document.getElementById('addr-city').onchange = () => onAddrCityChange();
+
+  if (existing) {
+    const matchedProv = provinces.find(p => p.name.toLowerCase() === (existing.province||'').toLowerCase());
+    if (matchedProv) {
+      provSel.value = matchedProv.code;
+      await onAddrProvinceChange(existing.city, existing.district);
+    }
+  }
+}
+
+function selectAddrTag(label) {
+  _addrSelectedTag = label;
+  document.getElementById('addr-tag-rumah')?.classList.toggle('active', label === 'Rumah');
+  document.getElementById('addr-tag-kantor')?.classList.toggle('active', label === 'Kantor');
+}
+
+async function onAddrProvinceChange(prefillCityName = null, prefillDistrictName = null) {
+  const provSel = document.getElementById('addr-province');
+  const citySel = document.getElementById('addr-city');
+  const distSel = document.getElementById('addr-district');
+  if (!provSel || !citySel || !distSel) return;
+  const code = provSel.value;
+  distSel.innerHTML = '<option value="">Pilih kota dulu</option>'; distSel.disabled = true;
+  if (!code) { citySel.innerHTML = '<option value="">Pilih provinsi dulu</option>'; citySel.disabled = true; return; }
+  citySel.innerHTML = '<option value="">Memuat...</option>'; citySel.disabled = true;
+  const regencies = await fetchRegencies(code);
+  if (document.getElementById('addr-city') !== citySel) return; // panel udah ganti
+  citySel.innerHTML = '<option value="">Pilih Kota/Kabupaten</option>' + regencies.map(r=>`<option value="${r.code}" data-name="${r.name}">${r.name}</option>`).join('');
+  citySel.disabled = false;
+  if (prefillCityName) {
+    const matchedCity = regencies.find(r => r.name.toLowerCase() === prefillCityName.toLowerCase());
+    if (matchedCity) { citySel.value = matchedCity.code; await onAddrCityChange(prefillDistrictName); }
+  }
+}
+
+async function onAddrCityChange(prefillDistrictName = null) {
+  const citySel = document.getElementById('addr-city');
+  const distSel = document.getElementById('addr-district');
+  if (!citySel || !distSel) return;
+  const code = citySel.value;
+  if (!code) { distSel.innerHTML = '<option value="">Pilih kota dulu</option>'; distSel.disabled = true; return; }
+  distSel.innerHTML = '<option value="">Memuat...</option>'; distSel.disabled = true;
+  const districts = await fetchDistricts(code);
+  if (document.getElementById('addr-district') !== distSel) return;
+  distSel.innerHTML = '<option value="">Pilih Kecamatan</option>' + districts.map(d=>`<option value="${d.code}" data-name="${d.name}">${d.name}</option>`).join('');
+  distSel.disabled = false;
+  if (prefillDistrictName) {
+    const matchedDist = districts.find(d => d.name.toLowerCase() === prefillDistrictName.toLowerCase());
+    if (matchedDist) distSel.value = matchedDist.code;
+  }
+}
+
+async function saveAddress() {
+  const name = document.getElementById('addr-name').value.trim();
+  const phone = document.getElementById('addr-phone').value.trim();
+  const provSel = document.getElementById('addr-province');
+  const citySel = document.getElementById('addr-city');
+  const distSel = document.getElementById('addr-district');
+  const province = provSel.selectedOptions[0]?.dataset.name || '';
+  const city = citySel.selectedOptions[0]?.dataset.name || '';
+  const district = distSel.selectedOptions[0]?.dataset.name || '';
+  const postal_code = document.getElementById('addr-postal').value.trim();
+  const address_detail = document.getElementById('addr-detail').value.trim();
+  const address_note = document.getElementById('addr-note').value.trim() || null;
+  const is_default = document.getElementById('addr-default').checked;
+  const label = _addrSelectedTag || 'Rumah';
+
+  if (!name || !phone || !province || !city || !district || !address_detail) {
+    showToast('Lengkapi dulu nama, telepon, provinsi/kota/kecamatan, dan alamat jalan');
+    return;
+  }
+
+  const payload = { customer_id: buyerUser.id, label, recipient_name: name, phone, province, city, district, postal_code: postal_code || null, address_detail, address_note, is_default };
+
+  if (is_default) {
+    await sb.from('addresses').update({is_default:false}).eq('customer_id', buyerUser.id);
+  }
+
+  if (editingAddressId) {
+    await sb.from('addresses').update(payload).eq('id', editingAddressId);
+  } else {
+    if (!buyerAddresses.length) payload.is_default = true; // alamat pertama otomatis jadi utama
+    await sb.from('addresses').insert(payload);
+  }
+  showToast('Alamat tersimpan ✓');
+  renderAddressList();
+}
+
+async function setDefaultAddress(id) {
+  await sb.from('addresses').update({is_default:false}).eq('customer_id', buyerUser.id);
+  await sb.from('addresses').update({is_default:true}).eq('id', id);
+  renderAddressList();
+}
+
+async function deleteAddress(id) {
+  if (!confirm('Hapus alamat ini?')) return;
+  const wasDefault = buyerAddresses.find(a=>a.id===id)?.is_default;
+  await sb.from('addresses').delete().eq('id', id);
+  if (wasDefault) {
+    const { data } = await sb.from('addresses').select('id').eq('customer_id', buyerUser.id).order('created_at').limit(1);
+    if (data && data[0]) await sb.from('addresses').update({is_default:true}).eq('id', data[0].id);
+  }
+  renderAddressList();
 }
 
 async function doBuyerLogout() {
