@@ -1107,32 +1107,42 @@ async function saveBuyerProfile() {
 }
 
 // ===================== ALAMAT (multi-alamat ala Shopee) =====================
+// Data wilayah (provinsi/kota/kecamatan) di-host sendiri di /data/wilayah-*.json (same-origin,
+// bukan panggil API pihak ketiga) — sebelumnya pakai wilayah.id tapi diblokir CORS di browser
+// dan gagalnya diem-diem tanpa pesan error. Format tiap file: array kompak [code, parentCode, name]
+// (provinces.json cuma [code, name]).
+let _wilayahRegenciesAll = null;
+let _wilayahDistrictsAll = null;
+
 async function fetchProvinces() {
   if (wilayahCache.provinces) return wilayahCache.provinces;
-  try {
-    const res = await fetch('https://wilayah.id/api/provinces.json');
-    const json = await res.json();
-    wilayahCache.provinces = json.data || [];
-  } catch (e) { wilayahCache.provinces = []; }
+  const res = await fetch('data/wilayah-provinces.json');
+  if (!res.ok) throw new Error('HTTP '+res.status);
+  const rows = await res.json();
+  wilayahCache.provinces = rows.map(([code,name]) => ({code, name}));
   return wilayahCache.provinces;
 }
 async function fetchRegencies(provinceCode) {
   if (wilayahCache.regencies[provinceCode]) return wilayahCache.regencies[provinceCode];
-  try {
-    const res = await fetch(`https://wilayah.id/api/regencies/${provinceCode}.json`);
-    const json = await res.json();
-    wilayahCache.regencies[provinceCode] = json.data || [];
-  } catch (e) { wilayahCache.regencies[provinceCode] = []; }
-  return wilayahCache.regencies[provinceCode];
+  if (!_wilayahRegenciesAll) {
+    const res = await fetch('data/wilayah-regencies.json');
+    if (!res.ok) throw new Error('HTTP '+res.status);
+    _wilayahRegenciesAll = await res.json();
+  }
+  const list = _wilayahRegenciesAll.filter(([,prov]) => prov === provinceCode).map(([code,,name]) => ({code, name}));
+  wilayahCache.regencies[provinceCode] = list;
+  return list;
 }
 async function fetchDistricts(regencyCode) {
   if (wilayahCache.districts[regencyCode]) return wilayahCache.districts[regencyCode];
-  try {
-    const res = await fetch(`https://wilayah.id/api/districts/${regencyCode}.json`);
-    const json = await res.json();
-    wilayahCache.districts[regencyCode] = json.data || [];
-  } catch (e) { wilayahCache.districts[regencyCode] = []; }
-  return wilayahCache.districts[regencyCode];
+  if (!_wilayahDistrictsAll) {
+    const res = await fetch('data/wilayah-districts.json');
+    if (!res.ok) throw new Error('HTTP '+res.status);
+    _wilayahDistrictsAll = await res.json();
+  }
+  const list = _wilayahDistrictsAll.filter(([,reg]) => reg === regencyCode).map(([code,,name]) => ({code, name}));
+  wilayahCache.districts[regencyCode] = list;
+  return list;
 }
 
 async function loadBuyerAddresses() {
@@ -1201,9 +1211,18 @@ async function openAddressForm(id = null) {
   `);
   selectAddrTag(existing?.label || 'Rumah');
 
-  const provinces = await fetchProvinces();
   const provSel = document.getElementById('addr-province');
   if (!provSel) return; // panel udah ditutup/diganti sebelum fetch selesai
+  let provinces;
+  try {
+    provinces = await fetchProvinces();
+  } catch (e) {
+    console.error('Gagal memuat daftar provinsi:', e);
+    provSel.innerHTML = '<option value="">Gagal memuat — tap utk coba lagi</option>';
+    provSel.onclick = () => openAddressForm(id);
+    showToast('Gagal memuat data wilayah, coba lagi');
+    return;
+  }
   provSel.innerHTML = '<option value="">Pilih Provinsi</option>' + provinces.map(p=>`<option value="${p.code}" data-name="${p.name}">${p.name}</option>`).join('');
   provSel.onchange = () => onAddrProvinceChange();
   document.getElementById('addr-city').onchange = () => onAddrCityChange();
@@ -1232,7 +1251,16 @@ async function onAddrProvinceChange(prefillCityName = null, prefillDistrictName 
   distSel.innerHTML = '<option value="">Pilih kota dulu</option>'; distSel.disabled = true;
   if (!code) { citySel.innerHTML = '<option value="">Pilih provinsi dulu</option>'; citySel.disabled = true; return; }
   citySel.innerHTML = '<option value="">Memuat...</option>'; citySel.disabled = true;
-  const regencies = await fetchRegencies(code);
+  let regencies;
+  try {
+    regencies = await fetchRegencies(code);
+  } catch (e) {
+    console.error('Gagal memuat daftar kota/kabupaten:', e);
+    citySel.innerHTML = '<option value="">Gagal memuat — tap utk coba lagi</option>';
+    citySel.onclick = () => onAddrProvinceChange(prefillCityName, prefillDistrictName);
+    showToast('Gagal memuat data wilayah, coba lagi');
+    return;
+  }
   if (document.getElementById('addr-city') !== citySel) return; // panel udah ganti
   citySel.innerHTML = '<option value="">Pilih Kota/Kabupaten</option>' + regencies.map(r=>`<option value="${r.code}" data-name="${r.name}">${r.name}</option>`).join('');
   citySel.disabled = false;
@@ -1249,7 +1277,16 @@ async function onAddrCityChange(prefillDistrictName = null) {
   const code = citySel.value;
   if (!code) { distSel.innerHTML = '<option value="">Pilih kota dulu</option>'; distSel.disabled = true; return; }
   distSel.innerHTML = '<option value="">Memuat...</option>'; distSel.disabled = true;
-  const districts = await fetchDistricts(code);
+  let districts;
+  try {
+    districts = await fetchDistricts(code);
+  } catch (e) {
+    console.error('Gagal memuat daftar kecamatan:', e);
+    distSel.innerHTML = '<option value="">Gagal memuat — tap utk coba lagi</option>';
+    distSel.onclick = () => onAddrCityChange(prefillDistrictName);
+    showToast('Gagal memuat data wilayah, coba lagi');
+    return;
+  }
   if (document.getElementById('addr-district') !== distSel) return;
   distSel.innerHTML = '<option value="">Pilih Kecamatan</option>' + districts.map(d=>`<option value="${d.code}" data-name="${d.name}">${d.name}</option>`).join('');
   distSel.disabled = false;
