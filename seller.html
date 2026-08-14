@@ -529,7 +529,7 @@
 
           <div class="admin-card" style="margin-bottom:14px">
             <div class="prod-toolbar-bottom">
-              <input class="form-input" id="pf-search" placeholder="Cari nama produk..." oninput="renderAdminProductList()" style="flex:0 1 240px"/>
+              <button class="prod-pill-select" id="pf-selectmode-btn" onclick="toggleSelectMode()" style="cursor:pointer">Pilih Produk</button>
               <select class="form-input" id="pf-gender" onchange="renderAdminProductList()" style="flex:0 1 140px">
                 <option value="">Semua Gender</option>
               </select>
@@ -541,7 +541,7 @@
                 <option value="sold-desc">Terjual Terbanyak</option>
                 <option value="supplier">Supplier A-Z</option>
               </select>
-              <button class="prod-pill-select" id="pf-selectmode-btn" onclick="toggleSelectMode()" style="margin-left:auto;cursor:pointer">Pilih Produk</button>
+              <input class="form-input" id="pf-search" placeholder="Cari nama produk..." oninput="renderAdminProductList()" style="flex:0 1 240px;margin-left:auto"/>
             </div>
             <div class="prod-bulkbar hidden" id="prod-bulkbar">
               <span id="prod-bulk-count">0 dipilih</span>
