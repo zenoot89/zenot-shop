@@ -1259,10 +1259,158 @@ async function fetchVillagesForDistrict(districtCode) {
   return (_villagesByDistrict[districtCode] || []).map(([name, postal], i) => ({code: String(i), name, postal}));
 }
 
+// ---- Isi Cepat alamat: 1 kotak pencarian gabungan (kecamatan+kabupaten+provinsi) + deteksi lokasi GPS ----
+let _districtSearchIndex = null;
+function buildDistrictSearchIndex() {
+  if (_districtSearchIndex) return _districtSearchIndex;
+  const provByCode = Object.fromEntries(WILAYAH_PROVINCES.map(([code,name]) => [code,name]));
+  const regByCode = Object.fromEntries(WILAYAH_REGENCIES.map(([code,name]) => [code,name]));
+  _districtSearchIndex = WILAYAH_DISTRICTS.map(([code,name]) => {
+    const regCode = code.slice(0, code.lastIndexOf('.'));
+    const provCode = regCode.split('.')[0];
+    const regName = regByCode[regCode] || '';
+    const provName = provByCode[provCode] || '';
+    return {
+      districtName: name, regCode, regName, provCode, provName,
+      label: `${name}, ${regName}, ${provName}`,
+      searchText: `${name} ${regName} ${provName}`.toLowerCase(),
+    };
+  });
+  return _districtSearchIndex;
+}
+
+function initAddrQuickSearch() {
+  const input = document.getElementById('addr-quicksearch-input');
+  const list = document.getElementById('addr-quicksearch-list');
+  if (!input || !list) return;
+  input.oninput = () => {
+    const q = input.value.trim().toLowerCase();
+    list.innerHTML = '';
+    if (!q) { list.classList.add('hidden'); return; }
+    const words = q.split(/\s+/).filter(Boolean);
+    const filtered = buildDistrictSearchIndex().filter(d => words.every(w => d.searchText.includes(w))).slice(0, 30);
+    if (!filtered.length) {
+      const empty = document.createElement('div');
+      empty.className = 'ssel-empty';
+      empty.textContent = 'Tidak ditemukan, coba kata lain';
+      list.appendChild(empty);
+    } else {
+      filtered.forEach(d => {
+        const item = document.createElement('div');
+        item.className = 'ssel-item';
+        item.textContent = d.label;
+        item.onmousedown = (e) => { e.preventDefault(); pickAddrQuickResult(d); };
+        list.appendChild(item);
+      });
+    }
+    list.classList.remove('hidden');
+  };
+  input.onfocus = () => { if (input.value.trim()) input.oninput(); };
+  input.onblur = () => setTimeout(() => list.classList.add('hidden'), 150);
+}
+
+async function pickAddrQuickResult(d) {
+  document.getElementById('addr-quicksearch-input').value = d.label;
+  document.getElementById('addr-quicksearch-list').classList.add('hidden');
+  document.getElementById('addr-province-input').value = d.provName;
+  document.getElementById('addr-province').value = d.provCode;
+  await onAddrProvincePicked(d.provCode, d.regName, d.districtName);
+  showToast('Provinsi, kota, kecamatan udah keisi — tinggal pilih Desa/Kelurahan ✓');
+  document.getElementById('addr-village-input')?.focus();
+}
+
+async function useCurrentLocation() {
+  const btn = document.getElementById('addr-geoloc-btn');
+  if (!btn) return;
+  if (!navigator.geolocation) {
+    showToast('HP/browser ini tidak mendukung deteksi lokasi');
+    return;
+  }
+  const originalText = btn.textContent;
+  btn.textContent = '📍 Mendeteksi lokasi...';
+  btn.disabled = true;
+  const restore = () => { btn.textContent = originalText; btn.disabled = false; };
+  navigator.geolocation.getCurrentPosition(async (pos) => {
+    try {
+      const { latitude, longitude } = pos.coords;
+      const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&addressdetails=1&accept-language=id&zoom=18`);
+      if (!res.ok) throw new Error('HTTP '+res.status);
+      const data = await res.json();
+      await applyGeoResult(data.address || {});
+    } catch (e) {
+      console.error('Gagal deteksi lokasi:', e);
+      showToast('Lokasi kedeteksi tapi gagal ambil detail alamat, isi manual ya');
+    } finally {
+      restore();
+    }
+  }, (err) => {
+    console.error('Geolocation error:', err);
+    let msg = 'Gagal ambil lokasi, isi manual ya';
+    if (err.code === err.PERMISSION_DENIED) msg = 'Izin lokasi ditolak — isi manual ya, atau aktifkan izin lokasi di browser lalu coba lagi';
+    showToast(msg);
+    restore();
+  }, { enableHighAccuracy: true, timeout: 12000 });
+}
+
+async function applyGeoResult(addr) {
+  const idx = buildDistrictSearchIndex();
+  const norm = s => (s || '').toLowerCase().replace(/^(kabupaten|kota|kec\.?|kecamatan)\s+/, '').trim();
+
+  const geoDistrict = addr.city_district || addr.suburb || addr.subdistrict || addr.municipality || '';
+  const geoRegency = addr.county || addr.city || addr.regency || '';
+  const geoProvince = addr.state || '';
+  const geoVillage = addr.village || addr.hamlet || addr.neighbourhood || '';
+
+  let match = null;
+  if (geoDistrict) {
+    match = idx.find(d => norm(d.districtName) === norm(geoDistrict) && (!geoRegency || norm(d.regName) === norm(geoRegency)));
+    if (!match) match = idx.find(d => norm(d.districtName) === norm(geoDistrict));
+  }
+  if (!match && geoRegency && geoProvince) {
+    const cand = idx.filter(d => norm(d.regName) === norm(geoRegency) && norm(d.provName).includes(norm(geoProvince)));
+    if (cand.length === 1) match = cand[0];
+  }
+
+  if (match) {
+    document.getElementById('addr-quicksearch-input').value = match.label;
+    document.getElementById('addr-province-input').value = match.provName;
+    document.getElementById('addr-province').value = match.provCode;
+    await onAddrProvincePicked(match.provCode, match.regName, match.districtName);
+    if (geoVillage) {
+      setTimeout(() => {
+        const vData = _sselData['addr-village'];
+        if (vData) {
+          const vMatch = vData.options.find(v => v.name.toLowerCase() === geoVillage.toLowerCase());
+          if (vMatch) sselPick('addr-village', vMatch);
+        }
+      }, 600);
+    }
+    showToast('Lokasi terdeteksi ✓ cek lagi ya, lalu lengkapi nama jalan');
+  } else {
+    showToast('Lokasi terdeteksi tapi nama wilayahnya nggak persis cocok — tolong pilih manual ya');
+  }
+
+  const detailInput = document.getElementById('addr-detail');
+  if (detailInput && !detailInput.value.trim()) {
+    const road = addr.road || addr.pedestrian || '';
+    const houseNumber = addr.house_number || '';
+    const guess = [road, houseNumber].filter(Boolean).join(' No. ');
+    if (guess) detailInput.value = guess;
+  }
+}
+
 async function openAddressForm(id = null) {
   editingAddressId = id;
   const existing = id ? buyerAddresses.find(a=>a.id===id) : null;
   openSidePanel(id ? 'Ubah Alamat' : 'Alamat Baru', `
+    <div style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:16px">
+      <div style="font-size:12px;font-weight:600;margin-bottom:10px">✨ Isi Cepat (opsional)</div>
+      <button type="button" id="addr-geoloc-btn" onclick="useCurrentLocation()" style="width:100%;padding:11px;background:#fff;border:1px solid var(--border);border-radius:8px;cursor:pointer;font-size:13px;font-weight:500;margin-bottom:10px">📍 Pakai Lokasi Saat Ini</button>
+      <div class="ssel">
+        <input class="form-input" id="addr-quicksearch-input" placeholder="Atau ketik kecamatan, mis. Wanaraja Garut" autocomplete="off"/>
+        <div class="ssel-list hidden" id="addr-quicksearch-list"></div>
+      </div>
+    </div>
     <label style="font-size:11px;color:var(--muted);text-transform:uppercase">Nama Lengkap</label>
     <input class="form-input" id="addr-name" value="${existing?.recipient_name||''}" style="margin:6px 0 14px"/>
     <label style="font-size:11px;color:var(--muted);text-transform:uppercase">Nomor Telepon</label>
@@ -1289,6 +1437,7 @@ async function openAddressForm(id = null) {
     <button style="width:100%;padding:12px;background:none;border:1px solid var(--border);border-radius:8px;cursor:pointer;color:var(--muted)" onclick="renderAddressList()">Batal</button>
   `);
   selectAddrTag(existing?.label || 'Rumah');
+  initAddrQuickSearch();
 
   const provinceOptions = WILAYAH_PROVINCES.map(([code,name]) => ({code, name})).sort((a,b)=>a.name.localeCompare(b.name));
   sselInit('addr-province', provinceOptions, (opt) => onAddrProvincePicked(opt.code));
