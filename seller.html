@@ -530,8 +530,8 @@
           <div class="admin-card" style="margin-bottom:14px">
             <div class="prod-toolbar-bottom">
               <button class="prod-pill-select" id="pf-selectmode-btn" onclick="toggleSelectMode()" style="cursor:pointer">Pilih Produk</button>
-              <select class="form-input" id="pf-gender" onchange="renderAdminProductList()" style="flex:0 1 140px">
-                <option value="">Semua Gender</option>
+              <select class="form-input" id="pf-gender" onchange="renderAdminProductList()" style="flex:0 1 160px">
+                <option value="">Semua Kategori</option>
               </select>
               <select class="form-input" id="pf-sort" onchange="renderAdminProductList()" style="flex:0 1 160px">
                 <option value="newest">Terbaru</option>
@@ -1270,7 +1270,7 @@ function populateGenderOptions() {
   const filterSel = document.getElementById('pf-gender');
   if (filterSel) {
     const cur = filterSel.value;
-    filterSel.innerHTML = '<option value="">Semua Gender</option>' + topCats.map(c => `<option value="${c.name.toLowerCase()}">${c.name}</option>`).join('');
+    filterSel.innerHTML = '<option value="">Semua Kategori</option>' + topCats.map(c => `<option value="${c.name.toLowerCase()}">${c.name}</option>`).join('');
     if (cur) filterSel.value = cur;
   }
 }
