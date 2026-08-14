@@ -1128,13 +1128,13 @@ async function fetchProvinces() {
 }
 async function fetchRegencies(provinceCode) {
   if (wilayahCache.regencies[provinceCode]) return wilayahCache.regencies[provinceCode];
-  const list = WILAYAH_REGENCIES.filter(([,prov]) => prov === provinceCode).map(([code,,name]) => ({code, name}));
+  const list = WILAYAH_REGENCIES.filter(([code]) => code.split('.')[0] === provinceCode).map(([code,name]) => ({code, name}));
   wilayahCache.regencies[provinceCode] = list;
   return list;
 }
 async function fetchDistricts(regencyCode) {
   if (wilayahCache.districts[regencyCode]) return wilayahCache.districts[regencyCode];
-  const list = WILAYAH_DISTRICTS.filter(([,reg]) => reg === regencyCode).map(([code,,name]) => ({code, name}));
+  const list = WILAYAH_DISTRICTS.filter(([code]) => code.slice(0, code.lastIndexOf('.')) === regencyCode).map(([code,name]) => ({code, name}));
   wilayahCache.districts[regencyCode] = list;
   return list;
 }
@@ -1313,7 +1313,7 @@ async function onAddrProvincePicked(provinceCode, prefillCity = null, prefillDis
   sselReset('addr-city', 'Pilih kota dulu');
   sselReset('addr-district', 'Pilih kota dulu');
   sselReset('addr-village', 'Pilih kecamatan dulu');
-  const regencyOptions = WILAYAH_REGENCIES.filter(([,prov]) => prov === provinceCode).map(([code,,name]) => ({code, name})).sort((a,b)=>a.name.localeCompare(b.name));
+  const regencyOptions = WILAYAH_REGENCIES.filter(([code]) => code.split('.')[0] === provinceCode).map(([code,name]) => ({code, name})).sort((a,b)=>a.name.localeCompare(b.name));
   sselInit('addr-city', regencyOptions, (opt) => onAddrCityPicked(opt.code));
   if (prefillCity) {
     const matched = regencyOptions.find(r => r.name.toLowerCase() === prefillCity.toLowerCase());
@@ -1328,7 +1328,7 @@ async function onAddrProvincePicked(provinceCode, prefillCity = null, prefillDis
 async function onAddrCityPicked(cityCode, prefillDistrict = null, prefillVillage = null) {
   sselReset('addr-district', 'Pilih kecamatan');
   sselReset('addr-village', 'Pilih kecamatan dulu');
-  const districtOptions = WILAYAH_DISTRICTS.filter(([,reg]) => reg === cityCode).map(([code,,name]) => ({code, name})).sort((a,b)=>a.name.localeCompare(b.name));
+  const districtOptions = WILAYAH_DISTRICTS.filter(([code]) => code.slice(0, code.lastIndexOf('.')) === cityCode).map(([code,name]) => ({code, name})).sort((a,b)=>a.name.localeCompare(b.name));
   sselInit('addr-district', districtOptions, (opt) => onAddrDistrictPicked(opt.code));
   if (prefillDistrict) {
     const matched = districtOptions.find(d => d.name.toLowerCase() === prefillDistrict.toLowerCase());
