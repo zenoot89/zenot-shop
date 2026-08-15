@@ -1354,24 +1354,48 @@ async function useCurrentLocation() {
 
 async function applyGeoResult(addr) {
   const idx = buildDistrictSearchIndex();
-  const norm = s => (s || '').toLowerCase().replace(/^(kabupaten|kota|kec\.?|kecamatan)\s+/, '').trim();
+  // Buat kecamatan: aman di-strip prefix "Kec."/"Kecamatan" (nggak ada isu Kota vs Kabupaten di level ini)
+  const normDistrict = s => (s || '').toLowerCase().replace(/^(kec\.?|kecamatan)\s+/, '').trim();
+  // Buat kabupaten/kota: JANGAN gabungin "Kota" & "Kabupaten" jadi satu — itu dua entitas beda
+  // (Kota Bandung != Kabupaten Bandung, Kota Bogor != Kabupaten Bogor, dst)
+  const normBase = s => (s || '').toLowerCase().trim();
+  const stripKotaKab = s => normBase(s).replace(/^(kabupaten|kota)\s+/, '');
 
   const geoDistrict = addr.city_district || addr.suburb || addr.subdistrict || addr.municipality || '';
   const geoRegency = addr.county || addr.city || addr.regency || '';
   const geoProvince = addr.state || '';
   const geoVillage = addr.village || addr.hamlet || addr.neighbourhood || '';
 
-  let match = null;
-  if (geoDistrict) {
-    match = idx.find(d => norm(d.districtName) === norm(geoDistrict) && (!geoRegency || norm(d.regName) === norm(geoRegency)));
-    if (!match) match = idx.find(d => norm(d.districtName) === norm(geoDistrict));
+  // Langkah 1: cocokkan kabupaten/kota dulu — nama kabupaten/kota jarang kembar dalam 1 provinsi,
+  // jadi ini penanda paling aman buat dijadiin patokan. Coba exact match dulu (termasuk beda Kota/
+  // Kabupaten); kalau nggak ketemu, baru coba tanpa prefix — TAPI cuma dipakai kalau hasilnya nggak
+  // ambigu (persis 1 kandidat), biar nggak ketuker Kota X vs Kabupaten X yang namanya mirip.
+  let regencyCandidates = [];
+  if (geoRegency) {
+    regencyCandidates = idx.filter(d => normBase(d.regName) === normBase(geoRegency));
+    if (!regencyCandidates.length) {
+      const stripped = idx.filter(d => stripKotaKab(d.regName) === stripKotaKab(geoRegency));
+      if (stripped.length === 1) regencyCandidates = stripped;
+    }
+    if (regencyCandidates.length > 1 && geoProvince) {
+      regencyCandidates = regencyCandidates.filter(d => normBase(d.provName).includes(normBase(geoProvince)) || normBase(geoProvince).includes(normBase(d.provName)));
+    }
   }
-  if (!match && geoRegency && geoProvince) {
-    const cand = idx.filter(d => norm(d.regName) === norm(geoRegency) && norm(d.provName).includes(norm(geoProvince)));
-    if (cand.length === 1) match = cand[0];
+  const regMatch = regencyCandidates[0] || null;
+
+  // Langkah 2: baru cari kecamatan, TAPI WAJIB di dalam kabupaten yang sudah ketemu di langkah 1.
+  // Banyak nama kecamatan/kelurahan kembar antar kabupaten se-Indonesia (mis. "Binong" ada di Kab.
+  // Subang, tapi juga nama kelurahan di Kec. Batununggal, Kota Bandung) — kalau dicari nasional tanpa
+  // dibatasi kabupatennya dulu, gampang nyantol ke daerah yang salah sama sekali.
+  let match = null;
+  if (regMatch && geoDistrict) {
+    match = idx.find(d => d.regCode === regMatch.regCode && normDistrict(d.districtName) === normDistrict(geoDistrict));
+  }
+  if (!match && regMatch) {
+    match = { ...regMatch, districtName: null }; // kabupaten yakin, kecamatan biar dipilih manual
   }
 
-  if (match) {
+  if (match && match.districtName) {
     document.getElementById('addr-quicksearch-input').value = match.label;
     document.getElementById('addr-province-input').value = match.provName;
     document.getElementById('addr-province').value = match.provCode;
@@ -1386,6 +1410,11 @@ async function applyGeoResult(addr) {
       }, 600);
     }
     showToast('Lokasi terdeteksi ✓ cek lagi ya, lalu lengkapi nama jalan');
+  } else if (match) {
+    document.getElementById('addr-province-input').value = match.provName;
+    document.getElementById('addr-province').value = match.provCode;
+    await onAddrProvincePicked(match.provCode, match.regName, null);
+    showToast('Kota/Kabupaten kedeteksi ✓ tapi kecamatannya kurang presisi — tolong pilih manual ya');
   } else {
     showToast('Lokasi terdeteksi tapi nama wilayahnya nggak persis cocok — tolong pilih manual ya');
   }
