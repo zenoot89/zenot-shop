@@ -286,6 +286,13 @@
     .prod-bulkbar{display:flex;align-items:center;gap:10px;margin-top:12px;padding-top:12px;border-top:1px solid var(--border);font-size:13px;color:var(--sec)}
     .prod-check{width:17px;height:17px;flex-shrink:0;cursor:pointer;accent-color:var(--accent)}
     .badge-lowstock{display:inline-block;background:#fdecea;color:#c0392b;font-size:12px;font-family:'IBM Plex Mono',monospace;padding:3px 8px;border-radius:4px;margin-left:6px}
+    .badge-inactive{display:inline-block;background:#f0ede8;color:var(--muted);font-size:12px;font-family:'IBM Plex Mono',monospace;padding:3px 8px;border-radius:4px;margin-left:6px}
+    .variant-active-toggle{position:relative;display:inline-block;width:38px;height:22px;flex-shrink:0}
+    .variant-active-toggle input{opacity:0;width:0;height:0}
+    .variant-active-toggle .slider{position:absolute;cursor:pointer;inset:0;background:#d9d3c8;border-radius:22px;transition:.15s}
+    .variant-active-toggle .slider:before{position:absolute;content:"";height:16px;width:16px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.15s}
+    .variant-active-toggle input:checked + .slider{background:#1a7a3c}
+    .variant-active-toggle input:checked + .slider:before{transform:translateX(16px)}
     .variant-row td{background:var(--bg);padding-top:10px!important;padding-bottom:10px!important}
     .variant-sub-row{display:flex;align-items:center;gap:12px}
     .variant-sub-img{width:44px;height:44px}
@@ -732,6 +739,7 @@
                             <th style="padding:8px 6px;color:var(--muted)">Foto</th>
                             <th style="padding:8px 6px;color:var(--muted)">Harga</th>
                             <th style="padding:8px 6px;color:var(--muted)">Stok</th>
+                            <th style="padding:8px 6px;color:var(--muted)">Status</th>
                           </tr>
                         </thead>
                         <tbody id="variant-tbody"></tbody>

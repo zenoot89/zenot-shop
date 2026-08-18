@@ -194,6 +194,7 @@ function rebuildVariantTable() {
       const d = variantData[key] || {};
       const existingImg = d.image_url || '';
       const showPhoto = si === 0; // hanya 1 foto per warna (baris pertama ukuran)
+      const isActive = d.active !== false; // default aktif kecuali eksplisit dimatikan
       rows.push(`
         <tr style="border-bottom:1px solid var(--border)" data-key="${key}">
           <td style="padding:10px 6px;white-space:nowrap">
@@ -211,6 +212,12 @@ function rebuildVariantTable() {
           <td style="padding:10px 6px"></td>
           <td style="padding:10px 6px"><input class="form-input vt-price" style="padding:7px 10px;font-size:12px" type="number" placeholder="Harga" value="${d.price||''}" oninput="updateVariantData('${key}','price',this.value)"/></td>
           <td style="padding:10px 6px"><input class="form-input vt-stock" style="padding:7px 10px;font-size:12px" type="number" placeholder="Stok" value="${d.stock||''}" oninput="updateVariantData('${key}','stock',this.value)"/></td>
+          <td style="padding:10px 6px;text-align:center">
+            <label class="variant-active-toggle" title="${isActive?'Aktif — bisa dibeli':'Nonaktif — disembunyikan dari pilihan pembeli'}">
+              <input type="checkbox" ${isActive?'checked':''} onchange="updateVariantData('${key}','active',this.checked)"/>
+              <span class="slider"></span>
+            </label>
+          </td>
         </tr>`);
     });
   });
@@ -655,7 +662,8 @@ async function saveProduct() {
         price,
         original_price: null,
         stock: parseInt(d.stock)||0,
-        image_url: variantImageUrl
+        image_url: variantImageUrl,
+        is_active: d.active !== false
       });
     }
   }
@@ -740,7 +748,7 @@ function editProduct(id) {
   // Prefill variantData
   vars.forEach(v => {
     const key = variantKey(v.color_name, v.size);
-    variantData[key] = {price: v.price, orig: v.original_price, stock: v.stock, image_url: v.image_url};
+    variantData[key] = {price: v.price, orig: v.original_price, stock: v.stock, image_url: v.image_url, active: v.is_active !== false};
   });
   renderColorTags();
   renderSizeTags();
@@ -759,6 +767,7 @@ const LOW_STOCK_THRESHOLD = 5;
 let bulkSelected = new Set();
 let expandedProductId = null;
 let productSalesMap = {};
+let variantSalesMap = {};
 let lastRenderedIds = [];
 let productStatusTab = 'semua';
 let lowStockOnly = false;
@@ -820,10 +829,12 @@ function priceRangeStr(vars, field) {
 async function loadProductSales() {
   const { data } = await sb.from('orders').select('items');
   productSalesMap = {};
+  variantSalesMap = {};
   (data || []).forEach(o => {
     (o.items || []).forEach(it => {
       if (!it.productId) return;
       productSalesMap[it.productId] = (productSalesMap[it.productId] || 0) + (it.qty || 0);
+      if (it.variantId) variantSalesMap[it.variantId] = (variantSalesMap[it.variantId] || 0) + (it.qty || 0);
     });
   });
 }
@@ -913,7 +924,9 @@ function renderAdminProductList() {
     </tr>`;
     const variantRows = isOpen ? vars.map(v => {
       const low = (v.stock??0) <= LOW_STOCK_THRESHOLD;
+      const inactive = v.is_active === false;
       const img = v.image_url || p.image_url;
+      const vSold = variantSalesMap[v.id] || 0;
       return `
       <tr class="variant-row">
         ${selectModeOn?'<td></td>':''}
@@ -926,9 +939,9 @@ function renderAdminProductList() {
         <td></td>
         <td>${v.original_price!=null?`<span class="prod-price-old">${fRp(v.original_price)}</span>`:''}<span class="prod-price-net">${fRp(v.price)}</span></td>
         <td class="prod-stock-num ${low?'variant-stock-low':''}">${v.stock??0}</td>
+        <td class="prod-sold-num">${vSold}</td>
         <td></td>
-        <td></td>
-        <td>${low?'<span class="badge-lowstock">Menipis</span>':''}</td>
+        <td>${inactive?'<span class="badge-inactive">Nonaktif</span>':(low?'<span class="badge-lowstock">Menipis</span>':'')}</td>
         <td></td>
       </tr>`;
     }).join('') : '';

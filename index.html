@@ -1735,12 +1735,16 @@ function selectColor(el, colorName) {
 
 function renderSizes(colorName) {
   const sizes = activeVariants.filter(v=>v.color_name===colorName);
-  document.getElementById('modal-sizes').innerHTML = sizes.map(v=>`
-    <button class="modal-size-btn ${v.stock===0?'out':''}" 
-      ${v.stock===0?'disabled':''} 
+  document.getElementById('modal-sizes').innerHTML = sizes.map(v=>{
+    const unavailable = v.stock===0 || v.is_active===false;
+    const label = v.is_active===false ? ' (Nonaktif)' : (v.stock===0 ? ' (Habis)' : '');
+    return `
+    <button class="modal-size-btn ${unavailable?'out':''}" 
+      ${unavailable?'disabled':''} 
       onclick="selectSize(this,'${v.id}')">
-      ${v.size}${v.stock===0?' (Habis)':''}
-    </button>`).join('');
+      ${v.size}${label}
+    </button>`;
+  }).join('');
 }
 
 function selectSize(el, variantId) {
