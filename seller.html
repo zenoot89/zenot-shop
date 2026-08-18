@@ -286,9 +286,13 @@
     .prod-bulkbar{display:flex;align-items:center;gap:10px;margin-top:12px;padding-top:12px;border-top:1px solid var(--border);font-size:13px;color:var(--sec)}
     .prod-check{width:17px;height:17px;flex-shrink:0;cursor:pointer;accent-color:var(--accent)}
     .badge-lowstock{display:inline-block;background:#fdecea;color:#c0392b;font-size:12px;font-family:'IBM Plex Mono',monospace;padding:3px 8px;border-radius:4px;margin-left:6px}
-    .variant-breakdown{margin-top:8px;padding-top:8px;border-top:1px dashed var(--border);display:flex;flex-wrap:wrap;gap:6px}
-    .variant-breakdown-chip{font-size:12px;font-family:'IBM Plex Mono',monospace;color:var(--sec);background:var(--bg);border-radius:5px;padding:4px 9px}
-    .variant-breakdown-chip.low{color:#c0392b;background:#fdecea}
+    .variant-row td{background:var(--bg);padding-top:10px!important;padding-bottom:10px!important}
+    .variant-sub-row{display:flex;align-items:center;gap:14px}
+    .variant-sub-img{width:44px;height:44px}
+    .variant-sub-label{flex:1;min-width:140px;font-size:14px;font-weight:600;color:var(--text)}
+    .variant-sub-price{min-width:140px}
+    .variant-sub-stock{font-family:'IBM Plex Mono',monospace;font-size:13.5px;font-weight:600;color:var(--sec);min-width:140px}
+    .variant-sub-stock.low{color:#c0392b}
     .variant-toggle{background:none;border:none;color:var(--sec);font-size:12.5px;cursor:pointer;padding:0;text-decoration:underline;margin-top:7px}
 
     /* ===== CATEGORY TREE (3 kolom) ===== */

@@ -884,7 +884,6 @@ function renderAdminProductList() {
     const lowest = productLowestStock(p);
     const isLow = vars.length && lowest <= LOW_STOCK_THRESHOLD;
     const isOpen = expandedProductId === p.id;
-    const breakdown = vars.map(v => `<span class="variant-breakdown-chip ${(v.stock??0)<=LOW_STOCK_THRESHOLD?'low':''}">${v.color_name} · ${v.size}: ${v.stock??0}</span>`).join('');
     const hasDiscount = vars.some(v => v.original_price != null);
     const netStr = priceRangeStr(vars, 'price') || '-';
     const jualStr = hasDiscount ? priceRangeStr(vars, 'original_price') : null;
@@ -912,8 +911,23 @@ function renderAdminProductList() {
         <button class="btn-edit" onclick="editProduct('${p.id}')">Edit</button>
       </td>
     </tr>`;
-    const variantRow = isOpen ? `<tr class="variant-row">${selectModeOn?'<td></td>':''}<td colspan="8"><div class="variant-breakdown">${breakdown}</div></td></tr>` : '';
-    return row + variantRow;
+    const variantRows = isOpen ? vars.map(v => {
+      const low = (v.stock??0) <= LOW_STOCK_THRESHOLD;
+      const img = v.image_url || p.image_url;
+      return `
+      <tr class="variant-row">
+        ${selectModeOn?'<td></td>':''}
+        <td colspan="8">
+          <div class="variant-sub-row">
+            <div class="admin-product-img variant-sub-img">${img?`<img src="${img}"/>`:`<div style="width:100%;height:100%;background:#f0ede8"></div>`}</div>
+            <div class="variant-sub-label">${v.color_name} · ${v.size}</div>
+            <div class="variant-sub-price">${v.original_price!=null?`<span class="prod-price-old">${fRp(v.original_price)}</span>`:''}<span class="prod-price-net">${fRp(v.price)}</span></div>
+            <div class="variant-sub-stock ${low?'low':''}">${v.stock??0} stok${low?' · Menipis':''}</div>
+          </div>
+        </td>
+      </tr>`;
+    }).join('') : '';
+    return row + variantRows;
   }).join('');
   lastRenderedIds = list.map(p => p.id);
   updateBulkBar();
