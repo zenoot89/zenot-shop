@@ -917,14 +917,19 @@ function renderAdminProductList() {
       return `
       <tr class="variant-row">
         ${selectModeOn?'<td></td>':''}
-        <td colspan="8">
+        <td>
           <div class="variant-sub-row">
             <div class="admin-product-img variant-sub-img">${img?`<img src="${img}"/>`:`<div style="width:100%;height:100%;background:#f0ede8"></div>`}</div>
             <div class="variant-sub-label">${v.color_name} · ${v.size}</div>
-            <div class="variant-sub-price">${v.original_price!=null?`<span class="prod-price-old">${fRp(v.original_price)}</span>`:''}<span class="prod-price-net">${fRp(v.price)}</span></div>
-            <div class="variant-sub-stock ${low?'low':''}">${v.stock??0} stok${low?' · Menipis':''}</div>
           </div>
         </td>
+        <td></td>
+        <td>${v.original_price!=null?`<span class="prod-price-old">${fRp(v.original_price)}</span>`:''}<span class="prod-price-net">${fRp(v.price)}</span></td>
+        <td class="prod-stock-num ${low?'variant-stock-low':''}">${v.stock??0}</td>
+        <td></td>
+        <td></td>
+        <td>${low?'<span class="badge-lowstock">Menipis</span>':''}</td>
+        <td></td>
       </tr>`;
     }).join('') : '';
     return row + variantRows;
