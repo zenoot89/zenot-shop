@@ -450,6 +450,10 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 8l-9-5-9 5 9 5 9-5z"/><path d="M3 8v8l9 5 9-5V8"/><path d="M12 13v8"/></svg>
         Produk
       </button>
+      <button class="admin-nav-item" data-tab="performance" onclick="switchTab('performance',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 3v18h18"/><path d="M18.7 8l-5.1 5.1-3-3L5 15.5"/></svg>
+        Performa Toko
+      </button>
       <button class="admin-nav-item admin-nav-group-toggle open" id="promo-group-toggle" onclick="toggleNavGroup(this)">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
         Promosi
@@ -810,6 +814,47 @@
         </div>
 
         <!-- TAB: ULASAN -->
+        <!-- TAB: PERFORMA TOKO -->
+        <div class="admin-section" id="tab-performance">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px">
+            <div style="font-size:13px;color:var(--muted)">Data dihitung dari kunjungan &amp; pesanan tercatat di toko.</div>
+            <select id="perf-period" class="form-input" style="width:auto" onchange="loadPerformanceDashboard(this.value)">
+              <option value="today">Hari Ini</option>
+              <option value="7d">7 Hari Terakhir</option>
+              <option value="30d">30 Hari Terakhir</option>
+            </select>
+          </div>
+
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:16px">
+            <div class="admin-card" style="margin:0">
+              <div style="font-size:12px;color:var(--muted);margin-bottom:6px">Total Penjualan</div>
+              <div id="perf-revenue" style="font-size:22px;font-weight:700">Rp 0</div>
+            </div>
+            <div class="admin-card" style="margin:0">
+              <div style="font-size:12px;color:var(--muted);margin-bottom:6px">Pesanan</div>
+              <div id="perf-orders" style="font-size:22px;font-weight:700">0</div>
+            </div>
+            <div class="admin-card" style="margin:0">
+              <div style="font-size:12px;color:var(--muted);margin-bottom:6px">Total Pengunjung</div>
+              <div id="perf-visitors" style="font-size:22px;font-weight:700">0</div>
+            </div>
+            <div class="admin-card" style="margin:0">
+              <div style="font-size:12px;color:var(--muted);margin-bottom:6px">Tingkat Konversi</div>
+              <div id="perf-conversion" style="font-size:22px;font-weight:700">0,00%</div>
+            </div>
+          </div>
+
+          <div class="admin-card" style="margin-bottom:16px">
+            <h3 class="admin-card-title">Kunjungan per Jam</h3>
+            <div id="perf-chart" style="margin-top:10px"></div>
+          </div>
+
+          <div class="admin-card">
+            <h3 class="admin-card-title">Produk Terpopuler (paling banyak diklik)</h3>
+            <div id="perf-top-products" style="margin-top:10px;font-size:13px;color:var(--muted)">Memuat...</div>
+          </div>
+        </div>
+
         <div class="admin-section" id="tab-reviews">
           <div class="admin-card">
             <h3 class="admin-card-title">Ulasan Masuk</h3>
@@ -1080,7 +1125,7 @@ function toggleSidebar(open) {
   document.getElementById('admin-scrim').classList.toggle('open', open);
 }
 
-const TAB_TITLES = { products: 'Produk', vouchers: 'Voucher', reviews: 'Ulasan', promotions: 'Diskon Produk', categories: 'Data Master', bundling: 'Bundling', reseller: 'Program Reseller', dropshipper: 'Program Dropshipper', customers: 'Pelanggan' };
+const TAB_TITLES = { products: 'Produk', performance: 'Performa Toko', vouchers: 'Voucher', reviews: 'Ulasan', promotions: 'Diskon Produk', categories: 'Data Master', bundling: 'Bundling', reseller: 'Program Reseller', dropshipper: 'Program Dropshipper', customers: 'Pelanggan' };
 
 function toggleNavGroup(btn) {
   btn.classList.toggle('open');
@@ -1095,6 +1140,7 @@ function switchTab(tab, el) {
   toggleSidebar(false);
   if (tab === 'categories') { loadAdminCategories(); loadAdminSuppliers(); }
   if (tab === 'customers') loadAdminCustomers();
+  if (tab === 'performance') loadPerformanceDashboard(document.getElementById('perf-period')?.value || 'today');
   if (tab === 'promotions') {
     loadCategories();
     ['promo-product-id','flash-product-id'].forEach(id => {
@@ -1104,6 +1150,113 @@ function switchTab(tab, el) {
     });
   }
 }
+// ===================== PERFORMA TOKO =====================
+function perfRangeStart(period) {
+  const now = new Date();
+  if (period === '7d') { const d = new Date(now); d.setDate(d.getDate()-6); d.setHours(0,0,0,0); return d; }
+  if (period === '30d') { const d = new Date(now); d.setDate(d.getDate()-29); d.setHours(0,0,0,0); return d; }
+  const d = new Date(now); d.setHours(0,0,0,0); return d; // today
+}
+
+async function loadPerformanceDashboard(period = 'today') {
+  const start = perfRangeStart(period).toISOString();
+
+  const [ordersRes, storeEventsRes, productEventsRes] = await Promise.all([
+    sb.from('orders').select('total, created_at').gte('created_at', start),
+    sb.from('analytics_events').select('session_id, created_at').eq('event_type', 'view_store').gte('created_at', start),
+    sb.from('analytics_events').select('product_id').eq('event_type', 'view_product').gte('created_at', start),
+  ]);
+
+  const orders = ordersRes.data || [];
+  const storeEvents = storeEventsRes.data || [];
+  const productEvents = productEventsRes.data || [];
+
+  const totalRevenue = orders.reduce((s, o) => s + (o.total || 0), 0);
+  const totalOrders = orders.length;
+  const uniqueVisitors = new Set(storeEvents.map(e => e.session_id)).size;
+  const conversion = uniqueVisitors > 0 ? (totalOrders / uniqueVisitors * 100) : 0;
+
+  document.getElementById('perf-revenue').textContent = 'Rp ' + totalRevenue.toLocaleString('id-ID');
+  document.getElementById('perf-orders').textContent = totalOrders.toLocaleString('id-ID');
+  document.getElementById('perf-visitors').textContent = uniqueVisitors.toLocaleString('id-ID');
+  document.getElementById('perf-conversion').textContent = conversion.toLocaleString('id-ID', {minimumFractionDigits:2, maximumFractionDigits:2}) + '%';
+
+  // Grafik: kunjungan per jam (Hari Ini) atau per hari (7/30 hari)
+  renderPerfChart(storeEvents, period);
+
+  // Produk terpopuler (paling banyak diklik)
+  const countByProduct = {};
+  productEvents.forEach(e => { if (e.product_id) countByProduct[e.product_id] = (countByProduct[e.product_id]||0) + 1; });
+  const top = Object.entries(countByProduct).sort((a,b) => b[1]-a[1]).slice(0, 5);
+  const topEl = document.getElementById('perf-top-products');
+  if (!top.length) {
+    topEl.innerHTML = '<p style="font-size:13px;color:var(--muted)">Belum ada data klik produk di periode ini.</p>';
+  } else {
+    topEl.innerHTML = `
+      <table style="width:100%;border-collapse:collapse;font-size:13px">
+        <thead><tr style="border-bottom:1px solid var(--border);text-align:left">
+          <th style="padding:8px 4px">Produk</th><th style="padding:8px 4px;text-align:right">Kali Diklik</th>
+        </tr></thead>
+        <tbody>
+          ${top.map(([pid, count]) => {
+            const p = adminProductsData.find(x => x.id === pid);
+            return `<tr style="border-bottom:1px solid var(--border)">
+              <td style="padding:8px 4px">${p ? p.name : '(produk sudah dihapus)'}</td>
+              <td style="padding:8px 4px;text-align:right;font-weight:600">${count}</td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>`;
+  }
+}
+
+function renderPerfChart(storeEvents, period) {
+  const el = document.getElementById('perf-chart');
+  const buckets = {}; // label -> count
+  let labels = [];
+
+  if (period === 'today') {
+    for (let h = 0; h < 24; h++) buckets[h] = 0;
+    storeEvents.forEach(e => { const h = new Date(e.created_at).getHours(); buckets[h] = (buckets[h]||0)+1; });
+    labels = Object.keys(buckets).map(Number).sort((a,b)=>a-b);
+  } else {
+    const days = period === '7d' ? 7 : 30;
+    const dayKeys = [];
+    for (let i = days-1; i >= 0; i--) {
+      const d = new Date(); d.setDate(d.getDate()-i); d.setHours(0,0,0,0);
+      const key = d.toISOString().slice(0,10);
+      dayKeys.push(key); buckets[key] = 0;
+    }
+    storeEvents.forEach(e => { const key = e.created_at.slice(0,10); if (buckets[key] !== undefined) buckets[key]++; });
+    labels = dayKeys;
+  }
+
+  const values = labels.map(l => buckets[l]);
+  const max = Math.max(1, ...values);
+  const w = 700, h = 160, pad = 24;
+  const stepX = (w - pad*2) / Math.max(1, values.length - 1);
+  const points = values.map((v, i) => {
+    const x = pad + i * stepX;
+    const y = h - pad - (v / max) * (h - pad*2);
+    return `${x},${y}`;
+  }).join(' ');
+
+  const labelEvery = Math.ceil(labels.length / 8);
+  const labelEls = labels.map((l, i) => {
+    if (i % labelEvery !== 0 && i !== labels.length-1) return '';
+    const x = pad + i * stepX;
+    const text = period === 'today' ? `${l}:00` : l.slice(5);
+    return `<text x="${x}" y="${h-4}" font-size="9" fill="var(--muted)" text-anchor="middle">${text}</text>`;
+  }).join('');
+
+  el.innerHTML = `
+    <svg viewBox="0 0 ${w} ${h}" style="width:100%;height:auto;max-height:200px" preserveAspectRatio="xMidYMid meet">
+      <polyline points="${points}" fill="none" stroke="#2563eb" stroke-width="2"/>
+      ${values.map((v,i) => `<circle cx="${pad+i*stepX}" cy="${h-pad-(v/max)*(h-pad*2)}" r="2.5" fill="#2563eb"/>`).join('')}
+      ${labelEls}
+    </svg>`;
+}
+
 // ===================== PELANGGAN ADMIN =====================
 let lastBuyerRows = [];
 

@@ -667,6 +667,26 @@ const WA_NUMBER = '628136664023';
 
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+// ===================== ANALYTICS (buat dashboard "Performa Toko" di admin) =====================
+// ID pengunjung disimpan di localStorage biar identitas browser sama tetap kekenal tiap kunjungan
+// (dipakai buat itung "Total Pengunjung" unik per hari, bukan per baris data)
+function getAnalyticsSessionId() {
+  let id = localStorage.getItem('zenot_visitor_id');
+  if (!id) {
+    id = (crypto.randomUUID ? crypto.randomUUID() : 'v-' + Date.now() + '-' + Math.random().toString(36).slice(2));
+    localStorage.setItem('zenot_visitor_id', id);
+  }
+  return id;
+}
+function trackEvent(eventType, productId = null) {
+  // Fire-and-forget, jangan sampai gagal catat analytics bikin toko error
+  sb.from('analytics_events').insert({
+    event_type: eventType,
+    product_id: productId,
+    session_id: getAnalyticsSessionId(),
+  }).then(() => {}, () => {});
+}
+
 // ===================== STATE =====================
 let products = [];
 let activeFilter = 'all';
@@ -1615,6 +1635,7 @@ async function doBuyerLogout() {
 async function openProduct(id) {
   activeProduct = products.find(p=>p.id===id);
   if (!activeProduct) return;
+  trackEvent('view_product', id);
   activeVariants = activeProduct.variants || [];
   selectedVariant = null;
   qty = 1;
@@ -2086,6 +2107,7 @@ function showToast(msg) {
 // ===================== INIT =====================
 loadProducts();
 loadCategories();
+trackEvent('view_store');
 document.getElementById('footer-year').textContent = new Date().getFullYear();
 document.getElementById('footer-wa-link').href = `https://wa.me/${WA_NUMBER}`;
 loadVouchersForPromo().then(() => {
