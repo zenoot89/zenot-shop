@@ -3,10 +3,11 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>ZENOT</title>
+  <title>Zenoot Store</title>
+  <meta name="description" content="Low Price, High Quality."/>
   <!-- Open Graph untuk preview di WA/IG/FB -->
-  <meta property="og:title" content="ZENOT"/>
-  <meta property="og:description" content="Koleksi knitwear pria premium. Pilih varian, checkout via WhatsApp."/>
+  <meta property="og:title" content="Zenoot Store"/>
+  <meta property="og:description" content="Low Price, High Quality."/>
   <meta property="og:type" content="website"/>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,wght@0,300;0,400;0,600;1,400&family=Space+Grotesk:wght@500;700&family=Inter:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet"/>
@@ -415,7 +416,7 @@
     <button class="hamburger-btn" onclick="toggleDrawer(true)" aria-label="Menu">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
     </button>
-    <a href="#" class="logo">ZENOT</a>
+    <a href="#" class="logo">ZENOOT</a>
     <div class="header-right">
       <button class="icon-btn" onclick="toggleSearchOverlay()" aria-label="Cari">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
@@ -435,7 +436,7 @@
 <div class="drawer-scrim" id="drawer-scrim" onclick="toggleDrawer(false)"></div>
 <nav class="menu-drawer" id="menu-drawer">
   <div class="drawer-header">
-    <a href="#" class="logo">ZENOT</a>
+    <a href="#" class="logo">ZENOOT</a>
     <button class="drawer-close" onclick="toggleDrawer(false)">✕</button>
   </div>
   <div class="drawer-items">
@@ -483,7 +484,7 @@
 <footer class="site-footer">
   <div class="footer-inner">
     <div class="footer-tagline">
-      <p class="footer-brand-name">ZENOT</p>
+      <p class="footer-brand-name">ZENOOT</p>
       <p class="footer-tagline-text">Rajutan yang tetap nyaman dipakai seharian, dari kerja sampai jalan-jalan.</p>
     </div>
     <div class="footer-cols">
@@ -510,7 +511,7 @@
       </div>
     </div>
     <div class="footer-bottom">
-      <span>© <span id="footer-year"></span> ZENOT</span>
+      <span>© <span id="footer-year"></span> ZENOOT</span>
       <span>
         <a href="#" onclick="return false">Kebijakan Privasi</a>
         <a href="#" onclick="return false">Syarat &amp; Ketentuan</a>
@@ -2067,7 +2068,7 @@ async function checkoutWA() {
   }
   const total = Math.max(0,subtotal-disc);
   const lines = cart.map(i=>`• ${i.name} (${i.color}, ${i.size}) x${i.qty} — ${fRp(i.price*i.qty)}`);
-  let msg = `Halo ZENOT, saya mau order:\n\n${lines.join('\n')}\n\nSubtotal Pesanan: ${fRp(subtotal)}`;
+  let msg = `Halo Zenoot, saya mau order:\n\n${lines.join('\n')}\n\nSubtotal Pesanan: ${fRp(subtotal)}`;
   if (disc>0) msg += `\nDiskon Voucher: -${fRp(disc)}`;
   msg += `\nOngkos Kirim: Dikonfirmasi kemudian\n\nTotal (belum termasuk ongkir): ${fRp(total)}\n\nMohon konfirmasi ketersediaan. Terima kasih!`;
   if (buyerUser) {
