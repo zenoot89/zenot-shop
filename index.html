@@ -1043,6 +1043,21 @@ async function renderAccountProfile() {
       : 'Belum ada alamat tersimpan.';
   });
   const orders = await loadOrderHistory();
+const ORDER_STATUS_LABEL = {
+  menunggu_pembayaran: { label: 'Menunggu Pembayaran', color: '#b8860b', bg: '#fdf3dc' },
+  diproses:            { label: 'Diproses',            color: '#1e6fa8', bg: '#e2f0fa' },
+  dikirim:             { label: 'Dikirim',              color: '#1e7a4c', bg: '#e1f5e9' },
+  selesai:             { label: 'Selesai',              color: '#4b4b4b', bg: '#eeeeee' },
+  dibatalkan:          { label: 'Dibatalkan',           color: '#a83232', bg: '#fbe4e4' }
+};
+function orderStatusBadge(status) {
+  const s = ORDER_STATUS_LABEL[status] || ORDER_STATUS_LABEL.menunggu_pembayaran;
+  return `<span style="display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;color:${s.color};background:${s.bg}">${s.label}</span>`;
+}
+function courierTrackingUrl(resi) {
+  return `https://cekresi.com/?noresi=${encodeURIComponent(resi)}`;
+}
+
   const el = document.getElementById('order-history-render');
   if (!el) return;
   if (!orders.length) {
@@ -1052,14 +1067,16 @@ async function renderAccountProfile() {
   el.innerHTML = orders.map(o => {
     const date = new Date(o.created_at).toLocaleDateString('id-ID', {day:'numeric',month:'short',year:'numeric'});
     const lines = (o.items||[]).map(i=>`${i.name} (${i.color}, ${i.size}) x${i.qty}`).join('\n');
+    const resiBlock = o.resi ? `<div style="margin-top:6px;font-size:12.5px;color:var(--muted)">Resi (${o.courier||'Kurir'}): <a href="${courierTrackingUrl(o.resi)}" target="_blank" style="color:var(--ink);font-weight:600">${o.resi}</a></div>` : '';
     return `
     <div class="order-item">
       <div class="order-item-top">
         <span class="order-item-date">${date}</span>
-        <span class="order-item-status">${o.status || 'menunggu konfirmasi'}</span>
+        ${orderStatusBadge(o.status)}
       </div>
       <div class="order-item-lines">${lines}</div>
       <div class="order-item-total">${fRp(o.total)}</div>
+      ${resiBlock}
     </div>`;
   }).join('');
 }
@@ -2060,6 +2077,26 @@ function autoApplyBestVoucher(subtotal) {
 // ===================== CHECKOUT WA =====================
 async function checkoutWA() {
   if (!cart.length) return;
+
+  // Wajib login dulu sebelum checkout
+  if (!buyerUser) {
+    showToast('Masuk dulu untuk checkout');
+    openAccount();
+    return;
+  }
+
+  // Pastikan data alamat sudah dimuat & terbaru
+  await loadBuyerAddresses();
+  const shippingAddress = buyerAddresses.find(a=>a.is_default) || buyerAddresses[0];
+
+  // Wajib punya alamat tersimpan sebelum checkout
+  if (!shippingAddress) {
+    showToast('Lengkapi alamat pengiriman dulu untuk checkout');
+    openAccount();
+    openAddressForm();
+    return;
+  }
+
   const subtotal = cart.reduce((s,i)=>s+i.price*i.qty,0);
   let disc = 0;
   if (voucher) {
@@ -2070,15 +2107,24 @@ async function checkoutWA() {
   const lines = cart.map(i=>`• ${i.name} (${i.color}, ${i.size}) x${i.qty} — ${fRp(i.price*i.qty)}`);
   let msg = `Halo Zenoot, saya mau order:\n\n${lines.join('\n')}\n\nSubtotal Pesanan: ${fRp(subtotal)}`;
   if (disc>0) msg += `\nDiskon Voucher: -${fRp(disc)}`;
-  msg += `\nOngkos Kirim: Dikonfirmasi kemudian\n\nTotal (belum termasuk ongkir): ${fRp(total)}\n\nMohon konfirmasi ketersediaan. Terima kasih!`;
-  if (buyerUser) {
-    await sb.from('orders').insert({
-      user_id: buyerUser.id,
-      items: cart,
-      subtotal, discount: disc, total,
-      voucher_code: voucher ? voucher.code : null
-    });
-  }
+  msg += `\nOngkos Kirim: Dikonfirmasi kemudian\n\nTotal (belum termasuk ongkir): ${fRp(total)}\n\n`;
+  msg += `Alamat Pengiriman:\n${shippingAddress.recipient_name} (${shippingAddress.phone})\n${shippingAddress.address_detail}`;
+  if (shippingAddress.address_note) msg += `, ${shippingAddress.address_note}`;
+  msg += `\n${shippingAddress.village ? shippingAddress.village+', ' : ''}${shippingAddress.district}, ${shippingAddress.city}, ${shippingAddress.province}`;
+  if (shippingAddress.postal_code) msg += ` ${shippingAddress.postal_code}`;
+  msg += `\n\nMohon konfirmasi ketersediaan. Terima kasih!`;
+
+  await sb.from('orders').insert({
+    user_id: buyerUser.id,
+    items: cart,
+    subtotal, discount: disc, total,
+    voucher_code: voucher ? voucher.code : null,
+    shipping_address: shippingAddress,
+    status: 'menunggu_pembayaran',
+    payment_method: 'wa_manual',
+    payment_status: 'pending'
+  });
+
   window.open(`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(msg)}`, '_blank');
 }
 
