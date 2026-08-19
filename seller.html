@@ -221,6 +221,9 @@
     .admin-section.active{display:block}
     .admin-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:24px;margin-bottom:20px}
     .admin-card-title{font-family:'Source Serif 4',serif;font-size:17px;font-weight:600;margin-bottom:18px}
+    .orders-tab{padding:9px 14px;font-size:12.5px;font-weight:500;background:none;border:none;border-bottom:2px solid transparent;color:var(--muted);cursor:pointer;white-space:nowrap}
+    .orders-tab:hover{color:var(--ink)}
+    .orders-tab.active{color:var(--ink);border-bottom-color:var(--ink);font-weight:600}
     .admin-list-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
 
     .form-group{margin-bottom:16px}
@@ -896,18 +899,16 @@
         <!-- TAB: PESANAN -->
         <div class="admin-section" id="tab-orders">
           <div class="admin-card">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;gap:12px;flex-wrap:wrap">
-              <h3 class="admin-card-title" style="margin-bottom:0">Daftar Pesanan</h3>
-              <select id="orders-filter-status" onchange="loadOrdersAdmin()" style="padding:7px 10px;border:1px solid var(--border);border-radius:6px;font-size:12.5px">
-                <option value="">Semua Status</option>
-                <option value="menunggu_pembayaran">Menunggu Pembayaran</option>
-                <option value="diproses">Diproses</option>
-                <option value="dikirim">Dikirim</option>
-                <option value="selesai">Selesai</option>
-                <option value="dibatalkan">Dibatalkan</option>
-              </select>
-            </div>
+            <h3 class="admin-card-title">Pesanan Masuk</h3>
             <p style="font-size:13px;color:var(--sec);margin-bottom:16px">Kelola status pesanan, input resi, dan pantau pembayaran.</p>
+            <div id="orders-status-tabs" style="display:flex;gap:4px;border-bottom:1px solid var(--border);margin-bottom:16px;flex-wrap:wrap">
+              <button class="orders-tab active" data-status="" onclick="filterOrdersTab('', this)">Semua</button>
+              <button class="orders-tab" data-status="menunggu_pembayaran" onclick="filterOrdersTab('menunggu_pembayaran', this)">Menunggu Pembayaran</button>
+              <button class="orders-tab" data-status="diproses" onclick="filterOrdersTab('diproses', this)">Perlu Dikirim</button>
+              <button class="orders-tab" data-status="dikirim" onclick="filterOrdersTab('dikirim', this)">Dikirim</button>
+              <button class="orders-tab" data-status="selesai" onclick="filterOrdersTab('selesai', this)">Selesai</button>
+              <button class="orders-tab" data-status="dibatalkan" onclick="filterOrdersTab('dibatalkan', this)">Dibatalkan</button>
+            </div>
             <div id="orders-admin-render"><div style="font-size:13px;color:var(--muted)">Memuat...</div></div>
           </div>
         </div>
@@ -1363,30 +1364,44 @@ const ORDER_STATUS_LABEL_ADMIN = {
 };
 const PAYMENT_METHOD_LABEL = { wa_manual: 'WhatsApp (Manual)', qris: 'QRIS', transfer_va: 'Transfer/VA' };
 const PAYMENT_STATUS_LABEL = { pending: 'Belum Bayar', paid: 'Sudah Bayar', failed: 'Gagal', expired: 'Kedaluwarsa' };
+let ordersAdminData = [];
+let ordersAdminFilter = '';
+let orderResiOpenId = null;
+
+function filterOrdersTab(status, btn) {
+  ordersAdminFilter = status;
+  document.querySelectorAll('.orders-tab').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active');
+  renderOrdersAdminTable();
+}
 
 async function loadOrdersAdmin() {
   const el = document.getElementById('orders-admin-render');
   if (!el) return;
   el.innerHTML = `<div style="font-size:13px;color:var(--muted)">Memuat...</div>`;
-  const filterStatus = document.getElementById('orders-filter-status')?.value || '';
-  let q = sb.from('orders').select('*').order('created_at', {ascending:false});
-  if (filterStatus) q = q.eq('status', filterStatus);
-  const { data, error } = await q;
+  const { data, error } = await sb.from('orders').select('*').order('created_at', {ascending:false});
   if (error) { el.innerHTML = `<p style="font-size:13px;color:#c0392b">${error.message}</p>`; return; }
-  if (!data || !data.length) { el.innerHTML = `<div style="font-size:13px;color:var(--muted)">Belum ada pesanan.</div>`; return; }
+  ordersAdminData = data || [];
+  renderOrdersAdminTable();
+}
+
+function renderOrdersAdminTable() {
+  const el = document.getElementById('orders-admin-render');
+  if (!el) return;
+  const rows = ordersAdminFilter ? ordersAdminData.filter(o => o.status === ordersAdminFilter) : ordersAdminData;
+  if (!rows.length) { el.innerHTML = `<div style="font-size:13px;color:var(--muted);padding:20px 0">Tidak ada pesanan di kategori ini.</div>`; return; }
 
   el.innerHTML = `<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:12.5px">
     <thead><tr style="text-align:left;border-bottom:1px solid var(--border)">
       <th style="padding:8px 6px">Tanggal</th>
-      <th style="padding:8px 6px">Penerima</th>
-      <th style="padding:8px 6px">Item</th>
+      <th style="padding:8px 6px">Pembeli</th>
+      <th style="padding:8px 6px">Produk</th>
       <th style="padding:8px 6px">Total</th>
-      <th style="padding:8px 6px">Bayar</th>
+      <th style="padding:8px 6px">Pembayaran</th>
       <th style="padding:8px 6px">Status</th>
-      <th style="padding:8px 6px">Resi / Kurir</th>
-      <th style="padding:8px 6px"></th>
+      <th style="padding:8px 6px">Aksi</th>
     </tr></thead>
-    <tbody>${data.map(o => renderOrderRow(o)).join('')}</tbody>
+    <tbody>${rows.map(o => renderOrderRow(o)).join('')}</tbody>
   </table></div>`;
 }
 
@@ -1394,29 +1409,49 @@ function renderOrderRow(o) {
   const date = new Date(o.created_at).toLocaleDateString('id-ID', {day:'numeric',month:'short',year:'numeric'});
   const addr = o.shipping_address || {};
   const itemCount = (o.items||[]).reduce((s,i)=>s+i.qty,0);
-  const itemSummary = (o.items||[]).map(i=>`${i.name} x${i.qty}`).join(', ');
+  const itemSummary = (o.items||[]).map(i=>`${i.name} (${i.color}, ${i.size}) x${i.qty}`).join(', ');
   const s = ORDER_STATUS_LABEL_ADMIN[o.status] || ORDER_STATUS_LABEL_ADMIN.menunggu_pembayaran;
   const payStatus = PAYMENT_STATUS_LABEL[o.payment_status] || 'Belum Bayar';
   const payMethod = PAYMENT_METHOD_LABEL[o.payment_method] || 'WhatsApp (Manual)';
+  const resiRow = orderResiOpenId === o.id ? `
+    <div style="margin-top:8px;padding:10px;background:var(--paper2,#f7f6f3);border-radius:6px">
+      <input type="text" id="resi-input-${o.id}" placeholder="Nama kurir (JNE, J&T, dll)" value="${o.courier||''}" style="width:100%;padding:6px 8px;border:1px solid var(--border);border-radius:5px;font-size:12px;margin-bottom:6px">
+      <input type="text" id="resi-num-${o.id}" placeholder="Nomor resi" value="${o.resi||''}" style="width:100%;padding:6px 8px;border:1px solid var(--border);border-radius:5px;font-size:12px;margin-bottom:6px">
+      <div style="display:flex;gap:6px">
+        <button onclick="saveOrderResi('${o.id}')" style="padding:6px 12px;font-size:11.5px;background:var(--ink);color:#fff;border:none;border-radius:5px;cursor:pointer;font-weight:500">Konfirmasi Kirim</button>
+        <button onclick="orderResiOpenId=null;renderOrdersAdminTable()" style="padding:6px 12px;font-size:11.5px;background:#fff;border:1px solid var(--border);border-radius:5px;cursor:pointer">Batal</button>
+      </div>
+    </div>` : '';
+
+  let actions = '';
+  if (o.status === 'menunggu_pembayaran') {
+    actions = `<div style="display:flex;flex-direction:column;gap:5px">
+      <button onclick="updateOrderStatus('${o.id}','diproses')" style="padding:6px 10px;font-size:11.5px;background:var(--ink);color:#fff;border:none;border-radius:5px;cursor:pointer;font-weight:500">Konfirmasi Bayar</button>
+      <button onclick="updateOrderStatus('${o.id}','dibatalkan')" style="padding:6px 10px;font-size:11.5px;background:#fff;color:#a83232;border:1px solid #e0b8b8;border-radius:5px;cursor:pointer">Batalkan</button>
+    </div>`;
+  } else if (o.status === 'diproses') {
+    actions = `<div style="display:flex;flex-direction:column;gap:5px">
+      <button onclick="orderResiOpenId='${o.id}';renderOrdersAdminTable()" style="padding:6px 10px;font-size:11.5px;background:var(--ink);color:#fff;border:none;border-radius:5px;cursor:pointer;font-weight:500">Input Resi & Kirim</button>
+      <button onclick="updateOrderStatus('${o.id}','dibatalkan')" style="padding:6px 10px;font-size:11.5px;background:#fff;color:#a83232;border:1px solid #e0b8b8;border-radius:5px;cursor:pointer">Batalkan</button>
+    </div>`;
+  } else if (o.status === 'dikirim') {
+    actions = `<div style="display:flex;flex-direction:column;gap:5px">
+      <button onclick="updateOrderStatus('${o.id}','selesai')" style="padding:6px 10px;font-size:11.5px;background:var(--ink);color:#fff;border:none;border-radius:5px;cursor:pointer;font-weight:500">Tandai Selesai</button>
+      <span style="font-size:11px;color:var(--muted)">${o.courier||'Kurir'}: ${o.resi||'-'}</span>
+    </div>`;
+  } else {
+    actions = `<span style="font-size:11px;color:var(--muted)">${o.status==='selesai' && o.resi ? (o.courier||'Kurir')+': '+o.resi : '—'}</span>`;
+  }
+
   return `
-    <tr style="border-bottom:1px solid var(--border)" data-order-id="${o.id}">
+    <tr style="border-bottom:1px solid var(--border);vertical-align:top" data-order-id="${o.id}">
       <td style="padding:8px 6px;white-space:nowrap">${date}</td>
       <td style="padding:8px 6px">${addr.recipient_name||'-'}<br><span style="color:var(--muted)">${addr.phone||''}</span></td>
-      <td style="padding:8px 6px;max-width:180px" title="${itemSummary}">${itemCount} item</td>
+      <td style="padding:8px 6px;max-width:180px" title="${itemSummary}">${itemCount} item<br><span style="color:var(--muted);font-size:11px">${itemSummary.length>40?itemSummary.slice(0,40)+'…':itemSummary}</span></td>
       <td style="padding:8px 6px;white-space:nowrap">Rp ${(o.total||0).toLocaleString('id-ID')}</td>
       <td style="padding:8px 6px;white-space:nowrap">${payMethod}<br><span style="color:var(--muted)">${payStatus}</span></td>
-      <td style="padding:8px 6px">
-        <select onchange="updateOrderStatus('${o.id}', this.value)" style="padding:4px 6px;border:1px solid var(--border);border-radius:5px;font-size:12px;background:${s.bg};color:${s.color};font-weight:600">
-          ${Object.entries(ORDER_STATUS_LABEL_ADMIN).map(([val,l]) => `<option value="${val}" ${o.status===val?'selected':''}>${l.label}</option>`).join('')}
-        </select>
-      </td>
-      <td style="padding:8px 6px;min-width:160px">
-        <input type="text" id="resi-input-${o.id}" placeholder="Kurir" value="${o.courier||''}" style="width:70px;padding:4px 6px;border:1px solid var(--border);border-radius:5px;font-size:11.5px;margin-bottom:3px">
-        <input type="text" id="resi-num-${o.id}" placeholder="No. Resi" value="${o.resi||''}" style="width:100%;padding:4px 6px;border:1px solid var(--border);border-radius:5px;font-size:11.5px">
-      </td>
-      <td style="padding:8px 6px">
-        <button onclick="saveOrderResi('${o.id}')" style="padding:5px 10px;font-size:11.5px;border:1px solid var(--border);background:#fff;border-radius:5px;cursor:pointer;font-weight:500">Simpan</button>
-      </td>
+      <td style="padding:8px 6px"><span style="display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;color:${s.color};background:${s.bg};white-space:nowrap">${s.label}</span></td>
+      <td style="padding:8px 6px;min-width:150px">${actions}${resiRow}</td>
     </tr>`;
 }
 
@@ -1431,10 +1466,9 @@ async function saveOrderResi(orderId) {
   const courier = document.getElementById(`resi-input-${orderId}`).value.trim();
   const resi = document.getElementById(`resi-num-${orderId}`).value.trim();
   if (!resi) { showToast('Isi nomor resi dulu'); return; }
-  const update = { courier, resi };
-  update.status = 'dikirim';
-  const { error } = await sb.from('orders').update(update).eq('id', orderId);
+  const { error } = await sb.from('orders').update({ courier, resi, status: 'dikirim' }).eq('id', orderId);
   if (error) { showToast('Gagal simpan resi: ' + error.message); return; }
+  orderResiOpenId = null;
   showToast('Resi tersimpan, status jadi Dikirim');
   loadOrdersAdmin();
 }
