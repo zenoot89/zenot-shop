@@ -224,6 +224,10 @@
     .orders-tab{padding:9px 14px;font-size:12.5px;font-weight:500;background:none;border:none;border-bottom:2px solid transparent;color:var(--muted);cursor:pointer;white-space:nowrap}
     .orders-tab:hover{color:var(--ink)}
     .orders-tab.active{color:var(--ink);border-bottom-color:var(--ink);font-weight:600}
+    .perf-delta{font-size:11.5px;margin-top:4px;font-weight:600}
+    .perf-delta.up{color:#1e7a4c}
+    .perf-delta.down{color:#a83232}
+    .perf-delta.flat{color:var(--muted);font-weight:500}
     .admin-list-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
 
     .form-group{margin-bottom:16px}
@@ -833,43 +837,142 @@
         <!-- TAB: ULASAN -->
         <!-- TAB: PERFORMA TOKO -->
         <div class="admin-section" id="tab-performance">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px">
-            <div style="font-size:13px;color:var(--muted)">Data dihitung dari kunjungan &amp; pesanan tercatat di toko.</div>
-            <select id="perf-period" class="form-input" style="width:auto" onchange="loadPerformanceDashboard(this.value)">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;flex-wrap:wrap;gap:10px">
+            <div id="perf-sub-tabs" style="display:flex;gap:2px;flex-wrap:wrap">
+              <button class="orders-tab active" data-perf="tinjauan" onclick="switchPerfTab('tinjauan',this)">Tinjauan</button>
+              <button class="orders-tab" data-perf="produk" onclick="switchPerfTab('produk',this)">Produk</button>
+              <button class="orders-tab" data-perf="penjualan" onclick="switchPerfTab('penjualan',this)">Penjualan</button>
+              <button class="orders-tab" data-perf="layanan" onclick="switchPerfTab('layanan',this)">Layanan</button>
+              <button class="orders-tab" data-perf="kunjungan" onclick="switchPerfTab('kunjungan',this)">Tingkat Kunjungan</button>
+              <button class="orders-tab" data-perf="promosi" onclick="switchPerfTab('promosi',this)">Promosi</button>
+              <button class="orders-tab" data-perf="panduan" onclick="switchPerfTab('panduan',this)">Panduan Penjualan</button>
+            </div>
+            <select id="perf-period" class="form-input" style="width:auto" onchange="loadPerfActiveTab()">
               <option value="today">Hari Ini</option>
               <option value="7d">7 Hari Terakhir</option>
               <option value="30d">30 Hari Terakhir</option>
             </select>
           </div>
+          <div style="font-size:12.5px;color:var(--muted);margin-bottom:16px">Data dihitung dari kunjungan &amp; pesanan tercatat di toko.</div>
 
-          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:16px">
-            <div class="admin-card" style="margin:0">
-              <div style="font-size:12px;color:var(--muted);margin-bottom:6px">Total Penjualan</div>
-              <div id="perf-revenue" style="font-size:22px;font-weight:700">Rp 0</div>
+          <!-- PANEL: TINJAUAN -->
+          <div id="perf-panel-tinjauan" class="perf-panel">
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:16px">
+              <div class="admin-card" style="margin:0">
+                <div style="font-size:12px;color:var(--muted);margin-bottom:6px">Total Penjualan</div>
+                <div id="perf-revenue" style="font-size:22px;font-weight:700">Rp 0</div>
+                <div id="perf-revenue-delta" class="perf-delta"></div>
+              </div>
+              <div class="admin-card" style="margin:0">
+                <div style="font-size:12px;color:var(--muted);margin-bottom:6px">Pesanan</div>
+                <div id="perf-orders" style="font-size:22px;font-weight:700">0</div>
+                <div id="perf-orders-delta" class="perf-delta"></div>
+              </div>
+              <div class="admin-card" style="margin:0">
+                <div style="font-size:12px;color:var(--muted);margin-bottom:6px">Total Pengunjung</div>
+                <div id="perf-visitors" style="font-size:22px;font-weight:700">0</div>
+                <div id="perf-visitors-delta" class="perf-delta"></div>
+              </div>
+              <div class="admin-card" style="margin:0">
+                <div style="font-size:12px;color:var(--muted);margin-bottom:6px">Tingkat Konversi</div>
+                <div id="perf-conversion" style="font-size:22px;font-weight:700">0,00%</div>
+                <div id="perf-conversion-delta" class="perf-delta"></div>
+              </div>
             </div>
-            <div class="admin-card" style="margin:0">
-              <div style="font-size:12px;color:var(--muted);margin-bottom:6px">Pesanan</div>
-              <div id="perf-orders" style="font-size:22px;font-weight:700">0</div>
+            <div class="admin-card" style="margin-bottom:16px">
+              <h3 class="admin-card-title">Kunjungan per Jam</h3>
+              <div id="perf-chart" style="margin-top:10px"></div>
             </div>
-            <div class="admin-card" style="margin:0">
-              <div style="font-size:12px;color:var(--muted);margin-bottom:6px">Total Pengunjung</div>
-              <div id="perf-visitors" style="font-size:22px;font-weight:700">0</div>
-            </div>
-            <div class="admin-card" style="margin:0">
-              <div style="font-size:12px;color:var(--muted);margin-bottom:6px">Tingkat Konversi</div>
-              <div id="perf-conversion" style="font-size:22px;font-weight:700">0,00%</div>
+            <div class="admin-card">
+              <h3 class="admin-card-title">Produk Terpopuler (paling banyak diklik)</h3>
+              <div id="perf-top-products" style="margin-top:10px;font-size:13px;color:var(--muted)">Memuat...</div>
             </div>
           </div>
 
-          <div class="admin-card" style="margin-bottom:16px">
-            <h3 class="admin-card-title">Kunjungan per Jam</h3>
-            <div id="perf-chart" style="margin-top:10px"></div>
+          <!-- PANEL: PRODUK -->
+          <div id="perf-panel-produk" class="perf-panel" style="display:none">
+            <div class="admin-card">
+              <h3 class="admin-card-title">Performa per Produk</h3>
+              <p style="font-size:13px;color:var(--sec);margin-bottom:16px">Dilihat, terjual, dan pendapatan tiap produk di periode ini.</p>
+              <div id="perf-produk-render" style="font-size:13px;color:var(--muted)">Memuat...</div>
+            </div>
           </div>
 
-          <div class="admin-card">
-            <h3 class="admin-card-title">Produk Terpopuler (paling banyak diklik)</h3>
-            <div id="perf-top-products" style="margin-top:10px;font-size:13px;color:var(--muted)">Memuat...</div>
+          <!-- PANEL: PENJUALAN -->
+          <div id="perf-panel-penjualan" class="perf-panel" style="display:none">
+            <div class="admin-card" style="margin-bottom:16px">
+              <h3 class="admin-card-title">Penjualan per Hari</h3>
+              <div id="perf-penjualan-chart">Memuat...</div>
+            </div>
+            <div class="admin-card">
+              <h3 class="admin-card-title">Pesanan berdasarkan Status</h3>
+              <div id="perf-penjualan-status" style="margin-top:10px">Memuat...</div>
+            </div>
           </div>
+
+          <!-- PANEL: LAYANAN -->
+          <div id="perf-panel-layanan" class="perf-panel" style="display:none">
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px">
+              <div class="admin-card" style="margin:0">
+                <div style="font-size:12px;color:var(--muted);margin-bottom:6px">Rata-rata Waktu Konfirmasi Bayar</div>
+                <div id="perf-layanan-konfirmasi" style="font-size:20px;font-weight:700">–</div>
+              </div>
+              <div class="admin-card" style="margin:0">
+                <div style="font-size:12px;color:var(--muted);margin-bottom:6px">Rata-rata Waktu Kirim</div>
+                <div id="perf-layanan-kirim" style="font-size:20px;font-weight:700">–</div>
+              </div>
+              <div class="admin-card" style="margin:0">
+                <div style="font-size:12px;color:var(--muted);margin-bottom:6px">Tingkat Pembatalan</div>
+                <div id="perf-layanan-batal" style="font-size:20px;font-weight:700">0%</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- PANEL: TINGKAT KUNJUNGAN -->
+          <div id="perf-panel-kunjungan" class="perf-panel" style="display:none">
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:16px">
+              <div class="admin-card" style="margin:0">
+                <div style="font-size:12px;color:var(--muted);margin-bottom:6px">Total Pengunjung (unik)</div>
+                <div id="perf-kv-visitors" style="font-size:22px;font-weight:700">0</div>
+              </div>
+              <div class="admin-card" style="margin:0">
+                <div style="font-size:12px;color:var(--muted);margin-bottom:6px">Kunjungan ke Halaman Toko</div>
+                <div id="perf-kv-storeviews" style="font-size:22px;font-weight:700">0</div>
+              </div>
+              <div class="admin-card" style="margin:0">
+                <div style="font-size:12px;color:var(--muted);margin-bottom:6px">Kunjungan ke Halaman Produk</div>
+                <div id="perf-kv-productviews" style="font-size:22px;font-weight:700">0</div>
+              </div>
+            </div>
+            <div class="admin-card">
+              <h3 class="admin-card-title">Tren Kunjungan</h3>
+              <div id="perf-kv-chart">Memuat...</div>
+            </div>
+          </div>
+
+          <!-- PANEL: PROMOSI -->
+          <div id="perf-panel-promosi" class="perf-panel" style="display:none">
+            <div class="admin-card">
+              <h3 class="admin-card-title">Performa Voucher</h3>
+              <p style="font-size:13px;color:var(--sec);margin-bottom:16px">Pemakaian dan estimasi diskon yang sudah diberikan (data sepanjang waktu, tidak terikat periode di atas).</p>
+              <div id="perf-promosi-render" style="font-size:13px;color:var(--muted)">Memuat...</div>
+            </div>
+          </div>
+
+          <!-- PANEL: PANDUAN PENJUALAN -->
+          <div id="perf-panel-panduan" class="perf-panel" style="display:none">
+            <div class="admin-card">
+              <h3 class="admin-card-title">Tips Meningkatkan Performa Toko</h3>
+              <ul style="font-size:13.5px;line-height:1.9;color:var(--sec);padding-left:18px">
+                <li>Perbarui foto produk secara berkala agar konsisten dan menarik.</li>
+                <li>Balas pesanan &amp; konfirmasi pembayaran secepat mungkin — pembeli menunggu.</li>
+                <li>Input resi tepat waktu setelah barang dikirim.</li>
+                <li>Gunakan voucher/diskon terbatas waktu untuk mendorong pembelian.</li>
+                <li>Pantau produk dengan klik tinggi tapi penjualan rendah — mungkin harga atau deskripsi perlu disesuaikan.</li>
+              </ul>
+            </div>
+          </div>
+
         </div>
 
         <div class="admin-section" id="tab-reviews">
@@ -1175,7 +1278,7 @@ function switchTab(tab, el) {
   if (tab === 'categories') { loadAdminCategories(); loadAdminSuppliers(); }
   if (tab === 'customers') loadAdminCustomers();
   if (tab === 'orders') loadOrdersAdmin();
-  if (tab === 'performance') loadPerformanceDashboard(document.getElementById('perf-period')?.value || 'today');
+  if (tab === 'performance') loadPerfActiveTab();
   if (tab === 'promotions') {
     loadCategories();
     ['promo-product-id','flash-product-id'].forEach(id => {
@@ -1192,34 +1295,88 @@ function perfRangeStart(period) {
   if (period === '30d') { const d = new Date(now); d.setDate(d.getDate()-29); d.setHours(0,0,0,0); return d; }
   const d = new Date(now); d.setHours(0,0,0,0); return d; // today
 }
+// Rentang periode sebelumnya (durasi sama, persis sebelum periode saat ini) — buat hitung % perbandingan
+function perfPrevRange(period) {
+  const start = perfRangeStart(period);
+  const days = period === '7d' ? 7 : (period === '30d' ? 30 : 1);
+  const prevStart = new Date(start); prevStart.setDate(prevStart.getDate() - days);
+  return { prevStart, prevEnd: start };
+}
+function perfDeltaHTML(current, previous, elId) {
+  const el = document.getElementById(elId);
+  if (!el) return;
+  if (previous === 0 && current === 0) { el.textContent = ''; el.className = 'perf-delta'; return; }
+  if (previous === 0) { el.textContent = '↑ Baru'; el.className = 'perf-delta up'; return; }
+  const pct = ((current - previous) / previous) * 100;
+  if (Math.abs(pct) < 0.05) { el.textContent = '– Sama dengan periode lalu'; el.className = 'perf-delta flat'; return; }
+  const arrow = pct > 0 ? '↑' : '↓';
+  el.textContent = `${arrow} ${Math.abs(pct).toLocaleString('id-ID',{maximumFractionDigits:1})}% vs periode lalu`;
+  el.className = 'perf-delta ' + (pct > 0 ? 'up' : 'down');
+}
 
-async function loadPerformanceDashboard(period = 'today') {
+const PERF_TAB_TITLES_ID = ['tinjauan','produk','penjualan','layanan','kunjungan','promosi','panduan'];
+function switchPerfTab(tab, el) {
+  document.querySelectorAll('#perf-sub-tabs .orders-tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  PERF_TAB_TITLES_ID.forEach(t => { const p = document.getElementById(`perf-panel-${t}`); if (p) p.style.display = (t===tab?'':'none'); });
+  document.getElementById('perf-period').style.display = (tab === 'promosi' || tab === 'panduan') ? 'none' : '';
+  loadPerfTabData(tab);
+}
+function loadPerfActiveTab() {
+  const active = document.querySelector('#perf-sub-tabs .orders-tab.active');
+  loadPerfTabData(active ? active.dataset.perf : 'tinjauan');
+}
+function loadPerfTabData(tab) {
+  if (tab === 'tinjauan') loadPerformanceDashboard();
+  else if (tab === 'produk') loadPerfProduk();
+  else if (tab === 'penjualan') loadPerfPenjualan();
+  else if (tab === 'layanan') loadPerfLayanan();
+  else if (tab === 'kunjungan') loadPerfKunjungan();
+  else if (tab === 'promosi') loadPerfPromosi();
+  // panduan: statis, tidak perlu load data
+}
+
+async function loadPerformanceDashboard() {
+  const period = document.getElementById('perf-period')?.value || 'today';
   const start = perfRangeStart(period).toISOString();
+  const { prevStart, prevEnd } = perfPrevRange(period);
 
-  const [ordersRes, storeEventsRes, productEventsRes] = await Promise.all([
+  const [ordersRes, storeEventsRes, productEventsRes, prevOrdersRes, prevStoreEventsRes] = await Promise.all([
     sb.from('orders').select('total, created_at').gte('created_at', start),
     sb.from('analytics_events').select('session_id, created_at').eq('event_type', 'view_store').gte('created_at', start),
     sb.from('analytics_events').select('product_id').eq('event_type', 'view_product').gte('created_at', start),
+    sb.from('orders').select('total, created_at').gte('created_at', prevStart.toISOString()).lt('created_at', prevEnd.toISOString()),
+    sb.from('analytics_events').select('session_id, created_at').eq('event_type', 'view_store').gte('created_at', prevStart.toISOString()).lt('created_at', prevEnd.toISOString()),
   ]);
 
   const orders = ordersRes.data || [];
   const storeEvents = storeEventsRes.data || [];
   const productEvents = productEventsRes.data || [];
+  const prevOrders = prevOrdersRes.data || [];
+  const prevStoreEvents = prevStoreEventsRes.data || [];
 
   const totalRevenue = orders.reduce((s, o) => s + (o.total || 0), 0);
   const totalOrders = orders.length;
   const uniqueVisitors = new Set(storeEvents.map(e => e.session_id)).size;
   const conversion = uniqueVisitors > 0 ? (totalOrders / uniqueVisitors * 100) : 0;
 
+  const prevRevenue = prevOrders.reduce((s, o) => s + (o.total || 0), 0);
+  const prevOrdersCount = prevOrders.length;
+  const prevVisitors = new Set(prevStoreEvents.map(e => e.session_id)).size;
+  const prevConversion = prevVisitors > 0 ? (prevOrdersCount / prevVisitors * 100) : 0;
+
   document.getElementById('perf-revenue').textContent = 'Rp ' + totalRevenue.toLocaleString('id-ID');
   document.getElementById('perf-orders').textContent = totalOrders.toLocaleString('id-ID');
   document.getElementById('perf-visitors').textContent = uniqueVisitors.toLocaleString('id-ID');
   document.getElementById('perf-conversion').textContent = conversion.toLocaleString('id-ID', {minimumFractionDigits:2, maximumFractionDigits:2}) + '%';
 
-  // Grafik: kunjungan per jam (Hari Ini) atau per hari (7/30 hari)
+  perfDeltaHTML(totalRevenue, prevRevenue, 'perf-revenue-delta');
+  perfDeltaHTML(totalOrders, prevOrdersCount, 'perf-orders-delta');
+  perfDeltaHTML(uniqueVisitors, prevVisitors, 'perf-visitors-delta');
+  perfDeltaHTML(conversion, prevConversion, 'perf-conversion-delta');
+
   renderPerfChart(storeEvents, period);
 
-  // Produk terpopuler (paling banyak diklik)
   const countByProduct = {};
   productEvents.forEach(e => { if (e.product_id) countByProduct[e.product_id] = (countByProduct[e.product_id]||0) + 1; });
   const top = Object.entries(countByProduct).sort((a,b) => b[1]-a[1]).slice(0, 5);
@@ -1245,28 +1402,174 @@ async function loadPerformanceDashboard(period = 'today') {
   }
 }
 
-function renderPerfChart(storeEvents, period) {
-  const el = document.getElementById('perf-chart');
-  const buckets = {}; // label -> count
-  let labels = [];
+// ===================== TAB: PRODUK =====================
+async function loadPerfProduk() {
+  const period = document.getElementById('perf-period')?.value || 'today';
+  const start = perfRangeStart(period).toISOString();
+  const el = document.getElementById('perf-produk-render');
+  el.innerHTML = 'Memuat...';
 
+  const [ordersRes, viewsRes] = await Promise.all([
+    sb.from('orders').select('items, created_at').gte('created_at', start),
+    sb.from('analytics_events').select('product_id').eq('event_type', 'view_product').gte('created_at', start),
+  ]);
+  const orders = ordersRes.data || [];
+  const views = viewsRes.data || [];
+
+  const viewCount = {};
+  views.forEach(e => { if (e.product_id) viewCount[e.product_id] = (viewCount[e.product_id]||0)+1; });
+
+  const soldQty = {}, soldRevenue = {};
+  orders.forEach(o => (o.items||[]).forEach(i => {
+    // items disimpan per-produk berdasarkan nama saat checkout; cocokkan lewat product_id kalau tersedia, jika tidak fallback ke nama
+    const key = i.productId || i.name;
+    soldQty[key] = (soldQty[key]||0) + (i.qty||0);
+    soldRevenue[key] = (soldRevenue[key]||0) + (i.price||0)*(i.qty||0);
+  }));
+
+  const rows = adminProductsData.map(p => ({
+    name: p.name,
+    views: viewCount[p.id] || 0,
+    qty: soldQty[p.id] || soldQty[p.name] || 0,
+    revenue: soldRevenue[p.id] || soldRevenue[p.name] || 0,
+  })).sort((a,b) => b.revenue - a.revenue || b.views - a.views);
+
+  if (!rows.length) { el.innerHTML = '<p style="font-size:13px;color:var(--muted)">Belum ada produk.</p>'; return; }
+  el.innerHTML = `
+    <table style="width:100%;border-collapse:collapse;font-size:13px">
+      <thead><tr style="border-bottom:1px solid var(--border);text-align:left">
+        <th style="padding:8px 4px">Produk</th>
+        <th style="padding:8px 4px;text-align:right">Dilihat</th>
+        <th style="padding:8px 4px;text-align:right">Terjual (pcs)</th>
+        <th style="padding:8px 4px;text-align:right">Pendapatan</th>
+      </tr></thead>
+      <tbody>${rows.map(r => `
+        <tr style="border-bottom:1px solid var(--border)">
+          <td style="padding:8px 4px">${r.name}</td>
+          <td style="padding:8px 4px;text-align:right">${r.views}</td>
+          <td style="padding:8px 4px;text-align:right">${r.qty}</td>
+          <td style="padding:8px 4px;text-align:right;font-weight:600">Rp ${r.revenue.toLocaleString('id-ID')}</td>
+        </tr>`).join('')}
+      </tbody>
+    </table>`;
+}
+
+// ===================== TAB: PENJUALAN =====================
+async function loadPerfPenjualan() {
+  const period = document.getElementById('perf-period')?.value || 'today';
+  const start = perfRangeStart(period).toISOString();
+  const chartEl = document.getElementById('perf-penjualan-chart');
+  const statusEl = document.getElementById('perf-penjualan-status');
+  chartEl.innerHTML = 'Memuat...'; statusEl.innerHTML = 'Memuat...';
+
+  const { data, error } = await sb.from('orders').select('total, status, created_at').gte('created_at', start);
+  if (error) { chartEl.innerHTML = `<p style="color:#c0392b;font-size:13px">${error.message}</p>`; statusEl.innerHTML=''; return; }
+  const orders = data || [];
+
+  // Grafik penjualan per hari (atau per jam kalau period=today)
+  const buckets = {}; let labels = [];
   if (period === 'today') {
-    for (let h = 0; h < 24; h++) buckets[h] = 0;
-    storeEvents.forEach(e => { const h = new Date(e.created_at).getHours(); buckets[h] = (buckets[h]||0)+1; });
+    for (let h=0; h<24; h++) buckets[h]=0;
+    orders.forEach(o => { const h = new Date(o.created_at).getHours(); buckets[h] += (o.total||0); });
     labels = Object.keys(buckets).map(Number).sort((a,b)=>a-b);
   } else {
     const days = period === '7d' ? 7 : 30;
-    const dayKeys = [];
-    for (let i = days-1; i >= 0; i--) {
-      const d = new Date(); d.setDate(d.getDate()-i); d.setHours(0,0,0,0);
-      const key = d.toISOString().slice(0,10);
-      dayKeys.push(key); buckets[key] = 0;
-    }
-    storeEvents.forEach(e => { const key = e.created_at.slice(0,10); if (buckets[key] !== undefined) buckets[key]++; });
-    labels = dayKeys;
+    for (let i=days-1;i>=0;i--){ const d=new Date(); d.setDate(d.getDate()-i); d.setHours(0,0,0,0); labels.push(d.toISOString().slice(0,10)); buckets[labels[labels.length-1]]=0; }
+    orders.forEach(o => { const key = o.created_at.slice(0,10); if (buckets[key]!==undefined) buckets[key]+=(o.total||0); });
   }
+  const values = labels.map(l=>buckets[l]);
+  chartEl.innerHTML = renderSvgLineChart(values, labels, period, v => 'Rp'+Math.round(v/1000)+'rb');
 
-  const values = labels.map(l => buckets[l]);
+  // Breakdown status
+  const statusCount = { menunggu_pembayaran:0, diproses:0, dikirim:0, selesai:0, dibatalkan:0 };
+  orders.forEach(o => { const s = o.status||'menunggu_pembayaran'; if (statusCount[s]!==undefined) statusCount[s]++; });
+  statusEl.innerHTML = `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px">
+    ${Object.entries(ORDER_STATUS_LABEL_ADMIN).map(([key,l]) => `
+      <div style="padding:12px;border:1px solid var(--border);border-radius:8px;text-align:center">
+        <div style="font-size:20px;font-weight:700;color:${l.color}">${statusCount[key]}</div>
+        <div style="font-size:11.5px;color:var(--muted);margin-top:2px">${l.label}</div>
+      </div>`).join('')}
+  </div>`;
+}
+
+// ===================== TAB: LAYANAN =====================
+async function loadPerfLayanan() {
+  const period = document.getElementById('perf-period')?.value || 'today';
+  const start = perfRangeStart(period).toISOString();
+  const { data, error } = await sb.from('orders').select('status, created_at').gte('created_at', start);
+  if (error) return;
+  const orders = data || [];
+  const total = orders.length;
+  const cancelled = orders.filter(o => o.status === 'dibatalkan').length;
+  const cancelRate = total > 0 ? (cancelled/total*100) : 0;
+
+  document.getElementById('perf-layanan-batal').textContent = cancelRate.toLocaleString('id-ID',{maximumFractionDigits:1}) + '%';
+  // Rata-rata waktu konfirmasi/kirim butuh timestamp perubahan status per tahap, yang belum tercatat terpisah saat ini
+  document.getElementById('perf-layanan-konfirmasi').textContent = 'Belum ada data';
+  document.getElementById('perf-layanan-konfirmasi').style.fontSize = '13px';
+  document.getElementById('perf-layanan-konfirmasi').style.color = 'var(--muted)';
+  document.getElementById('perf-layanan-kirim').textContent = 'Belum ada data';
+  document.getElementById('perf-layanan-kirim').style.fontSize = '13px';
+  document.getElementById('perf-layanan-kirim').style.color = 'var(--muted)';
+}
+
+// ===================== TAB: TINGKAT KUNJUNGAN =====================
+async function loadPerfKunjungan() {
+  const period = document.getElementById('perf-period')?.value || 'today';
+  const start = perfRangeStart(period).toISOString();
+  const [storeRes, productRes] = await Promise.all([
+    sb.from('analytics_events').select('session_id, created_at').eq('event_type','view_store').gte('created_at', start),
+    sb.from('analytics_events').select('created_at').eq('event_type','view_product').gte('created_at', start),
+  ]);
+  const storeEvents = storeRes.data || [];
+  const productEvents = productRes.data || [];
+  document.getElementById('perf-kv-visitors').textContent = new Set(storeEvents.map(e=>e.session_id)).size.toLocaleString('id-ID');
+  document.getElementById('perf-kv-storeviews').textContent = storeEvents.length.toLocaleString('id-ID');
+  document.getElementById('perf-kv-productviews').textContent = productEvents.length.toLocaleString('id-ID');
+
+  const buckets = {}; let labels = [];
+  if (period === 'today') {
+    for (let h=0;h<24;h++) buckets[h]=0;
+    storeEvents.forEach(e => { const h=new Date(e.created_at).getHours(); buckets[h]++; });
+    labels = Object.keys(buckets).map(Number).sort((a,b)=>a-b);
+  } else {
+    const days = period === '7d' ? 7 : 30;
+    for (let i=days-1;i>=0;i--){ const d=new Date(); d.setDate(d.getDate()-i); d.setHours(0,0,0,0); labels.push(d.toISOString().slice(0,10)); buckets[labels[labels.length-1]]=0; }
+    storeEvents.forEach(e => { const key=e.created_at.slice(0,10); if(buckets[key]!==undefined) buckets[key]++; });
+  }
+  const values = labels.map(l=>buckets[l]);
+  document.getElementById('perf-kv-chart').innerHTML = renderSvgLineChart(values, labels, period, v=>String(v));
+}
+
+// ===================== TAB: PROMOSI =====================
+async function loadPerfPromosi() {
+  const el = document.getElementById('perf-promosi-render');
+  el.innerHTML = 'Memuat...';
+  const { data, error } = await sb.from('vouchers').select('*').order('created_at', {ascending:false});
+  if (error) { el.innerHTML = `<p style="color:#c0392b;font-size:13px">${error.message}</p>`; return; }
+  const vouchers = data || [];
+  if (!vouchers.length) { el.innerHTML = '<p style="font-size:13px;color:var(--muted)">Belum ada voucher dibuat.</p>'; return; }
+  el.innerHTML = `
+    <table style="width:100%;border-collapse:collapse;font-size:13px">
+      <thead><tr style="border-bottom:1px solid var(--border);text-align:left">
+        <th style="padding:8px 4px">Kode</th>
+        <th style="padding:8px 4px">Diskon</th>
+        <th style="padding:8px 4px;text-align:right">Terpakai</th>
+        <th style="padding:8px 4px;text-align:right">Sisa Kuota</th>
+      </tr></thead>
+      <tbody>${vouchers.map(v => `
+        <tr style="border-bottom:1px solid var(--border)">
+          <td style="padding:8px 4px;font-family:'IBM Plex Mono',monospace">${v.code}</td>
+          <td style="padding:8px 4px">${v.discount_type==='percent' ? v.discount_value+'%' : 'Rp '+v.discount_value.toLocaleString('id-ID')}</td>
+          <td style="padding:8px 4px;text-align:right;font-weight:600">${v.used_count||0}x</td>
+          <td style="padding:8px 4px;text-align:right">${Math.max(0,(v.max_uses||0)-(v.used_count||0))}</td>
+        </tr>`).join('')}
+      </tbody>
+    </table>`;
+}
+
+// ===================== HELPER GRAFIK GARIS (dipakai beberapa tab) =====================
+function renderSvgLineChart(values, labels, period, valueFormatter) {
   const max = Math.max(1, ...values);
   const w = 700, h = 160, pad = 24;
   const stepX = (w - pad*2) / Math.max(1, values.length - 1);
@@ -1275,21 +1578,37 @@ function renderPerfChart(storeEvents, period) {
     const y = h - pad - (v / max) * (h - pad*2);
     return `${x},${y}`;
   }).join(' ');
-
   const labelEvery = Math.ceil(labels.length / 8);
   const labelEls = labels.map((l, i) => {
     if (i % labelEvery !== 0 && i !== labels.length-1) return '';
     const x = pad + i * stepX;
-    const text = period === 'today' ? `${l}:00` : l.slice(5);
+    const text = period === 'today' ? `${l}:00` : String(l).slice(5);
     return `<text x="${x}" y="${h-4}" font-size="9" fill="var(--muted)" text-anchor="middle">${text}</text>`;
   }).join('');
-
-  el.innerHTML = `
+  return `
     <svg viewBox="0 0 ${w} ${h}" style="width:100%;height:auto;max-height:200px" preserveAspectRatio="xMidYMid meet">
       <polyline points="${points}" fill="none" stroke="#2563eb" stroke-width="2"/>
-      ${values.map((v,i) => `<circle cx="${pad+i*stepX}" cy="${h-pad-(v/max)*(h-pad*2)}" r="2.5" fill="#2563eb"/>`).join('')}
+      ${values.map((v,i) => `<circle cx="${pad+i*stepX}" cy="${h-pad-(v/max)*(h-pad*2)}" r="2.5" fill="#2563eb"><title>${valueFormatter(v)}</title></circle>`).join('')}
       ${labelEls}
     </svg>`;
+}
+function renderPerfChart(storeEvents, period) {
+  const el = document.getElementById('perf-chart');
+  const buckets = {}; let labels = [];
+  if (period === 'today') {
+    for (let h = 0; h < 24; h++) buckets[h] = 0;
+    storeEvents.forEach(e => { const h = new Date(e.created_at).getHours(); buckets[h] = (buckets[h]||0)+1; });
+    labels = Object.keys(buckets).map(Number).sort((a,b)=>a-b);
+  } else {
+    const days = period === '7d' ? 7 : 30;
+    for (let i = days-1; i >= 0; i--) {
+      const d = new Date(); d.setDate(d.getDate()-i); d.setHours(0,0,0,0);
+      labels.push(d.toISOString().slice(0,10)); buckets[labels[labels.length-1]] = 0;
+    }
+    storeEvents.forEach(e => { const key = e.created_at.slice(0,10); if (buckets[key] !== undefined) buckets[key]++; });
+  }
+  const values = labels.map(l => buckets[l]);
+  el.innerHTML = renderSvgLineChart(values, labels, period, v => String(v));
 }
 
 // ===================== PELANGGAN ADMIN =====================
