@@ -423,6 +423,10 @@
     .login-box{background:var(--surface);border-radius:var(--radius);padding:40px;width:min(360px,90vw)}
     .login-title{font-family:'Source Serif 4',serif;font-size:24px;font-weight:600;margin-bottom:24px;text-align:center}
     .login-err{font-size:13px;color:#c0392b;margin-bottom:12px;text-align:center;font-family:'IBM Plex Mono',monospace}
+    .pass-wrap{position:relative}
+    .pass-wrap .form-input{padding-right:44px;width:100%;box-sizing:border-box}
+    .pass-toggle{position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;padding:4px;color:var(--muted);display:flex;align-items:center}
+    .pass-toggle svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.8}
 
     /* ===== WA FLOAT ===== */
     .wa-float{position:fixed;bottom:24px;right:24px;width:52px;height:52px;background:var(--green);border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 4px 16px rgba(37,211,102,.4);z-index:99;transition:transform .2s}
@@ -453,7 +457,12 @@
     </div>
     <div class="form-group">
       <label class="form-label">Password</label>
-      <input class="form-input" type="password" id="login-pass" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()"/>
+      <div class="pass-wrap">
+        <input class="form-input" type="password" id="login-pass" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()"/>
+        <button type="button" class="pass-toggle" onclick="togglePassVis()" id="pass-toggle-btn" aria-label="Tampilkan password">
+          <svg id="eye-icon" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+        </button>
+      </div>
     </div>
     <button class="btn-primary" onclick="doLogin()">Masuk</button>
     <a href="index.html" style="display:block;text-align:center;margin-top:10px;padding:12px;font-size:13px;color:var(--muted)">← Kembali ke Toko</a>
@@ -1214,6 +1223,16 @@ function showToast(msg) {
 }
 
 // ===================== LOGIN =====================
+function togglePassVis() {
+  const inp = document.getElementById('login-pass');
+  const icon = document.getElementById('eye-icon');
+  const show = inp.type === 'password';
+  inp.type = show ? 'text' : 'password';
+  icon.innerHTML = show
+    ? '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>'
+    : '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>';
+}
+
 async function doLogin() {
   const email = document.getElementById('login-email').value;
   const pass = document.getElementById('login-pass').value;
