@@ -1028,6 +1028,8 @@ async function renderAccountProfile() {
         <div style="width:44px;height:44px;border-radius:50%;background:var(--ink);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:600;flex-shrink:0">${initial}</div>
         <div><p style="font-weight:600">${p.name || '(belum diisi)'}</p><p style="font-size:12px;color:var(--muted)">${buyerUser.email}</p></div>
       </div>
+      <label style="font-size:11px;color:var(--muted);text-transform:uppercase">Nama Lengkap</label>
+      <input class="form-input" id="acc-p-name" value="${p.name || ''}" style="margin:6px 0 14px" placeholder="Nama kamu"/>
       <label style="font-size:11px;color:var(--muted);text-transform:uppercase">No. WhatsApp</label>
       <input class="form-input" id="acc-p-wa" value="${p.whatsapp || ''}" style="margin:6px 0 14px"/>
       <div style="border:1px solid var(--border);border-radius:8px;padding:14px;margin-bottom:14px">
@@ -1154,8 +1156,11 @@ async function loadBuyerProfile() {
 }
 
 async function saveBuyerProfile() {
+  const name = document.getElementById('acc-p-name').value.trim();
   const wa = document.getElementById('acc-p-wa').value.trim();
-  await sb.from('customers').update({whatsapp: wa}).eq('id', buyerUser.id);
+  if (!name) { showToast('Nama tidak boleh kosong'); return; }
+  await sb.from('customers').update({name, whatsapp: wa}).eq('id', buyerUser.id);
+  buyerProfile.name = name;
   buyerProfile.whatsapp = wa;
   showToast('Profil disimpan ✓');
 }
@@ -1202,7 +1207,7 @@ async function renderAddressList() {
         <span style="font-size:10px;text-transform:uppercase;letter-spacing:.05em;background:var(--bg);border:1px solid var(--border);border-radius:4px;padding:2px 8px">${a.label}</span>
         ${a.is_default ? `<span style="font-size:10px;color:var(--accent);font-weight:600">★ Alamat Utama</span>` : ''}
       </div>
-      <p style="font-weight:600;margin-bottom:2px">${a.recipient_name} · ${a.phone}</p>
+      <p style="font-weight:600;margin-bottom:2px">${a.recipient_name} <span style="font-size:12px;color:var(--muted);font-weight:400">(${a.label})</span></p>
       <p style="font-size:13px;color:var(--muted);line-height:1.5">${a.address_detail}${a.address_note?`, ${a.address_note}`:''}${a.village?`, ${a.village}`:''}, ${a.district}, ${a.city}, ${a.province}${a.postal_code?' '+a.postal_code:''}</p>
       <div style="display:flex;gap:14px;margin-top:10px;font-size:12px">
         <a href="#" onclick="event.preventDefault();openAddressForm('${a.id}')" style="color:var(--ink)">Ubah</a>
