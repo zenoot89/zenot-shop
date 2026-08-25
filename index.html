@@ -987,6 +987,18 @@ async function openAccount() {
 
 function showAccountTab(tab) { accountTab = tab; renderAccountAuth(); }
 
+function eyeIconSvg(open) {
+  return open
+    ? '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M17.94 17.94A10.94 10.94 0 0 1 12 19c-7 0-11-7-11-7a18.5 18.5 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 7 11 7a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>'
+    : '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>';
+}
+function togglePassVis(inputId, iconEl) {
+  const inp = document.getElementById(inputId);
+  const isHidden = inp.type === 'password';
+  inp.type = isHidden ? 'text' : 'password';
+  iconEl.innerHTML = eyeIconSvg(isHidden);
+}
+
 function renderAccountAuth() {
   const loginHtml = `
     <div class="acc-form">
@@ -997,7 +1009,10 @@ function renderAccountAuth() {
       </button>
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px"><div style="flex:1;height:1px;background:var(--border)"></div><span style="font-size:11px;color:var(--muted);text-transform:uppercase">Atau</span><div style="flex:1;height:1px;background:var(--border)"></div></div>
       <input class="form-input" id="acc-login-email" name="email" type="email" placeholder="Email" autocomplete="username" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="next" style="margin-bottom:10px"/>
-      <input class="form-input" id="acc-login-pass" name="password" type="password" placeholder="Password" autocomplete="current-password" enterkeyhint="go" onkeydown="if(event.key==='Enter')doBuyerLogin()" style="margin-bottom:10px"/>
+      <div style="position:relative;margin-bottom:10px">
+        <input class="form-input" id="acc-login-pass" name="password" type="password" placeholder="Password" autocomplete="current-password" enterkeyhint="go" onkeydown="if(event.key==='Enter')doBuyerLogin()" style="padding-right:40px"/>
+        <span onclick="togglePassVis('acc-login-pass',this)" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);cursor:pointer;display:flex;color:var(--muted)">${eyeIconSvg(false)}</span>
+      </div>
       <p class="hidden" id="acc-login-err" style="color:#c0392b;font-size:12px;margin-bottom:10px"></p>
       <button class="btn-primary" onclick="doBuyerLogin()">Masuk</button>
       <p style="text-align:center;font-size:13px;margin-top:14px;color:var(--muted)">Belum punya akun? <a href="#" onclick="showAccountTab('daftar');return false" style="color:var(--ink)">Daftar</a></p>
@@ -1013,7 +1028,10 @@ function renderAccountAuth() {
       <input class="form-input" id="acc-reg-name" name="name" placeholder="Nama Lengkap" autocomplete="name" enterkeyhint="next" style="margin-bottom:10px"/>
       <input class="form-input" id="acc-reg-wa" name="tel" placeholder="No. WhatsApp" autocomplete="tel" inputmode="numeric" enterkeyhint="next" style="margin-bottom:10px"/>
       <input class="form-input" id="acc-reg-email" name="email" type="email" placeholder="Email" autocomplete="username" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="next" style="margin-bottom:10px"/>
-      <input class="form-input" id="acc-reg-pass" name="new-password" type="password" placeholder="Password (min 6 karakter)" autocomplete="new-password" enterkeyhint="go" onkeydown="if(event.key==='Enter')doBuyerRegister()" style="margin-bottom:10px"/>
+      <div style="position:relative;margin-bottom:10px">
+        <input class="form-input" id="acc-reg-pass" name="new-password" type="password" placeholder="Password (min 6 karakter)" autocomplete="new-password" enterkeyhint="go" onkeydown="if(event.key==='Enter')doBuyerRegister()" style="padding-right:40px"/>
+        <span onclick="togglePassVis('acc-reg-pass',this)" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);cursor:pointer;display:flex;color:var(--muted)">${eyeIconSvg(false)}</span>
+      </div>
       <p class="hidden" id="acc-reg-err" style="color:#c0392b;font-size:12px;margin-bottom:10px"></p>
       <button class="btn-primary" onclick="doBuyerRegister()">Daftar</button>
       <p style="text-align:center;font-size:13px;margin-top:14px;color:var(--muted)">Sudah punya akun? <a href="#" onclick="showAccountTab('masuk');return false" style="color:var(--ink)">Masuk</a></p>
