@@ -1676,24 +1676,37 @@ async function deleteAddress(id) {
 
 function confirmLogout() {
   const dialog = document.createElement('div');
+  dialog.id = 'logout-confirm-dialog';
   dialog.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;display:flex;align-items:flex-end';
   dialog.innerHTML = `
     <div style="background:#fff;width:100%;border-radius:16px 16px 0 0;padding:24px 20px 32px">
       <p style="font-weight:600;font-size:16px;margin-bottom:8px">Yakin mau keluar?</p>
       <p style="font-size:13px;color:var(--muted);margin-bottom:24px">Kamu perlu login lagi untuk mengakses akun.</p>
-      <button onclick="doBuyerLogout()" style="width:100%;padding:14px;background:#c0392b;color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer;margin-bottom:10px">Ya, Keluar</button>
-      <button onclick="this.closest('div[style*="inset"]').remove()" style="width:100%;padding:14px;background:none;border:1px solid var(--border);border-radius:8px;font-size:15px;cursor:pointer;color:var(--muted)">Batal</button>
+      <div style="display:flex;gap:10px">
+        <button onclick="doBuyerLogout()" style="flex:1;padding:14px;background:#c0392b;color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer">Ya, Keluar</button>
+        <button onclick="closeLogoutConfirm()" style="flex:1;padding:14px;background:none;border:1px solid var(--border);border-radius:8px;font-size:15px;cursor:pointer;color:var(--muted)">Batal</button>
+      </div>
     </div>`;
   document.body.appendChild(dialog);
 }
 
+function closeLogoutConfirm() {
+  const dialog = document.getElementById('logout-confirm-dialog');
+  if (dialog) dialog.remove();
+}
+
 async function doBuyerLogout() {
-  await sb.auth.signOut();
-  buyerUser = null; buyerProfile = null; wishlistIds = new Set();
-  document.querySelectorAll('div[style*="inset:0"]').forEach(el => el.remove());
-  closeSidePanel();
-  renderProducts();
-  showToast('Berhasil keluar');
+  try {
+    await sb.auth.signOut();
+  } catch (err) {
+    console.warn('[logout] signOut gagal, tetap lanjut bersihkan sesi lokal:', err);
+  } finally {
+    buyerUser = null; buyerProfile = null; wishlistIds = new Set();
+    closeLogoutConfirm();
+    closeSidePanel();
+    renderProducts();
+    showToast('Berhasil keluar');
+  }
 }
 
 // ===================== PRODUCT MODAL =====================
