@@ -2203,5 +2203,56 @@ sb.auth.getSession().then(async ({data}) => {
   }
 });
 </script>
+<script>
+// ─── AUTO-UPDATE PWA — sama seperti mekanisme zenoot-app ────────
+// Begitu ada sw.js versi baru ter-deploy, browser deteksi → skip
+// waiting → reload otomatis, user langsung dapat versi terbaru
+// tanpa perlu hard refresh manual. Berlaku baik untuk PWA yang
+// di-install maupun dibuka via bookmark/tab browser biasa.
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).then(function(reg) {
+
+    // 1. Sudah ada SW waiting sejak awal → langsung skip
+    if (reg.waiting) {
+      reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+    }
+
+    // 2. SW baru ketemu saat install → langsung skip tanpa tunggu user
+    reg.addEventListener('updatefound', function() {
+      var newWorker = reg.installing;
+      if (!newWorker) return;
+      newWorker.addEventListener('statechange', function() {
+        if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+          newWorker.postMessage({ type: 'SKIP_WAITING' });
+        }
+      });
+    });
+
+    // 3. Force cek update setiap buka app
+    reg.update();
+
+    // 4. Cek ulang saat user kembali ke tab/app (dari background HP)
+    document.addEventListener('visibilitychange', function() {
+      if (document.visibilityState === 'visible') {
+        reg.update().then(function() {
+          if (reg.waiting) {
+            reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+          }
+        }).catch(function() {});
+      }
+    });
+
+  }).catch(function() {});
+
+  // 5. Reload otomatis setelah SW baru take over
+  var _reloading = false;
+  navigator.serviceWorker.addEventListener('controllerchange', function() {
+    if (!_reloading) {
+      _reloading = true;
+      window.location.reload();
+    }
+  });
+}
+</script>
 </body>
 </html>
