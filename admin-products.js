@@ -919,7 +919,12 @@ function renderAdminProductList() {
       <td>${p.supplier_id ? supplierName(p.supplier_id) : (p.supplier || '-')}</td>
       <td>${(() => { const s = productStatus(p); const cls = s==='aktif'?'on':'off'; const label = s==='aktif'?'Aktif':'Di Arsipkan'; return `<span class="prod-status-badge ${cls}">${label}</span>`; })()}</td>
       <td>
-        <button class="btn-edit" onclick="editProduct('${p.id}')">Edit</button>
+        <div class="prod-aksi-row">
+          <button class="prod-more-btn" onclick="openProductSheet('${p.id}')" aria-label="Lainnya">
+            <svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg>
+          </button>
+          <button class="btn-edit" onclick="editProduct('${p.id}')">Edit</button>
+        </div>
       </td>
     </tr>`;
     const variantRows = isOpen ? vars.map(v => {
@@ -1057,4 +1062,119 @@ async function deleteProductFromForm() {
     closeProductForm();
     loadAdminProducts();
   });
+}
+
+// ===================== BOTTOM SHEET "LAINNYA" (mobile, tombol titik-3) =====================
+function closeProductSheet() {
+  document.getElementById('prod-sheet-overlay').classList.remove('open');
+}
+
+async function toggleProductActiveById(id) {
+  const p = adminProductsData.find(x => x.id === id);
+  if (!p) return;
+  const isActive = productStatus(p) === 'aktif';
+  const newStatus = isActive ? 'nonaktif' : 'aktif';
+  await sb.from('products').update({status: newStatus, is_active: newStatus === 'aktif'}).eq('id', id);
+  showToast(isActive ? 'Produk diarsipkan ✓' : 'Produk diaktifkan ✓');
+  closeProductSheet();
+  loadAdminProducts();
+}
+
+async function duplicateProduct(id) {
+  const p = adminProductsData.find(x => x.id === id);
+  if (!p) return;
+  const { data: newProd, error } = await sb.from('products').insert({
+    name: p.name + ' (Copy)', category: p.category, category_id: p.category_id, gender: p.gender,
+    supplier: p.supplier, supplier_id: p.supplier_id, description: p.description,
+    bahan: p.bahan, tipe_cutting: p.tipe_cutting, ketebalan: p.ketebalan,
+    motif: p.motif, dipakai_model: p.dipakai_model, image_url: p.image_url, image_urls: p.image_urls
+  }).select().single();
+  if (error) { console.error('Duplikat produk gagal:', error); showToast('Gagal duplikat: ' + error.message); return; }
+  const vars = (p.variants || []).map(v => ({
+    product_id: newProd.id, color_name: v.color_name, color_hex: v.color_hex, size: v.size,
+    price: v.price, original_price: v.original_price, stock: v.stock, image_url: v.image_url, is_active: v.is_active
+  }));
+  if (vars.length) await sb.from('variants').insert(vars);
+  showToast('Produk berhasil diduplikat ✓');
+  closeProductSheet();
+  loadAdminProducts();
+}
+
+function deleteProductFromSheet(id) {
+  showConfirmDialog('Apakah kamu yakin ingin menghapus produk ini? Semua data termasuk foto bakal terhapus permanen dan nggak bisa dikembalikan.', async () => {
+    await deleteProductCascade(id);
+    showToast('Produk & semua datanya dihapus');
+    closeProductSheet();
+    loadAdminProducts();
+  });
+}
+
+async function openProductSheet(id) {
+  const p = adminProductsData.find(x => x.id === id);
+  if (!p) return;
+  const vars = p.variants || [];
+  const netStr = priceRangeStr(vars, 'price') || '-';
+  const stock = productTotalStock(p);
+  const soldAllTime = productSalesMap[p.id] || 0;
+  const status = productStatus(p);
+
+  document.getElementById('prod-sheet-overlay').classList.add('open');
+  document.getElementById('prod-sheet-body').innerHTML = `
+    <div style="display:flex;gap:12px;margin-bottom:16px">
+      <div class="admin-product-img" style="width:60px;height:60px;flex-shrink:0">${p.image_url ? `<img src="${p.image_url}"/>` : ''}</div>
+      <div>
+        <div style="font-weight:600;font-size:14px;margin-bottom:2px">${p.name}</div>
+        <div style="font-size:11.5px;color:var(--muted)">Kode Produk ${p.id.slice(0,8)}</div>
+        <div style="font-size:13px;margin-top:2px">${netStr} · Stok ${stock}</div>
+      </div>
+    </div>
+    <h4 style="font-size:11px;color:var(--muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:.04em">Performa Produk</h4>
+    <p style="font-size:12px;color:var(--muted);margin-bottom:12px">Memuat data 30 hari terakhir...</p>
+    <h4 style="font-size:11px;color:var(--muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:.04em">Aksi</h4>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+      <button class="btn-edit" onclick="toggleProductActiveById('${p.id}')">${status === 'aktif' ? 'Arsipkan' : 'Aktifkan'}</button>
+      <button class="btn-edit" onclick="duplicateProduct('${p.id}')">Salin</button>
+      <button class="btn-danger" style="grid-column:1/-1" onclick="deleteProductFromSheet('${p.id}')">Hapus</button>
+    </div>
+  `;
+
+  // Performa: fetch async, render belakangan biar sheet-nya langsung kebuka gak nunggu network
+  const now = new Date();
+  const d30 = new Date(now - 30 * 86400000).toISOString();
+  const d60 = new Date(now - 60 * 86400000).toISOString();
+
+  const [viewsAllRes, views30Res, viewsPrev30Res, orders30Res, ordersPrev30Res] = await Promise.all([
+    sb.from('analytics_events').select('*', { count: 'exact', head: true }).eq('event_type', 'view_product').eq('product_id', id),
+    sb.from('analytics_events').select('*', { count: 'exact', head: true }).eq('event_type', 'view_product').eq('product_id', id).gte('created_at', d30),
+    sb.from('analytics_events').select('*', { count: 'exact', head: true }).eq('event_type', 'view_product').eq('product_id', id).gte('created_at', d60).lt('created_at', d30),
+    sb.from('orders').select('items').gte('created_at', d30),
+    sb.from('orders').select('items').gte('created_at', d60).lt('created_at', d30),
+  ]);
+
+  const sumQty = (orders) => (orders || []).reduce((s, o) => s + (o.items || []).filter(i => i.productId === id).reduce((a, i) => a + (i.qty || 0), 0), 0);
+  const qty30 = sumQty(orders30Res.data);
+  const qtyPrev30 = sumQty(ordersPrev30Res.data);
+  const views30 = views30Res.count || 0;
+  const viewsPrev30 = viewsPrev30Res.count || 0;
+  const viewsAll = viewsAllRes.count || 0;
+
+  const pct = (cur, prev) => prev === 0 ? (cur > 0 ? 100 : 0) : Math.round((cur - prev) / prev * 1000) / 10;
+  const qtyDelta = pct(qty30, qtyPrev30);
+  const viewsDelta = pct(views30, viewsPrev30);
+  const konversi30 = views30 ? Math.round((qty30 / views30) * 10000) / 100 : 0;
+  const deltaHtml = (v) => `<span style="font-size:10px;color:${v >= 0 ? '#1b8a4c' : '#c0392b'}">${v >= 0 ? '▲' : '▼'} ${Math.abs(v)}%</span>`;
+
+  const perfEl = document.getElementById('prod-sheet-body');
+  if (!perfEl || !document.getElementById('prod-sheet-overlay').classList.contains('open')) return; // sheet udah ditutup duluan
+  const loadingP = perfEl.querySelector('p');
+  if (loadingP) {
+    loadingP.outerHTML = `
+    <div class="perf-metric-grid" style="margin-bottom:16px">
+      <div class="admin-card"><div style="font-size:11px;color:var(--muted)">Penjualan (semua waktu)</div><div style="font-size:17px;font-weight:600">${soldAllTime}</div></div>
+      <div class="admin-card"><div style="font-size:11px;color:var(--muted)">Jumlah Dilihat</div><div style="font-size:17px;font-weight:600">${viewsAll}</div></div>
+      <div class="admin-card"><div style="font-size:11px;color:var(--muted)">Penjualan 30 Hari</div><div style="font-size:17px;font-weight:600">${qty30}</div>${deltaHtml(qtyDelta)}</div>
+      <div class="admin-card"><div style="font-size:11px;color:var(--muted)">Kunjungan 30 Hari</div><div style="font-size:17px;font-weight:600">${views30}</div>${deltaHtml(viewsDelta)}</div>
+      <div class="admin-card"><div style="font-size:11px;color:var(--muted)">Konversi 30 Hari</div><div style="font-size:17px;font-weight:600">${konversi30}%</div></div>
+    </div>`;
+  }
 }
