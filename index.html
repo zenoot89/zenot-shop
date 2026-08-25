@@ -996,8 +996,8 @@ function renderAccountAuth() {
         Masuk dengan Google
       </button>
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px"><div style="flex:1;height:1px;background:var(--border)"></div><span style="font-size:11px;color:var(--muted);text-transform:uppercase">Atau</span><div style="flex:1;height:1px;background:var(--border)"></div></div>
-      <input class="form-input" id="acc-login-email" type="email" placeholder="Email" style="margin-bottom:10px"/>
-      <input class="form-input" id="acc-login-pass" type="password" placeholder="Password" style="margin-bottom:10px"/>
+      <input class="form-input" id="acc-login-email" name="email" type="email" placeholder="Email" autocomplete="username" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="next" style="margin-bottom:10px"/>
+      <input class="form-input" id="acc-login-pass" name="password" type="password" placeholder="Password" autocomplete="current-password" enterkeyhint="go" onkeydown="if(event.key==='Enter')doBuyerLogin()" style="margin-bottom:10px"/>
       <p class="hidden" id="acc-login-err" style="color:#c0392b;font-size:12px;margin-bottom:10px"></p>
       <button class="btn-primary" onclick="doBuyerLogin()">Masuk</button>
       <p style="text-align:center;font-size:13px;margin-top:14px;color:var(--muted)">Belum punya akun? <a href="#" onclick="showAccountTab('daftar');return false" style="color:var(--ink)">Daftar</a></p>
@@ -1010,10 +1010,10 @@ function renderAccountAuth() {
         Daftar dengan Google
       </button>
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px"><div style="flex:1;height:1px;background:var(--border)"></div><span style="font-size:11px;color:var(--muted);text-transform:uppercase">Atau isi manual</span><div style="flex:1;height:1px;background:var(--border)"></div></div>
-      <input class="form-input" id="acc-reg-name" placeholder="Nama Lengkap" style="margin-bottom:10px"/>
-      <input class="form-input" id="acc-reg-wa" placeholder="No. WhatsApp" style="margin-bottom:10px"/>
-      <input class="form-input" id="acc-reg-email" type="email" placeholder="Email" style="margin-bottom:10px"/>
-      <input class="form-input" id="acc-reg-pass" type="password" placeholder="Password (min 6 karakter)" style="margin-bottom:10px"/>
+      <input class="form-input" id="acc-reg-name" name="name" placeholder="Nama Lengkap" autocomplete="name" enterkeyhint="next" style="margin-bottom:10px"/>
+      <input class="form-input" id="acc-reg-wa" name="tel" placeholder="No. WhatsApp" autocomplete="tel" inputmode="numeric" enterkeyhint="next" style="margin-bottom:10px"/>
+      <input class="form-input" id="acc-reg-email" name="email" type="email" placeholder="Email" autocomplete="username" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="next" style="margin-bottom:10px"/>
+      <input class="form-input" id="acc-reg-pass" name="new-password" type="password" placeholder="Password (min 6 karakter)" autocomplete="new-password" enterkeyhint="go" onkeydown="if(event.key==='Enter')doBuyerRegister()" style="margin-bottom:10px"/>
       <p class="hidden" id="acc-reg-err" style="color:#c0392b;font-size:12px;margin-bottom:10px"></p>
       <button class="btn-primary" onclick="doBuyerRegister()">Daftar</button>
       <p style="text-align:center;font-size:13px;margin-top:14px;color:var(--muted)">Sudah punya akun? <a href="#" onclick="showAccountTab('masuk');return false" style="color:var(--ink)">Masuk</a></p>
@@ -1093,7 +1093,10 @@ function courierTrackingUrl(resi) {
 async function doGoogleAuth() {
   await sb.auth.signInWithOAuth({
     provider: 'google',
-    options: { redirectTo: window.location.href }
+    options: {
+      redirectTo: window.location.href,
+      queryParams: { prompt: 'select_account' }
+    }
   });
 }
 
