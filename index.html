@@ -1513,9 +1513,12 @@ async function openAddressForm(id = null) {
       <button type="button" class="filter-tab" id="addr-tag-rumah" onclick="selectAddrTag('Rumah')">Rumah</button>
       <button type="button" class="filter-tab" id="addr-tag-kantor" onclick="selectAddrTag('Kantor')">Kantor</button>
     </div>
-    <button class="btn-primary" style="margin-bottom:10px" onclick="saveAddress()">Simpan</button>
-    <button style="width:100%;padding:12px;background:none;border:1px solid var(--border);border-radius:8px;cursor:pointer;color:var(--muted);margin-bottom:10px" onclick="renderAddressList()">Batal</button>
-    ${id ? `<button style="width:100%;padding:12px;background:none;border:1px solid #c0392b;border-radius:8px;cursor:pointer;color:#c0392b;font-weight:600" onclick="deleteAddress('${id}')">Hapus Alamat</button>` : ''}
+    <div style="height:70px"></div>
+  </div>
+  <div style="position:fixed;bottom:0;left:0;right:0;background:var(--bg);border-top:1px solid var(--border);padding:12px 16px;display:flex;gap:10px;z-index:999">
+    ${id ? `<button onclick="deleteAddress('${id}')" style="flex:1;padding:12px;background:none;border:1px solid #c0392b;border-radius:8px;cursor:pointer;color:#c0392b;font-weight:600">Hapus</button>` : `<button onclick="renderAddressList()" style="flex:1;padding:12px;background:none;border:1px solid var(--border);border-radius:8px;cursor:pointer;color:var(--muted)">Batal</button>`}
+    <button onclick="saveAddress()" style="flex:2;padding:12px;background:var(--ink);color:var(--bg);border:none;border-radius:8px;cursor:pointer;font-weight:600">Simpan</button>
+  </div>
   `);
   selectAddrTag(existing?.label || 'Rumah');
   initAddrQuickSearch();
