@@ -792,15 +792,24 @@ function bottomNavGo(target, el) {
   showControls();
   document.getElementById('controls').scrollIntoView({behavior:'smooth', block:'start'});
 }
-function setFilterGender(gender, category, el) {
+function setFilterGender(gender, category, el, skipHistory) {
   activeGender = gender;
-  activeFilter = category;
+  activeFilter = category || 'all';
   document.querySelectorAll('.drawer-sub-item').forEach(t=>t.classList.remove('active'));
   if (el) el.classList.add('active');
   document.querySelectorAll('.bottom-nav-item').forEach(b=>b.classList.remove('active'));
   const bnId = gender === 'all' ? 'bn-home' : `bn-${gender}`;
   const bnEl = document.getElementById(bnId);
   if (bnEl) bnEl.classList.add('active');
+  // Update URL hash
+  if (!skipHistory) {
+    let hash = '';
+    if (gender && gender !== 'all') {
+      hash = gender;
+      if (category && category !== 'all') hash += '/' + category;
+    }
+    history.pushState(null, '', hash ? '#' + hash : location.pathname);
+  }
   renderProducts();
 }
 function filterProducts() { renderProducts(); }
@@ -869,8 +878,8 @@ function renderDrawerCategories() {
     const el = document.getElementById(`drawer-sub-${gKey}`);
     if (!el) return;
     const leaves = categoryLeavesForGender(gKey);
-    el.innerHTML = `<button class="drawer-sub-item" onclick="setFilterGender('${gKey}','all',this);toggleDrawer(false)">Semua ${capitalize(top.name)}</button>` +
-      leaves.map(c => `<button class="drawer-sub-item" onclick="setFilterGender('${gKey}','${c.name}',this);toggleDrawer(false)">${c.name}</button>`).join('');
+    el.innerHTML = `<button class="drawer-sub-item" data-gender="${gKey}" data-cat="all" onclick="setFilterGender('${gKey}','all',this);toggleDrawer(false)">Semua ${capitalize(top.name)}</button>` +
+      leaves.map(c => `<button class="drawer-sub-item" data-gender="${gKey}" data-cat="${c.name.toLowerCase()}" onclick="setFilterGender('${gKey}','${c.name}',this);toggleDrawer(false)">${c.name}</button>`).join('');
   });
 
   // Bottom nav: satu tab per kategori level-1 (dinamis)
@@ -2168,9 +2177,22 @@ function showToast(msg) {
   setTimeout(()=>t.classList.remove('show'), 2500);
 }
 
+// ===================== HASH ROUTER =====================
+function applyHashRoute() {
+  const hash = location.hash.replace('#', '').trim();
+  if (!hash) { setFilterGender('all', 'all', null, true); return; }
+  const parts = hash.split('/');
+  const gender = parts[0] ? parts[0].toLowerCase() : 'all';
+  const category = parts[1] ? parts[1].toLowerCase() : 'all';
+  // highlight drawer item jika ada
+  const drawerEl = document.querySelector(`.drawer-sub-item[data-gender="${gender}"][data-cat="${category}"]`);
+  setFilterGender(gender, category, drawerEl, true);
+}
+window.addEventListener('popstate', applyHashRoute);
+
 // ===================== INIT =====================
 loadProducts();
-loadCategories();
+loadCategories().then(() => applyHashRoute());
 trackEvent('view_store');
 document.getElementById('footer-year').textContent = new Date().getFullYear();
 document.getElementById('footer-wa-link').href = `https://wa.me/${WA_NUMBER}`;
