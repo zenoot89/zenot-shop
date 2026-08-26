@@ -1038,16 +1038,11 @@ async function renderAccountProfile() {
         <div style="width:44px;height:44px;border-radius:50%;background:var(--ink);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:600;flex-shrink:0">${initial}</div>
         <div><p style="font-weight:600">${p.name || '(belum diisi)'}</p><p style="font-size:12px;color:var(--muted)">${buyerUser.email}</p></div>
       </div>
-      <label style="font-size:11px;color:var(--muted);text-transform:uppercase">Nama Lengkap</label>
-      <input class="form-input" id="acc-p-name" value="${p.name || ''}" style="margin:6px 0 14px" placeholder="Nama kamu"/>
-      <label style="font-size:11px;color:var(--muted);text-transform:uppercase">No. WhatsApp</label>
-      <input class="form-input" id="acc-p-wa" value="${p.whatsapp || ''}" style="margin:6px 0 14px"/>
-      <div style="border:1px solid var(--border);border-radius:8px;padding:14px;margin-bottom:14px">
-        <p style="font-size:11px;color:var(--muted);text-transform:uppercase;margin-bottom:8px">Alamat Tersimpan</p>
+      <div style="border:1px solid var(--border);border-radius:8px;padding:14px;margin-bottom:14px;cursor:pointer" onclick="renderAddressList()">
+        <p style="font-size:11px;color:var(--muted);text-transform:uppercase;margin-bottom:8px">Alamat</p>
         <div id="acc-default-addr-preview" style="font-size:13px;color:var(--muted)">Memuat...</div>
-        <a href="#" onclick="event.preventDefault();renderAddressList()" style="display:inline-block;margin-top:10px;font-size:13px;font-weight:600;color:var(--ink)">Kelola Alamat →</a>
+        <span style="display:inline-block;margin-top:10px;font-size:13px;font-weight:600;color:var(--ink)">Kelola Alamat →</span>
       </div>
-      <button class="btn-primary" style="margin-bottom:10px" onclick="saveBuyerProfile()">Simpan Perubahan</button>
       <button style="width:100%;padding:12px;background:none;border:1px solid var(--border);border-radius:8px;cursor:pointer;color:var(--muted)" onclick="doBuyerLogout()">Keluar</button>
       <div style="margin-top:24px;padding-top:18px;border-top:1px solid var(--border)">
         <p style="font-size:12px;color:var(--muted);text-transform:uppercase;margin-bottom:8px">Riwayat Pesanan</p>
@@ -1212,18 +1207,13 @@ async function renderAddressList() {
   const body = document.getElementById('side-panel-body');
   if (!body) return;
   const listHtml = buyerAddresses.length ? buyerAddresses.map(a => `
-    <div style="border:1px solid var(--border);border-radius:8px;padding:14px;margin-bottom:12px">
+    <div onclick="openAddressForm('${a.id}')" style="border:1px solid var(--border);border-radius:8px;padding:14px;margin-bottom:12px;cursor:pointer;transition:border-color .15s" onmouseover="this.style.borderColor='var(--ink)'" onmouseout="this.style.borderColor='var(--border)'">
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap">
         <span style="font-size:10px;text-transform:uppercase;letter-spacing:.05em;background:var(--bg);border:1px solid var(--border);border-radius:4px;padding:2px 8px">${a.label}</span>
         ${a.is_default ? `<span style="font-size:10px;color:var(--accent);font-weight:600">★ Alamat Utama</span>` : ''}
       </div>
-      <p style="font-weight:600;margin-bottom:2px">${a.recipient_name} <span style="font-size:12px;color:var(--muted);font-weight:400">(${a.label})</span></p>
+      <p style="font-weight:600;margin-bottom:2px">${a.recipient_name} <span style="font-size:12px;color:var(--muted);font-weight:400">${a.phone}</span></p>
       <p style="font-size:13px;color:var(--muted);line-height:1.5">${a.address_detail}${a.address_note?`, ${a.address_note}`:''}${a.village?`, ${a.village}`:''}, ${a.district}, ${a.city}, ${a.province}${a.postal_code?' '+a.postal_code:''}</p>
-      <div style="display:flex;gap:14px;margin-top:10px;font-size:12px">
-        <a href="#" onclick="event.preventDefault();openAddressForm('${a.id}')" style="color:var(--ink)">Ubah</a>
-        ${!a.is_default ? `<a href="#" onclick="event.preventDefault();setDefaultAddress('${a.id}')" style="color:var(--ink)">Jadikan Utama</a>` : ''}
-        <a href="#" onclick="event.preventDefault();deleteAddress('${a.id}')" style="color:#c0392b">Hapus</a>
-      </div>
     </div>
   `).join('') : `<div class="side-panel-empty" style="padding:20px 0">Belum ada alamat tersimpan.</div>`;
   body.innerHTML = `
@@ -1524,7 +1514,8 @@ async function openAddressForm(id = null) {
       <button type="button" class="filter-tab" id="addr-tag-kantor" onclick="selectAddrTag('Kantor')">Kantor</button>
     </div>
     <button class="btn-primary" style="margin-bottom:10px" onclick="saveAddress()">Simpan</button>
-    <button style="width:100%;padding:12px;background:none;border:1px solid var(--border);border-radius:8px;cursor:pointer;color:var(--muted)" onclick="renderAddressList()">Batal</button>
+    <button style="width:100%;padding:12px;background:none;border:1px solid var(--border);border-radius:8px;cursor:pointer;color:var(--muted);margin-bottom:10px" onclick="renderAddressList()">Batal</button>
+    ${id ? `<button style="width:100%;padding:12px;background:none;border:1px solid #c0392b;border-radius:8px;cursor:pointer;color:#c0392b;font-weight:600" onclick="deleteAddress('${id}')">Hapus Alamat</button>` : ''}
   `);
   selectAddrTag(existing?.label || 'Rumah');
   initAddrQuickSearch();
