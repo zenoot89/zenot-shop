@@ -2102,9 +2102,8 @@ function cartQty(key, d) {
   updateCartUI();
 }
 
-// CEK ONGKIR (RajaOngkir by Komerce - Docs V2)
-const RAJAONGKIR_API_KEY = 'Sels3VuJa44b5dda89247f6dadfk9yBh';
-const RAJAONGKIR_BASE = 'https://rajaongkir.komerce.id/api/v1';
+// CEK ONGKIR (RajaOngkir by Komerce - via proxy Cloudflare Worker untuk hindari CORS)
+const ONGKIR_PROXY = 'https://zenoot-ongkir.zenootid.workers.dev';
 const ORIGIN_ID = 4816; // Kota Bandung
 const ORIGIN_CITY = 'Bandung';
 
@@ -2138,9 +2137,8 @@ function normalizeKota(nama) {
 }
 
 async function cariDestinationId(kota) {
-  const res = await fetch(`${RAJAONGKIR_BASE}/destination/domestic-destination?search=${encodeURIComponent(kota)}`, {
-    headers: { key: RAJAONGKIR_API_KEY }
-  }).then(r => r.json()).catch(() => null);
+  const res = await fetch(`${ONGKIR_PROXY}/search?search=${encodeURIComponent(kota)}`)
+    .then(r => r.json()).catch(() => null);
   const list = res?.data || [];
   if (!list.length) return null;
   const kotaNorm = normalizeKota(kota).toUpperCase();
@@ -2173,9 +2171,9 @@ async function cekOngkir() {
         courier: k,
         price: 'lowest'
       });
-      return fetch(`${RAJAONGKIR_BASE}/calculate/domestic-cost`, {
+      return fetch(`${ONGKIR_PROXY}/cost`, {
         method: 'POST',
-        headers: { key: RAJAONGKIR_API_KEY, 'Content-Type': 'application/x-www-form-urlencoded' },
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body
       }).then(r => r.json()).catch(() => null);
     }));
