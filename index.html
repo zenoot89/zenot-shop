@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
   <title>Zenoot — Sweater Rajut & Knitwear Bandung | Grosir & Eceran</title>
   <meta name="description" content="Produsen sweater rajut & knitwear di Bandung. Tersedia turtleneck, cardigan, half zip, polo rajut pria & wanita. Harga grosir & eceran. Buka reseller & dropship."/>
   <meta name="keywords" content="sweater rajut bandung, knitwear bandung, turtleneck rajut, cardigan rajut, sweater rajut pria, sweater rajut wanita, grosir sweater bandung, zenoot"/>
@@ -256,12 +256,12 @@
     .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;align-items:flex-end;justify-content:center}
     .modal-overlay.open{display:flex}
     @media(min-width:600px){.modal-overlay{align-items:center}}
-    .modal{background:var(--surface);border-radius:var(--radius) var(--radius) 0 0;width:100%;max-width:480px;max-height:90vh;display:flex;flex-direction:column;overflow:hidden;position:relative}
+    .modal{background:var(--surface);border-radius:var(--radius) var(--radius) 0 0;width:100%;max-width:480px;max-height:90vh;display:flex;flex-direction:column;overflow:hidden;position:relative;touch-action:pan-y}
     .modal-top-bar{position:absolute;top:0;left:0;right:0;z-index:5;display:flex;align-items:center;justify-content:space-between;padding:10px 10px;background:linear-gradient(to bottom, rgba(0,0,0,.28), rgba(0,0,0,0));pointer-events:none}
     .modal-top-bar .modal-icon-btn{pointer-events:auto;background:rgba(255,255,255,.85);border-radius:50%;width:32px;height:32px;color:var(--text)}
     .modal-top-bar .modal-icon-btn svg{width:17px;height:17px}
     .modal-top-bar-brand{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:13px;letter-spacing:.1em;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.4)}
-    .modal-scroll{overflow-y:auto;padding:0 24px 24px;flex:1;min-height:0}
+    .modal-scroll{overflow-y:auto;overflow-x:hidden;padding:0 24px 24px;flex:1;min-height:0;max-width:100%;box-sizing:border-box}
     .modal-price-actions{display:flex;align-items:center;gap:2px;flex-shrink:0}
     .modal-sticky-bar{border-top:1px solid var(--border);background:var(--surface);padding:14px 24px;padding-bottom:calc(14px + env(safe-area-inset-bottom));flex-shrink:0}
     .modal-sticky-total{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px;font-size:13px;color:var(--sec)}
@@ -2149,25 +2149,27 @@ async function cekOngkir() {
     const kurirLabel = ['JNE','J&T','SiCepat','Anteraja','Ninja'];
     const results = await Promise.all(kurir.map(k =>
       fetch(`https://api.binderbyte.com/v1/cost?api_key=${BINDERBYTE_KEY}&courier=${k}&origin=${encodeURIComponent(ORIGIN_CITY)}&destination=${encodeURIComponent(kotaNorm)}&weight=${berat}`)
-        .then(r => r.json()).then(d => { console.log(k, JSON.stringify(d)); return d; }).catch(e => { console.log(k, 'error', e); return null; })
+        .then(r => r.json()).catch(() => null)
     ));
     const rows = [];
     results.forEach((res, i) => {
-      if (!res || res.code !== 200 || !res.data?.costs?.length) return;
-      res.data.costs.forEach(c => {
+      // Binderbyte response: data.results[].costs[] atau data.costs[]
+      const costs = res?.data?.results?.[0]?.costs || res?.data?.costs || [];
+      if (!res || (res.code != 200 && res.status != 200) || !costs.length) return;
+      costs.forEach(c => {
         rows.push(`
           <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border)">
             <div>
               <span style="font-size:12px;font-weight:600">${kurirLabel[i]}</span>
               <span style="font-size:11px;color:var(--muted);margin-left:6px">${c.service}</span>
-              <p style="font-size:11px;color:var(--muted);margin-top:2px">Est. ${c.etd}</p>
+              <p style="font-size:11px;color:var(--muted);margin-top:2px">Est. ${c.etd} hari</p>
             </div>
             <span style="font-size:13px;font-weight:600">${fRp(c.cost)}</span>
           </div>`);
       });
     });
     if (!rows.length) {
-      resultEl.innerHTML = `<p style="font-size:12px;color:#c0392b;margin-top:4px">Layanan tidak tersedia untuk kota ini. Coba nama lain.</p>`;
+      resultEl.innerHTML = `<p style="font-size:12px;color:#c0392b;margin-top:4px">Ongkir tidak tersedia untuk kota ini. Coba nama kota lain.</p>`;
     } else {
       resultEl.innerHTML = `
         <p style="font-size:11px;color:var(--muted);margin:8px 0 4px">Berat: ${berat}g · Dari: ${ORIGIN_CITY} → ${kotaNorm}</p>
