@@ -656,7 +656,7 @@
       <!-- Deskripsi Produk -->
       <div id="modal-description" style="margin-top:20px;padding-top:20px;border-top:1px solid var(--border)"></div>
       <!-- Cek Ongkir -->
-      <div id="cek-ongkir-section" style="margin-top:20px;padding-top:20px;border-top:1px solid var(--border)">
+      <div id="cek-ongkir-section" style="margin-top:20px;padding-top:20px;border-top:1px solid var(--border);overflow:hidden;max-width:100%">
         <p style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:12px">Cek Ongkir</p>
         <div style="position:relative;margin-bottom:8px">
           <div style="display:flex;gap:8px;width:100%">
@@ -2149,7 +2149,7 @@ async function cekOngkir() {
     const kurirLabel = ['JNE','J&T','SiCepat','Anteraja','Ninja'];
     const results = await Promise.all(kurir.map(k =>
       fetch(`https://api.binderbyte.com/v1/cost?api_key=${BINDERBYTE_KEY}&courier=${k}&origin=${encodeURIComponent(ORIGIN_CITY)}&destination=${encodeURIComponent(kotaNorm)}&weight=${berat}`)
-        .then(r => r.json()).catch(() => null)
+        .then(r => r.json()).then(d => { console.log(k, JSON.stringify(d)); return d; }).catch(e => { console.log(k, 'error', e); return null; })
     ));
     const rows = [];
     results.forEach((res, i) => {
