@@ -655,6 +655,15 @@
       <div id="modal-specs"></div>
       <!-- Deskripsi Produk -->
       <div id="modal-description" style="margin-top:20px;padding-top:20px;border-top:1px solid var(--border)"></div>
+      <!-- Cek Ongkir -->
+      <div id="cek-ongkir-section" style="margin-top:20px;padding-top:20px;border-top:1px solid var(--border)">
+        <p style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:12px">Cek Ongkir</p>
+        <div style="display:flex;gap:8px;margin-bottom:8px">
+          <input id="ongkir-kota" class="form-input" placeholder="Kota/kabupaten tujuan" style="flex:1;font-size:13px" autocomplete="off"/>
+          <button onclick="cekOngkir()" style="padding:10px 16px;background:var(--ink);color:var(--bg);border:none;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;white-space:nowrap">Cek</button>
+        </div>
+        <div id="ongkir-result"></div>
+      </div>
       <!-- Reviews -->
       <div class="modal-reviews" id="modal-reviews"></div>
       <!-- Related products -->
@@ -2086,6 +2095,49 @@ function cartQty(key, d) {
   cart[idx].qty += d;
   if(cart[idx].qty<=0) cart.splice(idx,1);
   updateCartUI();
+}
+
+// CEK ONGKIR
+const BINDERBYTE_KEY = 'sk_gootnleqwadvjo64s3o1ng4euhnz4zifjaejabxycj4dmklouoe7edrbzcjvsojk';
+const ORIGIN_CITY = 'Bandung';
+
+async function cekOngkir() {
+  const kota = document.getElementById('ongkir-kota').value.trim();
+  const resultEl = document.getElementById('ongkir-result');
+  if (!kota) { resultEl.innerHTML = `<p style="font-size:12px;color:#c0392b">Masukkan kota tujuan dulu.</p>`; return; }
+  resultEl.innerHTML = `<p style="font-size:12px;color:var(--muted)">Mengambil data...</p>`;
+  const berat = activeProduct?.weight || 300; // gram, default 300g
+  try {
+    const kurir = ['jne','j&t','sicepat','anteraja','ninja'];
+    const results = await Promise.all(kurir.map(k =>
+      fetch(`https://api.binderbyte.com/v1/cost?api_key=${BINDERBYTE_KEY}&courier=${k}&origin=${encodeURIComponent(ORIGIN_CITY)}&destination=${encodeURIComponent(kota)}&weight=${berat}`)
+        .then(r => r.json()).catch(() => null)
+    ));
+    const rows = [];
+    results.forEach((res, i) => {
+      if (!res || res.code !== 200 || !res.data?.costs?.length) return;
+      res.data.costs.forEach(c => {
+        rows.push(`
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border)">
+            <div>
+              <span style="font-size:12px;font-weight:600;text-transform:uppercase">${kurir[i].toUpperCase()}</span>
+              <span style="font-size:11px;color:var(--muted);margin-left:6px">${c.service}</span>
+              <p style="font-size:11px;color:var(--muted);margin-top:2px">Estimasi ${c.etd}</p>
+            </div>
+            <span style="font-size:13px;font-weight:600">${fRp(c.cost)}</span>
+          </div>`);
+      });
+    });
+    if (!rows.length) {
+      resultEl.innerHTML = `<p style="font-size:12px;color:#c0392b">Kota tidak ditemukan atau tidak ada layanan tersedia.</p>`;
+    } else {
+      resultEl.innerHTML = `
+        <p style="font-size:11px;color:var(--muted);margin-bottom:4px">Berat: ${berat}g · Dari: ${ORIGIN_CITY}</p>
+        ${rows.join('')}`;
+    }
+  } catch(e) {
+    resultEl.innerHTML = `<p style="font-size:12px;color:#c0392b">Gagal mengambil data. Coba lagi.</p>`;
+  }
 }
 
 function openCart() { updateCartUI(); document.getElementById('cart-drawer').classList.add('open'); document.body.style.overflow='hidden'; showVoucherPopup(); }
