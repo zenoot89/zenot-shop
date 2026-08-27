@@ -658,9 +658,14 @@
       <!-- Cek Ongkir -->
       <div id="cek-ongkir-section" style="margin-top:20px;padding-top:20px;border-top:1px solid var(--border)">
         <p style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:12px">Cek Ongkir</p>
-        <div style="display:flex;gap:8px;margin-bottom:8px">
-          <input id="ongkir-kota" class="form-input" placeholder="Kota/kabupaten tujuan" style="flex:1;font-size:13px" autocomplete="off"/>
-          <button onclick="cekOngkir()" style="padding:10px 16px;background:var(--ink);color:var(--bg);border:none;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;white-space:nowrap">Cek</button>
+        <div style="position:relative;margin-bottom:8px">
+          <div style="display:flex;gap:8px">
+            <div style="flex:1;position:relative">
+              <input id="ongkir-kota" class="form-input" placeholder="Ketik kota/kabupaten tujuan" style="font-size:13px;width:100%" autocomplete="off" oninput="ongkirAutocomplete(this.value)" onkeydown="if(event.key==='Enter')cekOngkir()"/>
+              <div id="ongkir-dropdown" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--surface);border:1px solid var(--border);border-radius:8px;z-index:999;max-height:180px;overflow-y:auto;box-shadow:0 4px 12px rgba(0,0,0,.1)"></div>
+            </div>
+            <button onclick="cekOngkir()" style="padding:10px 16px;background:var(--ink);color:var(--bg);border:none;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;white-space:nowrap">Cek</button>
+          </div>
         </div>
         <div id="ongkir-result"></div>
       </div>
@@ -2101,16 +2106,48 @@ function cartQty(key, d) {
 const BINDERBYTE_KEY = 'sk_gootnleqwadvjo64s3o1ng4euhnz4zifjaejabxycj4dmklouoe7edrbzcjvsojk';
 const ORIGIN_CITY = 'Bandung';
 
+function ongkirAutocomplete(q) {
+  const dd = document.getElementById('ongkir-dropdown');
+  if (!q || q.length < 2) { dd.style.display = 'none'; return; }
+  const lower = q.toLowerCase();
+  const matches = WILAYAH_REGENCIES
+    .map(([,name]) => name)
+    .filter(n => n.toLowerCase().includes(lower))
+    .slice(0, 8);
+  if (!matches.length) { dd.style.display = 'none'; return; }
+  dd.innerHTML = matches.map(n => `
+    <div onclick="selectOngkirKota('${n}')" style="padding:10px 12px;cursor:pointer;font-size:13px;border-bottom:1px solid var(--border)" onmouseover="this.style.background='var(--border)'" onmouseout="this.style.background=''">
+      ${n}
+    </div>`).join('');
+  dd.style.display = 'block';
+}
+
+function selectOngkirKota(nama) {
+  document.getElementById('ongkir-kota').value = nama;
+  document.getElementById('ongkir-dropdown').style.display = 'none';
+}
+
+function normalizeKota(nama) {
+  // Binderbyte pakai nama tanpa "Kabupaten"/"Kota Administrasi", tapi dengan "Kota" untuk kota
+  return nama
+    .replace(/^Kabupaten\s+/i, '')
+    .replace(/^Kota Administrasi\s+/i, '')
+    .trim();
+}
+
 async function cekOngkir() {
   const kota = document.getElementById('ongkir-kota').value.trim();
+  document.getElementById('ongkir-dropdown').style.display = 'none';
   const resultEl = document.getElementById('ongkir-result');
   if (!kota) { resultEl.innerHTML = `<p style="font-size:12px;color:#c0392b">Masukkan kota tujuan dulu.</p>`; return; }
-  resultEl.innerHTML = `<p style="font-size:12px;color:var(--muted)">Mengambil data...</p>`;
-  const berat = activeProduct?.weight || 300; // gram, default 300g
+  resultEl.innerHTML = `<p style="font-size:12px;color:var(--muted)">Mengambil data ongkir...</p>`;
+  const berat = activeProduct?.weight || 300;
+  const kotaNorm = normalizeKota(kota);
   try {
-    const kurir = ['jne','j&t','sicepat','anteraja','ninja'];
+    const kurir = ['jne','jnt','sicepat','anteraja','ninja'];
+    const kurirLabel = ['JNE','J&T','SiCepat','Anteraja','Ninja'];
     const results = await Promise.all(kurir.map(k =>
-      fetch(`https://api.binderbyte.com/v1/cost?api_key=${BINDERBYTE_KEY}&courier=${k}&origin=${encodeURIComponent(ORIGIN_CITY)}&destination=${encodeURIComponent(kota)}&weight=${berat}`)
+      fetch(`https://api.binderbyte.com/v1/cost?api_key=${BINDERBYTE_KEY}&courier=${k}&origin=${encodeURIComponent(ORIGIN_CITY)}&destination=${encodeURIComponent(kotaNorm)}&weight=${berat}`)
         .then(r => r.json()).catch(() => null)
     ));
     const rows = [];
@@ -2120,19 +2157,19 @@ async function cekOngkir() {
         rows.push(`
           <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border)">
             <div>
-              <span style="font-size:12px;font-weight:600;text-transform:uppercase">${kurir[i].toUpperCase()}</span>
+              <span style="font-size:12px;font-weight:600">${kurirLabel[i]}</span>
               <span style="font-size:11px;color:var(--muted);margin-left:6px">${c.service}</span>
-              <p style="font-size:11px;color:var(--muted);margin-top:2px">Estimasi ${c.etd}</p>
+              <p style="font-size:11px;color:var(--muted);margin-top:2px">Est. ${c.etd}</p>
             </div>
             <span style="font-size:13px;font-weight:600">${fRp(c.cost)}</span>
           </div>`);
       });
     });
     if (!rows.length) {
-      resultEl.innerHTML = `<p style="font-size:12px;color:#c0392b">Kota tidak ditemukan atau tidak ada layanan tersedia.</p>`;
+      resultEl.innerHTML = `<p style="font-size:12px;color:#c0392b;margin-top:4px">Layanan tidak tersedia untuk kota ini. Coba nama lain.</p>`;
     } else {
       resultEl.innerHTML = `
-        <p style="font-size:11px;color:var(--muted);margin-bottom:4px">Berat: ${berat}g · Dari: ${ORIGIN_CITY}</p>
+        <p style="font-size:11px;color:var(--muted);margin:8px 0 4px">Berat: ${berat}g · Dari: ${ORIGIN_CITY} → ${kotaNorm}</p>
         ${rows.join('')}`;
     }
   } catch(e) {
