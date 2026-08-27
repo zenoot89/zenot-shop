@@ -213,7 +213,7 @@
     /* ===== GRID ===== */
     .catalog{max-width:1100px;margin:0 auto;padding:0 20px 60px}
     .product-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:20px}
-    .product-card{background:var(--surface);border-radius:var(--radius);overflow:hidden;border:1px solid var(--border);transition:transform .2s,box-shadow .2s;cursor:pointer}
+    .product-card{background:var(--surface);border-radius:var(--radius);overflow:hidden;border:1px solid var(--border);transition:transform .2s,box-shadow .2s;cursor:pointer;display:flex;flex-direction:column;height:100%}
     .product-card:hover{transform:translateY(-3px);box-shadow:0 8px 24px rgba(0,0,0,.08)}
     .card-img{position:relative;aspect-ratio:1/1;background:#f0ede8;overflow:hidden}
     .card-img img{width:100%;height:100%;object-fit:cover}
@@ -238,14 +238,15 @@
     .order-item-status{font-family:'IBM Plex Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:#2a7a2a;background:#eaf6ea;padding:3px 8px;border-radius:4px}
     .order-item-lines{font-size:12px;color:var(--sec);line-height:1.6;margin-bottom:4px;white-space:pre-line}
     .order-item-total{font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:500}
-    .card-body{padding:14px 16px 16px}
-    .card-cat{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.12em;color:var(--muted);text-transform:uppercase;margin-bottom:5px}
-    .card-name{font-family:'Source Serif 4',serif;font-size:17px;font-weight:600;margin-bottom:10px;line-height:1.3}
-    .card-price-row{display:flex;align-items:baseline;gap:8px;margin-bottom:14px}
+    .card-body{padding:12px 14px 14px;display:flex;flex-direction:column;flex:1}
+    .card-cat{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.12em;color:var(--muted);text-transform:uppercase;margin-bottom:4px}
+    .card-name{font-family:'Source Serif 4',serif;font-size:14px;font-weight:500;margin-bottom:8px;line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+    .card-price-row{display:flex;align-items:baseline;gap:6px;margin-top:auto}
     .price-final{font-family:'IBM Plex Mono',monospace;font-size:16px;font-weight:500}
     .price-orig{font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--muted);text-decoration:line-through}
-    .card-colors{display:flex;gap:5px;margin-bottom:14px;flex-wrap:wrap}
-    .color-dot{width:18px;height:18px;border-radius:50%;border:1.5px solid var(--border)}
+    .card-colors{display:flex;align-items:center;gap:4px;margin-bottom:10px;flex-wrap:nowrap;overflow:hidden}
+    .color-dot{width:14px;height:14px;border-radius:50%;border:1.5px solid var(--border);flex-shrink:0}
+    .color-more{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--muted);flex-shrink:0;margin-left:2px}
     .card-rating{display:flex;align-items:center;gap:4px;margin-bottom:10px;font-size:12px;color:var(--sec)}
     .stars{color:#f0a500;font-size:13px}
     .empty-state{text-align:center;padding:80px 20px;grid-column:1/-1}
@@ -853,7 +854,7 @@ function renderProducts() {
       </div>
       <div class="card-body">
         <div class="card-colors-row">
-          <div class="card-colors">${colors.map(([n,h])=>`<span class="color-dot" style="background:${h}" title="${n}"></span>`).join('')}</div>
+          <div class="card-colors">${colors.slice(0,5).map(([n,h])=>`<span class="color-dot" style="background:${h}" title="${n}"></span>`).join('')}${colors.length>5?`<span class="color-more">+${colors.length-5}</span>`:''}</div>
           <button class="wish-btn ${wishlistIds.has(p.id)?'active':''}" onclick="event.stopPropagation();toggleWishlist('${p.id}',this)">
             <svg viewBox="0 0 24 24"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg>
           </button>
