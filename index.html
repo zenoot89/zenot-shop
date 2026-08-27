@@ -2102,8 +2102,10 @@ function cartQty(key, d) {
   updateCartUI();
 }
 
-// CEK ONGKIR
-const BINDERBYTE_KEY = 'sk_gootnleqwadvjo64s3o1ng4euhnz4zifjaejabxycj4dmklouoe7edrbzcjvsojk';
+// CEK ONGKIR (RajaOngkir by Komerce - Docs V2)
+const RAJAONGKIR_API_KEY = 'Sels3VuJa44b5dda89247f6dadfk9yBh';
+const RAJAONGKIR_BASE = 'https://rajaongkir.komerce.id/api/v1';
+const ORIGIN_ID = 4816; // Kota Bandung
 const ORIGIN_CITY = 'Bandung';
 
 function ongkirAutocomplete(q) {
@@ -2128,12 +2130,23 @@ function selectOngkirKota(nama) {
 }
 
 function normalizeKota(nama) {
-  // Binderbyte pakai nama singkat tanpa prefix Kabupaten/Kota/Administrasi
   return nama
     .replace(/^Kabupaten\s+/i, '')
     .replace(/^Kota Administrasi\s+/i, '')
     .replace(/^Kota\s+/i, '')
     .trim();
+}
+
+async function cariDestinationId(kota) {
+  const res = await fetch(`${RAJAONGKIR_BASE}/destination/domestic-destination?search=${encodeURIComponent(kota)}`, {
+    headers: { key: RAJAONGKIR_API_KEY }
+  }).then(r => r.json()).catch(() => null);
+  const list = res?.data || [];
+  if (!list.length) return null;
+  const kotaNorm = normalizeKota(kota).toUpperCase();
+  // Cocokkan city_name persis dulu, kalau tidak ada ambil hasil pertama
+  const exact = list.find(d => d.city_name?.toUpperCase() === kotaNorm);
+  return (exact || list[0]).id;
 }
 
 async function cekOngkir() {
@@ -2145,24 +2158,38 @@ async function cekOngkir() {
   const berat = activeProduct?.weight || 300;
   const kotaNorm = normalizeKota(kota);
   try {
-    const kurir = ['jne','jnt','sicepat','anteraja','ninja'];
-    const kurirLabel = ['JNE','J&T','SiCepat','Anteraja','Ninja'];
-    const results = await Promise.all(kurir.map(k =>
-      fetch(`https://api.binderbyte.com/v1/cost?api_key=${BINDERBYTE_KEY}&courier=${k}&origin=${encodeURIComponent(ORIGIN_CITY)}&destination=${encodeURIComponent(kotaNorm)}&weight=${berat}`)
-        .then(r => r.json()).catch(() => null)
-    ));
+    const destinationId = await cariDestinationId(kota);
+    if (!destinationId) {
+      resultEl.innerHTML = `<p style="font-size:12px;color:#c0392b;margin-top:4px">Kota tujuan tidak ditemukan. Coba nama kota lain.</p>`;
+      return;
+    }
+    const kurir = ['jne','tiki','pos'];
+    const kurirLabel = { jne:'JNE', tiki:'TIKI', pos:'POS Indonesia' };
+    const results = await Promise.all(kurir.map(k => {
+      const body = new URLSearchParams({
+        origin: ORIGIN_ID,
+        destination: destinationId,
+        weight: berat,
+        courier: k,
+        price: 'lowest'
+      });
+      return fetch(`${RAJAONGKIR_BASE}/calculate/domestic-cost`, {
+        method: 'POST',
+        headers: { key: RAJAONGKIR_API_KEY, 'Content-Type': 'application/x-www-form-urlencoded' },
+        body
+      }).then(r => r.json()).catch(() => null);
+    }));
     const rows = [];
-    results.forEach((res, i) => {
-      // Binderbyte response: data.results[].costs[] atau data.costs[]
-      const costs = res?.data?.results?.[0]?.costs || res?.data?.costs || [];
-      if (!res || (res.code != 200 && res.status != 200) || !costs.length) return;
-      costs.forEach(c => {
+    results.forEach((res) => {
+      const list = res?.data || [];
+      if (!res || res.meta?.status !== 'success' || !list.length) return;
+      list.forEach(c => {
         rows.push(`
           <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border)">
             <div>
-              <span style="font-size:12px;font-weight:600">${kurirLabel[i]}</span>
-              <span style="font-size:11px;color:var(--muted);margin-left:6px">${c.service}</span>
-              <p style="font-size:11px;color:var(--muted);margin-top:2px">Est. ${c.etd} hari</p>
+              <span style="font-size:12px;font-weight:600">${c.name || kurirLabel[c.code] || c.code}</span>
+              <span style="font-size:11px;color:var(--muted);margin-left:6px">${c.service || ''}</span>
+              <p style="font-size:11px;color:var(--muted);margin-top:2px">Est. ${c.etd || '-'} hari</p>
             </div>
             <span style="font-size:13px;font-weight:600">${fRp(c.cost)}</span>
           </div>`);
