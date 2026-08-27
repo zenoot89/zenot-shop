@@ -1767,6 +1767,11 @@ async function openProduct(id) {
   document.getElementById('qty-val').textContent = 1;
   document.getElementById('btn-add-cart').disabled = true;
   document.getElementById('stok-label').textContent = 'Stok: pilih varian dulu';
+  // Reset Cek Ongkir tiap buka produk baru
+  selectedDestinationId = null;
+  document.getElementById('ongkir-kota').value = '';
+  document.getElementById('ongkir-dropdown').style.display = 'none';
+  document.getElementById('ongkir-result').innerHTML = '';
   updateStickyTotal();
   renderModalSpecs(activeProduct);
   renderModalRelated(activeProduct);
@@ -2108,44 +2113,38 @@ const ONGKIR_PROXY = 'https://zenoot-ongkir.zenootid.workers.dev';
 const ORIGIN_ID = 4816; // Kota Bandung
 const ORIGIN_CITY = 'Bandung';
 
+let selectedDestinationId = null;
+let ongkirSearchTimer = null;
+
 function ongkirAutocomplete(q) {
+  selectedDestinationId = null; // reset kalau user ngetik ulang
   const dd = document.getElementById('ongkir-dropdown');
-  if (!q || q.length < 2) { dd.style.display = 'none'; return; }
-  const lower = q.toLowerCase();
-  const matches = WILAYAH_REGENCIES
-    .map(([,name]) => name)
-    .filter(n => n.toLowerCase().includes(lower))
-    .slice(0, 8);
-  if (!matches.length) { dd.style.display = 'none'; return; }
-  dd.innerHTML = matches.map(n => `
-    <div onclick="selectOngkirKota('${n}')" style="padding:10px 12px;cursor:pointer;font-size:13px;border-bottom:1px solid var(--border)" onmouseover="this.style.background='var(--border)'" onmouseout="this.style.background=''">
-      ${n}
-    </div>`).join('');
+  clearTimeout(ongkirSearchTimer);
+  if (!q || q.length < 3) { dd.style.display = 'none'; return; }
+  dd.innerHTML = `<div style="padding:10px 12px;font-size:12px;color:var(--muted)">Mencari...</div>`;
   dd.style.display = 'block';
+  ongkirSearchTimer = setTimeout(async () => {
+    try {
+      const res = await fetch(`${ONGKIR_PROXY}/search?search=${encodeURIComponent(q)}`).then(r => r.json());
+      const list = (res?.data || []).slice(0, 10);
+      if (!list.length) {
+        dd.innerHTML = `<div style="padding:10px 12px;font-size:12px;color:var(--muted)">Lokasi tidak ditemukan</div>`;
+        return;
+      }
+      dd.innerHTML = list.map(d => `
+        <div onclick='selectOngkirLokasi(${d.id}, ${JSON.stringify(d.label)})' style="padding:10px 12px;cursor:pointer;font-size:12px;border-bottom:1px solid var(--border)" onmouseover="this.style.background='var(--border)'" onmouseout="this.style.background=''">
+          ${d.label}
+        </div>`).join('');
+    } catch(e) {
+      dd.innerHTML = `<div style="padding:10px 12px;font-size:12px;color:#c0392b">Gagal mencari, coba lagi</div>`;
+    }
+  }, 400);
 }
 
-function selectOngkirKota(nama) {
-  document.getElementById('ongkir-kota').value = nama;
+function selectOngkirLokasi(id, label) {
+  selectedDestinationId = id;
+  document.getElementById('ongkir-kota').value = label;
   document.getElementById('ongkir-dropdown').style.display = 'none';
-}
-
-function normalizeKota(nama) {
-  return nama
-    .replace(/^Kabupaten\s+/i, '')
-    .replace(/^Kota Administrasi\s+/i, '')
-    .replace(/^Kota\s+/i, '')
-    .trim();
-}
-
-async function cariDestinationId(kota) {
-  const res = await fetch(`${ONGKIR_PROXY}/search?search=${encodeURIComponent(kota)}`)
-    .then(r => r.json()).catch(() => null);
-  const list = res?.data || [];
-  if (!list.length) return null;
-  const kotaNorm = normalizeKota(kota).toUpperCase();
-  // Cocokkan city_name persis dulu, kalau tidak ada ambil hasil pertama
-  const exact = list.find(d => d.city_name?.toUpperCase() === kotaNorm);
-  return (exact || list[0]).id;
 }
 
 async function cekOngkir() {
@@ -2153,15 +2152,14 @@ async function cekOngkir() {
   document.getElementById('ongkir-dropdown').style.display = 'none';
   const resultEl = document.getElementById('ongkir-result');
   if (!kota) { resultEl.innerHTML = `<p style="font-size:12px;color:#c0392b">Masukkan kota tujuan dulu.</p>`; return; }
+  if (!selectedDestinationId) {
+    resultEl.innerHTML = `<p style="font-size:12px;color:#c0392b">Pilih lokasi dari daftar yang muncul dulu ya, biar ongkirnya akurat.</p>`;
+    return;
+  }
   resultEl.innerHTML = `<p style="font-size:12px;color:var(--muted)">Mengambil data ongkir...</p>`;
   const berat = activeProduct?.weight || 300;
-  const kotaNorm = normalizeKota(kota);
+  const destinationId = selectedDestinationId;
   try {
-    const destinationId = await cariDestinationId(kota);
-    if (!destinationId) {
-      resultEl.innerHTML = `<p style="font-size:12px;color:#c0392b;margin-top:4px">Kota tujuan tidak ditemukan. Coba nama kota lain.</p>`;
-      return;
-    }
     const kurir = ['jne','tiki','pos'];
     const kurirLabel = { jne:'JNE', tiki:'TIKI', pos:'POS Indonesia' };
     const results = await Promise.all(kurir.map(k => {
@@ -2198,7 +2196,7 @@ async function cekOngkir() {
       resultEl.innerHTML = `<p style="font-size:12px;color:#c0392b;margin-top:4px">Ongkir tidak tersedia untuk kota ini. Coba nama kota lain.</p>`;
     } else {
       resultEl.innerHTML = `
-        <p style="font-size:11px;color:var(--muted);margin:8px 0 4px">Berat: ${berat}g · Dari: ${ORIGIN_CITY} → ${kotaNorm}</p>
+        <p style="font-size:11px;color:var(--muted);margin:8px 0 4px">Berat: ${berat}g · Dari: ${ORIGIN_CITY} → ${kota}</p>
         ${rows.join('')}`;
     }
   } catch(e) {
