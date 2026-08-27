@@ -659,12 +659,12 @@
       <div id="cek-ongkir-section" style="margin-top:20px;padding-top:20px;border-top:1px solid var(--border)">
         <p style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:12px">Cek Ongkir</p>
         <div style="position:relative;margin-bottom:8px">
-          <div style="display:flex;gap:8px">
-            <div style="flex:1;position:relative">
-              <input id="ongkir-kota" class="form-input" placeholder="Ketik kota/kabupaten tujuan" style="font-size:13px;width:100%" autocomplete="off" oninput="ongkirAutocomplete(this.value)" onkeydown="if(event.key==='Enter')cekOngkir()"/>
-              <div id="ongkir-dropdown" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--surface);border:1px solid var(--border);border-radius:8px;z-index:999;max-height:180px;overflow-y:auto;box-shadow:0 4px 12px rgba(0,0,0,.1)"></div>
+          <div style="display:flex;gap:8px;width:100%">
+            <div style="flex:1;min-width:0;position:relative">
+              <input id="ongkir-kota" class="form-input" placeholder="Ketik kota/kabupaten tujuan" style="font-size:13px;width:100%;box-sizing:border-box" autocomplete="off" oninput="ongkirAutocomplete(this.value)" onkeydown="if(event.key==='Enter')cekOngkir()"/>
+              <div id="ongkir-dropdown" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--surface);border:1px solid var(--border);border-radius:8px;z-index:9999;max-height:180px;overflow-y:auto;box-shadow:0 4px 12px rgba(0,0,0,.15)"></div>
             </div>
-            <button onclick="cekOngkir()" style="padding:10px 16px;background:var(--ink);color:var(--bg);border:none;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;white-space:nowrap">Cek</button>
+            <button onclick="cekOngkir()" style="flex-shrink:0;padding:10px 16px;background:var(--ink);color:var(--bg);border:none;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;white-space:nowrap">Cek</button>
           </div>
         </div>
         <div id="ongkir-result"></div>
@@ -2128,10 +2128,11 @@ function selectOngkirKota(nama) {
 }
 
 function normalizeKota(nama) {
-  // Binderbyte pakai nama tanpa "Kabupaten"/"Kota Administrasi", tapi dengan "Kota" untuk kota
+  // Binderbyte pakai nama singkat tanpa prefix Kabupaten/Kota/Administrasi
   return nama
     .replace(/^Kabupaten\s+/i, '')
     .replace(/^Kota Administrasi\s+/i, '')
+    .replace(/^Kota\s+/i, '')
     .trim();
 }
 
