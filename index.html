@@ -104,6 +104,10 @@
 
     /* ===== HEADER ===== */
     header{background:var(--surface);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100}
+    .ptr-indicator{position:fixed;top:0;left:0;right:0;height:56px;display:flex;align-items:center;justify-content:center;gap:8px;background:var(--surface);border-bottom:1px solid var(--border);transform:translateY(-56px);z-index:950;font-size:12px;color:var(--sec)}
+    .ptr-icon{width:16px;height:16px}
+    .ptr-indicator.loading .ptr-icon{animation:ptr-spin .8s linear infinite}
+    @keyframes ptr-spin{to{transform:rotate(360deg)}}
     .header-inner{max-width:1100px;margin:0 auto;padding:0 20px;height:60px;display:flex;align-items:center;justify-content:space-between}
     .logo{font-family:'Space Grotesk',sans-serif;font-size:20px;font-weight:700;letter-spacing:.14em;text-decoration:none;color:var(--text)}
     .header-right{display:flex;align-items:center;gap:12px}
@@ -513,6 +517,12 @@
   </style>
 </head>
 <body>
+
+<!-- PULL TO REFRESH INDICATOR -->
+<div class="ptr-indicator" id="ptr-indicator">
+  <svg class="ptr-icon" id="ptr-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 11-3-6.7"/><path d="M21 3v6h-6"/></svg>
+  <span id="ptr-text">Tarik untuk refresh</span>
+</div>
 
 <header>
   <div class="header-inner">
@@ -2551,6 +2561,54 @@ sb.auth.getSession().then(async ({data}) => {
     renderProducts();
   }
 });
+
+// ===================== PULL TO REFRESH (ala Shopee) =====================
+(function() {
+  const indicator = document.getElementById('ptr-indicator');
+  const icon = document.getElementById('ptr-icon');
+  const text = document.getElementById('ptr-text');
+  const THRESHOLD = 70;
+  const MAX_PULL = 100;
+  let startY = 0, pulling = false, currentPull = 0;
+
+  function overlayLagiTerbuka() {
+    return !!document.querySelector('#product-modal.open, .cart-drawer.open, .ongkir-sheet-overlay.open, .promo-overlay.open, .login-overlay.open, .side-panel.open, .drawer-scrim.open');
+  }
+
+  document.addEventListener('touchstart', (e) => {
+    if (window.scrollY > 0 || overlayLagiTerbuka()) { pulling = false; return; }
+    startY = e.touches[0].clientY;
+    pulling = true;
+    currentPull = 0;
+  }, { passive: true });
+
+  document.addEventListener('touchmove', (e) => {
+    if (!pulling) return;
+    if (window.scrollY > 0) { pulling = false; indicator.style.transform = 'translateY(-56px)'; return; }
+    const delta = e.touches[0].clientY - startY;
+    if (delta <= 0) { currentPull = 0; indicator.style.transform = 'translateY(-56px)'; return; }
+    currentPull = Math.min(delta * 0.5, MAX_PULL);
+    indicator.style.transform = `translateY(${currentPull - 56}px)`;
+    icon.style.transform = `rotate(${currentPull * 3}deg)`;
+    text.textContent = currentPull >= THRESHOLD ? 'Lepas untuk refresh' : 'Tarik untuk refresh';
+  }, { passive: true });
+
+  document.addEventListener('touchend', () => {
+    if (!pulling) return;
+    pulling = false;
+    if (currentPull >= THRESHOLD) {
+      text.textContent = 'Memuat...';
+      indicator.classList.add('loading');
+      indicator.style.transform = 'translateY(0)';
+      setTimeout(() => {
+        location.href = location.pathname + (location.search ? location.search+'&' : '?') + '_r=' + Date.now() + location.hash;
+      }, 200);
+    } else {
+      indicator.style.transform = 'translateY(-56px)';
+    }
+    currentPull = 0;
+  }, { passive: true });
+})();
 </script>
 </body>
 </html>
