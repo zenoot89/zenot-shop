@@ -140,6 +140,8 @@
     .footer-bottom a{color:rgba(244,239,228,.5);text-decoration:none;margin-left:16px}
     .footer-bottom a:hover{color:#fff}
     .icon-btn{background:none;border:none;cursor:pointer;padding:6px;display:flex;align-items:center;justify-content:center;color:var(--ink)}
+    .header-cart-count{position:absolute;top:0;right:0;background:var(--accent);color:#fff;border-radius:50%;min-width:16px;height:16px;font-size:9px;display:flex;align-items:center;justify-content:center;padding:0 2px}
+    .header-cart-count.hidden{display:none}
     .icon-btn svg{width:20px;height:20px;stroke:var(--ink);stroke-width:1.7}
     .icon-btn:hover{opacity:.7}
     .search-overlay{max-height:0;overflow:hidden;transition:max-height .25s ease;background:var(--bg);border-bottom:1px solid var(--border)}
@@ -495,8 +497,6 @@
     .bottom-nav-item span{font-size:10px;letter-spacing:.02em}
     .bottom-nav-item.active{color:var(--accent)}
     .bottom-nav-item.active svg{stroke-width:2}
-    .bottom-nav-cart-count{position:absolute;top:2px;right:calc(50% - 20px);background:var(--accent);color:#fff;border-radius:50%;width:15px;height:15px;font-size:9px;display:flex;align-items:center;justify-content:center}
-    .bottom-nav-cart-count.hidden{display:none}
 
     @media(max-width:768px){
       .bottom-nav{display:block}
@@ -523,6 +523,10 @@
     <div class="header-right">
       <button class="icon-btn" onclick="toggleSearchOverlay()" aria-label="Cari">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+      </button>
+      <button class="icon-btn" id="header-cart-btn" onclick="openCart()" aria-label="Keranjang" style="position:relative">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 8h12l-1 12H7L6 8z"/><path d="M9 8V6a3 3 0 016 0v2"/></svg>
+        <span class="header-cart-count hidden" id="header-cart-count">0</span>
       </button>
     </div>
   </div>
@@ -775,11 +779,6 @@
     <button class="bottom-nav-item" onclick="openAccount()">
       <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/></svg>
       <span>Akun</span>
-    </button>
-    <button class="bottom-nav-item" onclick="openCart()">
-      <svg viewBox="0 0 24 24"><path d="M6 8h12l-1 12H7L6 8z"/><path d="M9 8V6a3 3 0 016 0v2"/></svg>
-      <span>Keranjang</span>
-      <span class="bottom-nav-cart-count hidden" id="bottom-nav-cart-count">0</span>
     </button>
   </div>
 </nav>
@@ -2096,8 +2095,8 @@ function updateCartUI() {
   
   document.getElementById('cart-count').textContent = count;
   document.getElementById('cart-count').classList.toggle('hidden', count===0);
-  document.getElementById('bottom-nav-cart-count').textContent = count;
-  document.getElementById('bottom-nav-cart-count').classList.toggle('hidden', count===0);
+  document.getElementById('header-cart-count').textContent = count;
+  document.getElementById('header-cart-count').classList.toggle('hidden', count===0);
   document.getElementById('cart-total').textContent = fRp(total);
   document.getElementById('subtotal-val').textContent = fRp(subtotal);
   
