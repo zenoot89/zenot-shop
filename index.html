@@ -742,8 +742,8 @@
       <div class="summary-row" id="subtotal-row">
         <span>Subtotal Pesanan</span><span id="subtotal-val">Rp 0</span>
       </div>
-      <div class="summary-row" id="shipping-row">
-        <span>Ongkos Kirim</span><span>Dikonfirmasi kemudian</span>
+      <div class="summary-row" id="shipping-row" onclick="openOngkirSheet('cart')" style="cursor:pointer;align-items:center">
+        <span>🚚 Ongkos Kirim</span><span id="cart-ongkir-summary" style="color:var(--ink);display:flex;align-items:center;gap:4px">Cek ongkir <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg></span>
       </div>
       <div class="discount-row hidden" id="discount-row">
         <span>Diskon voucher</span><span id="discount-val"></span>
@@ -1797,7 +1797,8 @@ async function openProduct(id) {
   document.getElementById('btn-add-cart').disabled = true;
   document.getElementById('stok-label').textContent = 'Stok: pilih varian dulu';
   // Hitung ulang ongkir kalau destinasi sudah pernah dipilih (berat produk bisa beda)
-  ongkirCheapest = null;
+  ongkirMode = 'product';
+  ongkirCheapestProduct = null;
   updateOngkirRowSummary();
   if (ongkirDestId) hitungDanTampilkanOngkir().catch(()=>{});
   updateStickyTotal();
@@ -2090,7 +2091,8 @@ function updateCartUI() {
   if (voucher) {
     disc = voucher.discount_type==='percent' ? Math.round(subtotal*voucher.discount_value/100) : voucher.discount_value;
   }
-  const total = Math.max(0, subtotal - disc);
+  const ongkir = ongkirCheapestCart ? ongkirCheapestCart.cost : 0;
+  const total = Math.max(0, subtotal - disc + ongkir);
   const count = cart.reduce((s,i)=>s+i.qty,0);
   
   document.getElementById('cart-count').textContent = count;
@@ -2099,6 +2101,7 @@ function updateCartUI() {
   document.getElementById('header-cart-count').classList.toggle('hidden', count===0);
   document.getElementById('cart-total').textContent = fRp(total);
   document.getElementById('subtotal-val').textContent = fRp(subtotal);
+  updateCartOngkirSummary();
   
   const discRow = document.getElementById('discount-row');
   if (disc > 0) {
@@ -2143,18 +2146,29 @@ const ORIGIN_CITY = 'Bandung';
 const KURIR_LIST = ['jne','tiki','pos'];
 const KURIR_LABEL = { jne:'JNE', tiki:'TIKI', pos:'POS Indonesia' };
 
-let ongkirDestId = null;      // id lokasi tujuan yang sudah dipilih/ditemukan (per sesi buka web)
+let ongkirDestId = null;      // id lokasi tujuan yang sudah dipilih/ditemukan (dipakai bareng, sama-sama alamat kirim)
 let ongkirDestLabel = null;   // label lengkap lokasi tujuan
 let ongkirSearchTimer = null;
-let ongkirCheapest = null;    // termurah, buat ringkasan di row produk
+let ongkirMode = 'product';          // 'product' (dari modal produk) atau 'cart' (dari keranjang)
+let ongkirCheapestProduct = null;    // termurah utk produk yang lagi dibuka
+let ongkirCheapestCart = null;       // termurah utk keseluruhan isi keranjang
 
-function openOngkirSheet() {
+function openOngkirSheet(mode) {
+  ongkirMode = mode || 'product';
   document.getElementById('ongkir-sheet-overlay').classList.add('open');
   renderOngkirSheet();
 }
 
 function closeOngkirSheet() {
   document.getElementById('ongkir-sheet-overlay').classList.remove('open');
+}
+
+function getCartWeight() {
+  const total = cart.reduce((sum, i) => {
+    const p = products.find(pp => pp.id === i.productId);
+    return sum + (p?.weight || 300) * i.qty;
+  }, 0);
+  return total || 300;
 }
 
 async function renderOngkirSheet() {
@@ -2246,7 +2260,7 @@ function pilihOngkirLokasi(id, label) {
 
 async function hitungDanTampilkanOngkir() {
   const listEl = document.getElementById('ongkir-courier-list');
-  const berat = activeProduct?.weight || 300;
+  const berat = ongkirMode === 'cart' ? getCartWeight() : (activeProduct?.weight || 300);
   try {
     const results = await Promise.all(KURIR_LIST.map(k => {
       const body = new URLSearchParams({ origin: ORIGIN_ID, destination: ongkirDestId, weight: berat, courier: k, price: 'lowest' });
@@ -2259,12 +2273,12 @@ async function hitungDanTampilkanOngkir() {
       if (!res || res.meta?.status !== 'success' || !list.length) return;
       list.forEach(c => rows.push(c));
     });
+    let cheapest = null;
     if (!rows.length) {
-      ongkirCheapest = null;
       if (listEl) listEl.innerHTML = `<p style="font-size:12px;color:#c0392b;padding:16px 0;text-align:center">Ongkir tidak tersedia untuk lokasi ini.</p>`;
     } else {
       rows.sort((a,b) => a.cost - b.cost);
-      ongkirCheapest = rows[0];
+      cheapest = rows[0];
       if (listEl) {
         listEl.innerHTML = rows.map(c => `
           <div class="ongkir-courier-row">
@@ -2276,7 +2290,14 @@ async function hitungDanTampilkanOngkir() {
           </div>`).join('');
       }
     }
-    updateOngkirRowSummary();
+    if (ongkirMode === 'cart') {
+      ongkirCheapestCart = cheapest;
+      updateCartOngkirSummary();
+      updateCartUI();
+    } else {
+      ongkirCheapestProduct = cheapest;
+      updateOngkirRowSummary();
+    }
   } catch(e) {
     if (listEl) listEl.innerHTML = `<p style="font-size:12px;color:#c0392b;padding:16px 0;text-align:center">Gagal mengambil data ongkir.</p>`;
   }
@@ -2285,9 +2306,9 @@ async function hitungDanTampilkanOngkir() {
 function updateOngkirRowSummary() {
   const el = document.getElementById('ongkir-row-summary');
   if (!el) return;
-  if (ongkirDestLabel && ongkirCheapest) {
+  if (ongkirDestLabel && ongkirCheapestProduct) {
     const kotaSingkat = ongkirDestLabel.split(',')[1]?.trim() || ongkirDestLabel;
-    el.textContent = `Ke ${kotaSingkat} · mulai ${fRp(ongkirCheapest.cost)}`;
+    el.textContent = `Ke ${kotaSingkat} · mulai ${fRp(ongkirCheapestProduct.cost)}`;
   } else if (ongkirDestLabel) {
     el.textContent = `Ke ${ongkirDestLabel.split(',')[1]?.trim() || ongkirDestLabel}`;
   } else {
@@ -2295,7 +2316,39 @@ function updateOngkirRowSummary() {
   }
 }
 
-function openCart() { updateCartUI(); document.getElementById('cart-drawer').classList.add('open'); document.body.style.overflow='hidden'; showVoucherPopup(); }
+function updateCartOngkirSummary() {
+  const el = document.getElementById('cart-ongkir-summary');
+  if (!el) return;
+  const chevron = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg>`;
+  if (ongkirDestLabel && ongkirCheapestCart) {
+    const kotaSingkat = ongkirDestLabel.split(',')[1]?.trim() || ongkirDestLabel;
+    el.innerHTML = `Ke ${kotaSingkat} · ${fRp(ongkirCheapestCart.cost)} ${chevron}`;
+  } else if (ongkirDestLabel) {
+    el.innerHTML = `Ke ${ongkirDestLabel.split(',')[1]?.trim() || ongkirDestLabel} ${chevron}`;
+  } else {
+    el.innerHTML = `Cek ongkir ${chevron}`;
+  }
+}
+
+function openCart() {
+  updateCartUI();
+  document.getElementById('cart-drawer').classList.add('open');
+  document.body.style.overflow='hidden';
+  showVoucherPopup();
+  ongkirMode = 'cart';
+  ensureOngkirUntukKeranjang();
+}
+
+async function ensureOngkirUntukKeranjang() {
+  if (!ongkirDestId && buyerUser && buyerAddresses.length) {
+    const addr = buyerAddresses.find(a => a.is_default) || buyerAddresses[0];
+    if (addr) {
+      const found = await cariLokasiTerbaik(`${addr.district}, ${addr.city}`, addr.city);
+      if (found) { ongkirDestId = found.id; ongkirDestLabel = found.label; }
+    }
+  }
+  if (ongkirDestId) await hitungDanTampilkanOngkir();
+}
 function closeCart() { document.getElementById('cart-drawer').classList.remove('open'); document.body.style.overflow=''; }
 
 // ===================== VOUCHER PROMO (popup + auto-apply) =====================
@@ -2398,11 +2451,16 @@ async function checkoutWA() {
     disc = voucher.discount_type==='percent'?Math.round(subtotal*voucher.discount_value/100):voucher.discount_value;
     await sb.from('vouchers').update({used_count:voucher.used_count+1}).eq('id',voucher.id);
   }
-  const total = Math.max(0,subtotal-disc);
+  const ongkirBiaya = ongkirCheapestCart ? ongkirCheapestCart.cost : 0;
+  const total = Math.max(0,subtotal-disc+ongkirBiaya);
   const lines = cart.map(i=>`• ${i.name} (${i.color}, ${i.size}) x${i.qty} — ${fRp(i.price*i.qty)}`);
   let msg = `Halo Zenoot, saya mau order:\n\n${lines.join('\n')}\n\nSubtotal Pesanan: ${fRp(subtotal)}`;
   if (disc>0) msg += `\nDiskon Voucher: -${fRp(disc)}`;
-  msg += `\nOngkos Kirim: Dikonfirmasi kemudian\n\nTotal (belum termasuk ongkir): ${fRp(total)}\n\n`;
+  if (ongkirCheapestCart) {
+    msg += `\nOngkos Kirim (${ongkirCheapestCart.name || ''} ${ongkirCheapestCart.service || ''}): ${fRp(ongkirBiaya)}\n\nTotal: ${fRp(total)}\n\n`;
+  } else {
+    msg += `\nOngkos Kirim: Dikonfirmasi kemudian\n\nTotal (belum termasuk ongkir): ${fRp(total)}\n\n`;
+  }
   msg += `Alamat Pengiriman:\n${shippingAddress.recipient_name} (${shippingAddress.phone})\n${shippingAddress.address_detail}`;
   if (shippingAddress.address_note) msg += `, ${shippingAddress.address_note}`;
   msg += `\n${shippingAddress.village ? shippingAddress.village+', ' : ''}${shippingAddress.district}, ${shippingAddress.city}, ${shippingAddress.province}`;
@@ -2447,7 +2505,7 @@ function showToast(msg) {
   const t = document.getElementById('toast');
   t.textContent = msg;
   t.classList.add('show');
-  setTimeout(()=>t.classList.remove('show'), 2500);
+  setTimeout(()=>t.classList.remove('show'), 1500);
 }
 
 // ===================== HASH ROUTER =====================
