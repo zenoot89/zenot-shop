@@ -1211,7 +1211,41 @@ function courierTrackingUrl(resi) {
     const date = new Date(o.created_at).toLocaleDateString('id-ID', {day:'numeric',month:'short',year:'numeric'});
     const lines = (o.items||[]).map(i=>`${i.name} (${i.color}, ${i.size}) x${i.qty}`).join('\n');
     const resiBlock = o.resi ? `<div style="margin-top:6px;font-size:12.5px;color:var(--muted)">Resi (${o.courier||'Kurir'}): <a href="${courierTrackingUrl(o.resi)}" target="_blank" style="color:var(--ink);font-weight:600">${o.resi}</a></div>` : '';
-    const btnBatal = o.status === 'menunggu_pembayaran' ? `<button onclick="buyerCancelOrder('${o.id}')" style="margin-top:8px;padding:7px 14px;font-size:12px;background:#fff;color:#a83232;border:1px solid #e0b8b8;border-radius:8px;cursor:pointer;width:100%">Batalkan Pesanan</button>` : '';
+
+    // Panel ubah pesanan — hanya untuk menunggu_pembayaran
+    const ubahPanel = o.status === 'menunggu_pembayaran' ? `
+      <button onclick="toggleUbahPanel('${o.id}')" id="btn-ubah-${o.id}" style="margin-top:10px;padding:8px 14px;font-size:12.5px;background:#f5f5f5;color:var(--ink);border:1px solid var(--border);border-radius:8px;cursor:pointer;width:100%;text-align:left;display:flex;justify-content:space-between;align-items:center">
+        <span>Ubah Pesanan</span><span id="arr-${o.id}" style="font-size:10px">▼</span>
+      </button>
+      <div id="ubah-panel-${o.id}" style="display:none;margin-top:6px;border:1px solid var(--border);border-radius:10px;overflow:hidden">
+        <!-- Ubah Alamat -->
+        <div style="padding:12px 14px;border-bottom:1px solid var(--border)">
+          <div style="font-size:12px;font-weight:600;margin-bottom:8px;color:var(--ink)">✏️ Ubah Alamat Pengiriman</div>
+          <input type="text" id="ba-name-${o.id}" placeholder="Nama penerima" value="${(o.shipping_address||{}).recipient_name||''}" style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:7px;font-size:13px;margin-bottom:6px;box-sizing:border-box">
+          <input type="text" id="ba-phone-${o.id}" placeholder="No. HP" value="${(o.shipping_address||{}).phone||''}" style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:7px;font-size:13px;margin-bottom:6px;box-sizing:border-box">
+          <input type="text" id="ba-addr-${o.id}" placeholder="Alamat lengkap" value="${(o.shipping_address||{}).address||''}" style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:7px;font-size:13px;margin-bottom:6px;box-sizing:border-box">
+          <input type="text" id="ba-city-${o.id}" placeholder="Kota / Kabupaten" value="${(o.shipping_address||{}).city||''}" style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:7px;font-size:13px;margin-bottom:6px;box-sizing:border-box">
+          <input type="text" id="ba-post-${o.id}" placeholder="Kode pos" value="${(o.shipping_address||{}).postal_code||''}" style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:7px;font-size:13px;margin-bottom:8px;box-sizing:border-box">
+          <button onclick="buyerSaveAlamat('${o.id}')" style="width:100%;padding:9px;background:var(--ink);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer">Simpan Alamat</button>
+        </div>
+        <!-- Ubah Warna/Variasi -->
+        <div style="padding:12px 14px;border-bottom:1px solid var(--border)">
+          <div style="font-size:12px;font-weight:600;margin-bottom:8px;color:var(--ink)">🎨 Ubah Warna / Variasi</div>
+          ${(o.items||[]).map((item,idx) => `
+            <div style="margin-bottom:8px">
+              <div style="font-size:11.5px;color:var(--muted);margin-bottom:4px">${item.name}</div>
+              <input type="text" id="bv-color-${o.id}-${idx}" placeholder="Warna" value="${item.color||''}" style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:7px;font-size:13px;margin-bottom:4px;box-sizing:border-box">
+              <input type="text" id="bv-size-${o.id}-${idx}" placeholder="Ukuran" value="${item.size||''}" style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:7px;font-size:13px;box-sizing:border-box">
+            </div>`).join('')}
+          <button onclick="buyerSaveVariasi('${o.id}',${(o.items||[]).length})" style="width:100%;padding:9px;background:var(--ink);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer">Simpan Variasi</button>
+        </div>
+        <!-- Batalkan -->
+        <div style="padding:12px 14px">
+          <div style="font-size:12px;color:var(--muted);margin-bottom:8px">Pesanan yang dibatalkan tidak dapat dikembalikan.</div>
+          <button onclick="buyerCancelOrder('${o.id}')" style="width:100%;padding:9px;background:#fff;color:#a83232;border:1.5px solid #e0b8b8;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer">Batalkan Pesanan</button>
+        </div>
+      </div>` : '';
+
     return `
     <div class="order-item">
       <div class="order-item-top">
@@ -1221,7 +1255,7 @@ function courierTrackingUrl(resi) {
       <div class="order-item-lines">${lines}</div>
       <div class="order-item-total">${fRp(o.total)}</div>
       ${resiBlock}
-      ${btnBatal}
+      ${ubahPanel}
     </div>`;
   }).join('');
 }
@@ -2542,6 +2576,45 @@ async function buyerCancelOrder(orderId) {
   const { error } = await sb.from('orders').update({ status: 'dibatalkan' }).eq('id', orderId).eq('user_id', buyerUser.id).eq('status', 'menunggu_pembayaran');
   if (error) { showToast('Gagal membatalkan pesanan'); return; }
   showToast('Pesanan dibatalkan');
+  renderAccountProfile();
+}
+
+function toggleUbahPanel(orderId) {
+  const panel = document.getElementById(`ubah-panel-${orderId}`);
+  const arr = document.getElementById(`arr-${orderId}`);
+  if (!panel) return;
+  const isOpen = panel.style.display !== 'none';
+  panel.style.display = isOpen ? 'none' : 'block';
+  if (arr) arr.textContent = isOpen ? '▼' : '▲';
+}
+
+async function buyerSaveAlamat(orderId) {
+  const o = (await sb.from('orders').select('shipping_address').eq('id', orderId).single()).data;
+  const newAddr = {
+    ...(o?.shipping_address || {}),
+    recipient_name: document.getElementById(`ba-name-${orderId}`).value.trim(),
+    phone:          document.getElementById(`ba-phone-${orderId}`).value.trim(),
+    address:        document.getElementById(`ba-addr-${orderId}`).value.trim(),
+    city:           document.getElementById(`ba-city-${orderId}`).value.trim(),
+    postal_code:    document.getElementById(`ba-post-${orderId}`).value.trim(),
+  };
+  const { error } = await sb.from('orders').update({ shipping_address: newAddr }).eq('id', orderId).eq('user_id', buyerUser.id);
+  if (error) { showToast('Gagal simpan alamat'); return; }
+  showToast('Alamat berhasil diubah ✓');
+  renderAccountProfile();
+}
+
+async function buyerSaveVariasi(orderId, itemCount) {
+  const { data: ord } = await sb.from('orders').select('items').eq('id', orderId).single();
+  if (!ord) return;
+  const newItems = ord.items.map((item, idx) => ({
+    ...item,
+    color: document.getElementById(`bv-color-${orderId}-${idx}`)?.value.trim() || item.color,
+    size:  document.getElementById(`bv-size-${orderId}-${idx}`)?.value.trim()  || item.size,
+  }));
+  const { error } = await sb.from('orders').update({ items: newItems }).eq('id', orderId).eq('user_id', buyerUser.id);
+  if (error) { showToast('Gagal simpan variasi'); return; }
+  showToast('Variasi berhasil diubah ✓');
   renderAccountProfile();
 }
 
