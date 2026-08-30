@@ -48,9 +48,13 @@
   .chev{flex:0 0 auto;color:var(--muted);font-size:15px;transition:transform .2s;}
   .chev.open{transform:rotate(90deg);}
 
-  .submenu{max-height:0;overflow:hidden;transition:max-height .2s ease;display:flex;flex-direction:column;gap:8px;}
+  .submenu{max-height:0;overflow:hidden;transition:max-height .2s ease;display:flex;flex-direction:column;gap:6px;padding-left:8px;}
   .submenu.open{max-height:260px;margin-top:2px;}
-  .submenu a.card{padding:12px 16px;box-shadow:none;border:1px solid var(--border);}
+  .submenu a.card{padding:9px 14px;box-shadow:none;border:none;background:var(--bg);}
+  .submenu a.card:hover{transform:none;box-shadow:none;background:var(--border);}
+  .submenu .badge{flex:0 0 auto;width:24px;height:24px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;font-family:'IBM Plex Mono',monospace;}
+  .submenu .label{font-size:13.5px;}
+  .submenu .chev{font-size:13px;}
 
   .group-label{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:20px 4px 2px;}
 
@@ -127,9 +131,9 @@ async function render(){
 
   // 2. Marketplace (expandable)
   const mp = [
-    data.shopee_url ? {label:'Shopee', href:normalizeUrl(data.shopee_url)} : null,
-    data.tiktokshop_url ? {label:'TikTok Shop', href:normalizeUrl(data.tiktokshop_url)} : null,
-    data.tokopedia_url ? {label:'Tokopedia', href:normalizeUrl(data.tokopedia_url)} : null,
+    data.shopee_url ? {label:'Shopee', href:normalizeUrl(data.shopee_url), color:'#ee4d2d', letter:'S'} : null,
+    data.tiktokshop_url ? {label:'TikTok Shop', href:normalizeUrl(data.tiktokshop_url), color:'#000000', letter:'T'} : null,
+    data.tokopedia_url ? {label:'Tokopedia', href:normalizeUrl(data.tokopedia_url), color:'#03ac0e', letter:'T'} : null,
   ].filter(Boolean);
   if (mp.length){
     html += `<button class="card" onclick="toggleMarketplace()">
@@ -138,7 +142,7 @@ async function render(){
       <span class="chev" id="mpChevron">›</span>
     </button>
     <div class="submenu" id="mpSubmenu">
-      ${mp.map(m=>`<a class="card" href="${m.href}" target="_blank" rel="noopener"><span class="txt"><p class="label">${m.label}</p></span><span class="chev">›</span></a>`).join('')}
+      ${mp.map(m=>`<a class="card" href="${m.href}" target="_blank" rel="noopener"><span class="badge" style="background:${m.color}">${m.letter}</span><span class="txt"><p class="label">${m.label}</p></span><span class="chev">↗</span></a>`).join('')}
     </div>`;
   }
 
