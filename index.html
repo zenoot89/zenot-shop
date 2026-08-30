@@ -247,12 +247,13 @@
     .order-item-status{font-family:'IBM Plex Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:#2a7a2a;background:#eaf6ea;padding:3px 8px;border-radius:4px}
     .order-item-lines{font-size:12px;color:var(--sec);line-height:1.6;margin-bottom:4px;white-space:pre-line}
     .order-item-total{font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:500}
-    .card-body{padding:12px 14px 14px;display:flex;flex-direction:column;flex:1}
+    .card-body{padding:8px 8px 10px;display:flex;flex-direction:column;flex:1}
     .card-cat{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.12em;color:var(--muted);text-transform:uppercase;margin-bottom:4px}
-    .card-name{font-family:'Source Serif 4',serif;font-size:14px;font-weight:500;margin-bottom:8px;line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+    .card-name{font-family:'Source Serif 4',serif;font-size:13px;font-weight:500;margin-bottom:8px;line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
     .card-price-row{display:flex;align-items:baseline;gap:6px;margin-top:auto}
     .price-final{font-family:'IBM Plex Mono',monospace;font-size:16px;font-weight:500}
-    .price-orig{font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--muted);text-decoration:line-through}
+    .price-voucher-icon{width:22px;height:22px;border-radius:50%;background:var(--border);border:none;display:flex;align-items:center;justify-content:center;color:var(--sec);cursor:pointer;flex-shrink:0;padding:0}
+    .price-voucher-icon svg{width:13px;height:13px}
     .card-colors{display:flex;align-items:center;gap:4px;margin-bottom:10px;flex-wrap:nowrap;overflow:hidden}
     .color-dot{width:14px;height:14px;border-radius:50%;border:1.5px solid var(--border);flex-shrink:0}
     .color-more{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--muted);flex-shrink:0;margin-left:2px}
@@ -263,10 +264,9 @@
     .loading-state{text-align:center;padding:80px 20px;grid-column:1/-1;color:var(--muted);font-family:'IBM Plex Mono',monospace;font-size:13px}
 
     /* ===== PRODUCT MODAL ===== */
-    .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;align-items:flex-end;justify-content:center}
+    .modal-overlay{display:none;position:fixed;inset:0;background:var(--bg);z-index:200;justify-content:center}
     .modal-overlay.open{display:flex}
-    @media(min-width:600px){.modal-overlay{align-items:center}}
-    .modal{background:var(--surface);border-radius:var(--radius) var(--radius) 0 0;width:100%;max-width:480px;max-height:90vh;display:flex;flex-direction:column;overflow:hidden;position:relative}
+    .modal{background:var(--surface);width:100%;max-width:480px;height:100%;max-height:100%;margin:0 auto;display:flex;flex-direction:column;overflow:hidden;position:relative}
     .modal-top-bar{position:absolute;top:0;left:0;right:0;z-index:5;display:flex;align-items:center;justify-content:space-between;padding:10px 10px;background:linear-gradient(to bottom, rgba(0,0,0,.28), rgba(0,0,0,0));pointer-events:none}
     .modal-top-bar .modal-icon-btn{pointer-events:auto;background:rgba(255,255,255,.85);border-radius:50%;width:32px;height:32px;color:var(--text)}
     .modal-top-bar .modal-icon-btn svg{width:17px;height:17px}
@@ -316,7 +316,6 @@
     .modal-related-card .rel-price{font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600;margin-top:2px}
     .modal-related-colors{display:flex;gap:4px;margin-bottom:6px}
     .modal-related-colors .color-dot{width:12px;height:12px}
-    @media(min-width:600px){.modal{border-radius:var(--radius)}}
     .modal-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px}
     .modal-header-actions{display:flex;align-items:center;gap:6px;flex-shrink:0}
     .modal-icon-btn{background:none;border:none;cursor:pointer;padding:4px;display:flex;color:var(--sec);flex-shrink:0}
@@ -513,9 +512,9 @@
     }
 
     @media(max-width:480px){
-      .product-grid{grid-template-columns:repeat(2,1fr);gap:12px}
+      .product-grid{grid-template-columns:repeat(2,1fr);gap:8px}
       .hero{padding:28px 16px 20px}
-      .controls,.promo-section,.catalog{padding-left:16px;padding-right:16px}
+      .controls,.promo-section,.catalog{padding-left:8px;padding-right:8px}
     }
   </style>
 </head>
@@ -732,6 +731,22 @@
   </div>
 </div>
 
+<!-- SHEET RINCIAN HARGA (gaya marketplace) -->
+<div class="ongkir-sheet-overlay" id="price-detail-overlay" onclick="if(event.target===this)closePriceDetail()">
+  <div class="ongkir-sheet">
+    <div class="ongkir-sheet-header">
+      <span>Rincian Harga</span>
+      <button class="ongkir-sheet-close" onclick="closePriceDetail()" aria-label="Tutup">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="ongkir-sheet-body" id="price-detail-body"></div>
+    <div class="ongkir-sheet-footer">
+      <button onclick="closePriceDetail()">OK</button>
+    </div>
+  </div>
+</div>
+
 <!-- VOUCHER PROMO POPUP -->
 <div class="promo-overlay" id="promo-overlay">
   <div class="promo-box">
@@ -905,7 +920,9 @@ function renderProducts() {
         <h3 class="card-name">${p.name}</h3>
         <div class="card-price-row">
           <span class="price-final">${fRp(minPrice)}</span>
-          ${maxOrig ? `<span class="price-orig">${fRp(maxOrig)}</span>` : ''}
+          ${disc ? `<button type="button" class="price-voucher-icon" onclick="event.stopPropagation();openPriceDetail('${p.id}')" aria-label="Rincian harga">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v1.5a1.5 1.5 0 0 0 0 3V15a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-1.5a1.5 1.5 0 0 0 0-3V9Z"/><path d="M10 7v10" stroke-dasharray="1.5 2.5"/></svg>
+          </button>` : ''}
         </div>
       </div>
     </div>`;
@@ -2491,6 +2508,32 @@ function showVoucherPopup() {
 }
 function closeVoucherPopup() {
   document.getElementById('promo-overlay').classList.remove('open');
+}
+
+function openPriceDetail(id) {
+  const p = products.find(x => x.id === id);
+  if (!p) return;
+  const vars = p.variants || [];
+  const minPrice = vars.length ? Math.min(...vars.map(v=>v.price)) : 0;
+  const maxOrig = vars.length ? Math.max(...vars.map(v=>v.original_price||0)) : 0;
+  const dProduk = maxOrig ? Math.max(0, maxOrig - minPrice) : 0;
+  let bestVoucher = null, bestVoucherDisc = 0;
+  allVouchers.filter(v => minPrice >= v.min_order).forEach(v => {
+    const d = discAmountFor(v, minPrice);
+    if (d > bestVoucherDisc) { bestVoucherDisc = d; bestVoucher = v; }
+  });
+  const estimasi = Math.max(0, minPrice - bestVoucherDisc);
+  const rows = [['Harga Normal', fRp(maxOrig || minPrice)]];
+  if (dProduk > 0) rows.push(['Diskon Produk', `-${fRp(dProduk)}`]);
+  if (bestVoucher) rows.push([`Diskon Voucher (${bestVoucher.code})`, `-${fRp(bestVoucherDisc)}`]);
+  document.getElementById('price-detail-body').innerHTML = `
+    ${rows.map(([label,val]) => `<div class="spec-row"><span class="spec-row-label">${label}</span><span class="spec-row-val">${val}</span></div>`).join('')}
+    <div class="spec-row" style="font-weight:600"><span class="spec-row-label" style="color:var(--text)">Perkiraan Harga</span><span class="spec-row-val">${fRp(estimasi)}</span></div>
+    <p style="font-size:11px;color:var(--muted);margin-top:10px">*Harga akhir & voucher ditentukan saat checkout</p>`;
+  document.getElementById('price-detail-overlay').classList.add('open');
+}
+function closePriceDetail() {
+  document.getElementById('price-detail-overlay').classList.remove('open');
 }
 
 function autoApplyBestVoucher(subtotal) {
