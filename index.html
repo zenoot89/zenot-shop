@@ -207,18 +207,22 @@
     .promo-close{position:absolute;top:14px;right:14px;background:none;border:none;font-size:20px;cursor:pointer;color:var(--muted)}
     .promo-title{font-family:'Source Serif 4',serif;font-size:20px;font-weight:600;margin-bottom:4px}
     .promo-sub{font-size:13px;color:var(--sec);margin-bottom:20px}
-    .promo-card{position:relative;display:flex;align-items:stretch;background:var(--surface);border-radius:10px;border:1px solid var(--border);overflow:visible;min-height:84px;width:100%;margin-bottom:16px}
-    .promo-card::before,.promo-card::after{content:'';position:absolute;left:76px;transform:translateX(-50%);width:16px;height:16px;background:var(--bg);border-radius:50%;z-index:2}
-    .promo-card::before{top:-8px}
-    .promo-card::after{bottom:-8px}
-    .promo-card-badge{width:76px;flex-shrink:0;background:linear-gradient(160deg,#ff7a45,#ff3d5f);color:#fff;display:flex;align-items:center;justify-content:center;border-radius:10px 0 0 10px;font-family:'Source Serif 4',serif;font-size:19px;font-weight:600;text-align:center;line-height:1.1;padding:8px}
-    .promo-card-info{flex:1;padding:12px 14px;border-left:1.5px dashed var(--border);display:flex;flex-direction:column;justify-content:center;gap:2px}
-    .promo-card-name{font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:13px;letter-spacing:.04em;color:#e0472e}
-    .promo-card-desc{font-size:12px;color:var(--sec)}
-    .promo-card-exp{font-size:11px;color:var(--muted)}
-    .promo-claim-btn{position:absolute;right:12px;bottom:10px;background:linear-gradient(160deg,#ff7a45,#ff3d5f);color:#fff;border:none;border-radius:50px;padding:7px 16px;font-size:12px;font-weight:600;cursor:pointer;flex-shrink:0}
-    .promo-claim-btn.claimed{background:#e8e5e0;color:var(--muted);cursor:default}
-    .promo-section .promo-card{width:280px}
+    .promo-card{--vc:#ee4d2d;--vc-tint:#fff4f1;--vc-line:#fbc9bd;--cut:var(--bg);position:relative;display:flex;align-items:stretch;background:var(--vc-tint);border:1px solid var(--vc-line);border-radius:4px;min-height:84px;width:100%;margin-bottom:12px;overflow:hidden}
+    .promo-box .promo-card{--cut:var(--surface)}
+    .promo-card::before{content:'';position:absolute;left:-4px;top:0;bottom:0;width:8px;background:radial-gradient(circle at 4px 50%,var(--cut) 0 3.5px,transparent 4px) 0 0/8px 12px repeat-y;pointer-events:none}
+    .promo-card-main{flex:1;min-width:0;padding:10px 10px 10px 16px;display:flex;flex-direction:column;justify-content:center;gap:2px}
+    .promo-card-name{font-size:15px;font-weight:600;color:var(--vc);line-height:1.25}
+    .promo-card-desc{font-size:13px;color:var(--vc);line-height:1.3}
+    .promo-card-exp{font-size:11px;color:var(--sec);margin-top:2px}
+    .promo-card-exp.soon{color:var(--vc)}
+    .promo-card-action{position:relative;flex:0 0 92px;display:flex;align-items:center;justify-content:center;border-left:1.5px dashed var(--vc-line);padding:0 10px}
+    .promo-card-action::before,.promo-card-action::after{content:'';position:absolute;left:-7px;width:12px;height:12px;border-radius:50%;background:var(--cut)}
+    .promo-card-action::before{top:-6px}
+    .promo-card-action::after{bottom:-6px}
+    .promo-claim-btn{background:var(--vc);color:#fff;border:1px solid var(--vc);border-radius:3px;padding:7px 14px;font-size:12px;font-weight:600;font-family:inherit;cursor:pointer;white-space:nowrap}
+    .promo-claim-btn.claimed{background:transparent;color:var(--vc);cursor:default}
+    .promo-claim-btn:disabled:not(.claimed){background:#e8e5e0;border-color:#e8e5e0;color:var(--muted);cursor:default}
+    .promo-section .promo-card{width:290px}
 
     /* ===== GRID ===== */
     .catalog{max-width:1100px;margin:0 auto;padding:0 20px 60px}
@@ -2477,24 +2481,46 @@ function discAmountFor(v, subtotal) {
   return Math.min(d, subtotal);
 }
 
+function shortRp(n) {
+  n = Number(n) || 0;
+  if (n >= 1000000) return fRp(n);
+  if (n >= 1000) return 'Rp' + (n / 1000).toLocaleString('id-ID', { maximumFractionDigits: 1 }) + 'RB';
+  return 'Rp' + n;
+}
+function voucherDMY(d) {
+  const p = x => String(x).padStart(2, '0');
+  return p(d.getDate()) + '.' + p(d.getMonth() + 1) + '.' + d.getFullYear();
+}
+function voucherExpiryInfo(v, upcoming) {
+  if (upcoming) {
+    const st = new Date(v.starts_at);
+    return { text: 'Mulai: ' + voucherDMY(st) + ' ' + String(st.getHours()).padStart(2, '0') + '.' + String(st.getMinutes()).padStart(2, '0'), soon: false };
+  }
+  if (!v.expires_at) return { text: 'Tanpa batas waktu', soon: false };
+  const ms = new Date(v.expires_at) - Date.now();
+  if (ms <= 3 * 86400000) {
+    return { text: ms < 86400000 ? 'Berakhir dlm: ' + Math.max(1, Math.ceil(ms / 3600000)) + ' jam' : 'Berakhir dlm: ' + Math.ceil(ms / 86400000) + ' hari', soon: true };
+  }
+  return { text: 'Hingga: ' + voucherDMY(new Date(v.expires_at)), soon: false };
+}
 function voucherCardHTML(v, upcoming) {
   const claimed = !upcoming && claimedCodes.includes(v.code);
-  const badge = v.discount_type === 'percent' ? `${v.discount_value}%` : `${Math.round(v.discount_value/1000)}rb`;
-  const capText = (v.discount_type === 'percent' && v.max_discount) ? ` · Maks. diskon ${fRp(v.max_discount)}` : '';
-  const expText = upcoming
-    ? `Mulai ${new Date(v.starts_at).toLocaleString('id-ID', {day:'numeric', month:'short', hour:'2-digit', minute:'2-digit'})}`
-    : (v.expires_at ? `Berlaku sampai ${new Date(v.expires_at).toLocaleDateString('id-ID')}` : 'Tanpa batas waktu');
+  const isPct = v.discount_type === 'percent';
+  const title = isPct ? 'Diskon ' + v.discount_value + '%' : 'Diskon ' + shortRp(v.discount_value);
+  const capText = (isPct && v.max_discount) ? ' · Maks. ' + shortRp(v.max_discount) : '';
+  const exp = voucherExpiryInfo(v, upcoming);
   return `
     <div class="promo-card">
-      <div class="promo-card-badge">${badge}<br><span style="font-size:10px;font-weight:400;opacity:.85">OFF</span></div>
-      <div class="promo-card-info" style="padding-right:70px">
-        <p class="promo-card-name">Diskon ${badge}</p>
-        <p class="promo-card-desc">Min. belanja ${fRp(v.min_order)}${capText}</p>
-        <p class="promo-card-exp">${expText}</p>
+      <div class="promo-card-main">
+        <p class="promo-card-name">${title}</p>
+        <p class="promo-card-desc">Min. Blj ${shortRp(v.min_order)}${capText}</p>
+        <p class="promo-card-exp${exp.soon ? ' soon' : ''}">${exp.text}</p>
       </div>
-      ${upcoming
-        ? `<button class="promo-claim-btn" disabled>Segera</button>`
-        : `<button class="promo-claim-btn ${claimed?'claimed':''}" ${claimed?'disabled':''} onclick="claimVoucher('${v.code}')">${claimed?'✓ Diklaim':'Klaim'}</button>`}
+      <div class="promo-card-action">
+        ${upcoming
+          ? `<button class="promo-claim-btn" disabled>Segera</button>`
+          : `<button class="promo-claim-btn ${claimed?'claimed':''}" ${claimed?'disabled':''} onclick="claimVoucher('${v.code}')">${claimed?'Diklaim':'Klaim'}</button>`}
+      </div>
     </div>`;
 }
 
