@@ -2199,9 +2199,7 @@ function updateCartUI() {
   const subtotal = cart.reduce((s,i)=>s+i.price*i.qty,0);
   autoApplyBestVoucher(subtotal);
   let disc = 0;
-  if (voucher) {
-    disc = voucher.discount_type==='percent' ? Math.round(subtotal*voucher.discount_value/100) : voucher.discount_value;
-  }
+  if (voucher) disc = discAmountFor(voucher, subtotal);
   const ongkir = ongkirCheapestCart ? ongkirCheapestCart.cost : 0;
   const total = Math.max(0, subtotal - disc + ongkir);
   const count = cart.reduce((s,i)=>s+i.qty,0);
@@ -2463,42 +2461,52 @@ async function ensureOngkirUntukKeranjang() {
 function closeCart() { document.getElementById('cart-drawer').classList.remove('open'); document.body.style.overflow=''; }
 
 // ===================== VOUCHER PROMO (popup + auto-apply) =====================
+let upcomingVouchers = [];
 async function loadVouchersForPromo() {
   const { data } = await sb.from('vouchers').select('*').eq('is_active', true);
   const now = new Date();
-  allVouchers = (data || []).filter(v => (!v.expires_at || new Date(v.expires_at) >= now) && v.used_count < v.max_uses);
+  const live = (data || []).filter(v => (!v.expires_at || new Date(v.expires_at) >= now) && (v.max_uses == null || v.used_count < v.max_uses));
+  allVouchers = live.filter(v => !v.starts_at || new Date(v.starts_at) <= now);
+  upcomingVouchers = live.filter(v => v.starts_at && new Date(v.starts_at) > now && v.show_early);
   renderVoucherPopupList();
 }
 
 function discAmountFor(v, subtotal) {
-  return v.discount_type === 'percent' ? Math.round(subtotal * v.discount_value / 100) : v.discount_value;
+  let d = v.discount_type === 'percent' ? Math.round(subtotal * v.discount_value / 100) : v.discount_value;
+  if (v.discount_type === 'percent' && v.max_discount) d = Math.min(d, v.max_discount);
+  return Math.min(d, subtotal);
 }
 
-function voucherCardHTML(v) {
-  const claimed = claimedCodes.includes(v.code);
+function voucherCardHTML(v, upcoming) {
+  const claimed = !upcoming && claimedCodes.includes(v.code);
   const badge = v.discount_type === 'percent' ? `${v.discount_value}%` : `${Math.round(v.discount_value/1000)}rb`;
-  const expText = v.expires_at ? `Berlaku sampai ${new Date(v.expires_at).toLocaleDateString('id-ID')}` : 'Tanpa batas waktu';
+  const capText = (v.discount_type === 'percent' && v.max_discount) ? ` · Maks. diskon ${fRp(v.max_discount)}` : '';
+  const expText = upcoming
+    ? `Mulai ${new Date(v.starts_at).toLocaleString('id-ID', {day:'numeric', month:'short', hour:'2-digit', minute:'2-digit'})}`
+    : (v.expires_at ? `Berlaku sampai ${new Date(v.expires_at).toLocaleDateString('id-ID')}` : 'Tanpa batas waktu');
   return `
     <div class="promo-card">
       <div class="promo-card-badge">${badge}<br><span style="font-size:10px;font-weight:400;opacity:.85">OFF</span></div>
       <div class="promo-card-info" style="padding-right:70px">
         <p class="promo-card-name">Diskon ${badge}</p>
-        <p class="promo-card-desc">Min. belanja ${fRp(v.min_order)}</p>
+        <p class="promo-card-desc">Min. belanja ${fRp(v.min_order)}${capText}</p>
         <p class="promo-card-exp">${expText}</p>
       </div>
-      <button class="promo-claim-btn ${claimed?'claimed':''}" ${claimed?'disabled':''} onclick="claimVoucher('${v.code}')">${claimed?'✓ Diklaim':'Klaim'}</button>
+      ${upcoming
+        ? `<button class="promo-claim-btn" disabled>Segera</button>`
+        : `<button class="promo-claim-btn ${claimed?'claimed':''}" ${claimed?'disabled':''} onclick="claimVoucher('${v.code}')">${claimed?'✓ Diklaim':'Klaim'}</button>`}
     </div>`;
 }
 
 function renderVoucherPopupList() {
   const el = document.getElementById('promo-list');
   const sectionEl = document.getElementById('promo-section-list');
-  if (!allVouchers.length) {
+  if (!allVouchers.length && !upcomingVouchers.length) {
     if (el) el.innerHTML = '<p style="font-size:13px;color:var(--muted)">Belum ada voucher aktif saat ini.</p>';
     if (sectionEl) sectionEl.innerHTML = '';
     return;
   }
-  const html = allVouchers.map(voucherCardHTML).join('');
+  const html = allVouchers.map(v => voucherCardHTML(v)).join('') + upcomingVouchers.map(v => voucherCardHTML(v, true)).join('');
   if (el) el.innerHTML = html;
   if (sectionEl) sectionEl.innerHTML = html;
 }
@@ -2582,38 +2590,46 @@ async function checkoutWA() {
     return;
   }
 
-  const subtotal = cart.reduce((s,i)=>s+i.price*i.qty,0);
-  let disc = 0;
-  if (voucher) {
-    disc = voucher.discount_type==='percent'?Math.round(subtotal*voucher.discount_value/100):voucher.discount_value;
-    await sb.from('vouchers').update({used_count:voucher.used_count+1}).eq('id',voucher.id);
-  }
   const ongkirBiaya = ongkirCheapestCart ? ongkirCheapestCart.cost : 0;
-  const total = Math.max(0,subtotal-disc+ongkirBiaya);
-  const lines = cart.map(i=>`• ${i.name} (${i.color}, ${i.size}) x${i.qty} — ${fRp(i.price*i.qty)}`);
-  let msg = `Halo Zenoot, saya mau order:\n\n${lines.join('\n')}\n\nSubtotal Pesanan: ${fRp(subtotal)}`;
-  if (disc>0) msg += `\nDiskon Voucher: -${fRp(disc)}`;
+
+  // Harga, voucher, dan nomor pesanan dihitung di server (fungsi buat_pesanan), bukan di browser
+  const checkoutBtn = document.querySelector('.btn-checkout');
+  if (checkoutBtn) checkoutBtn.disabled = true;
+  const { data: order, error: orderErr } = await sb.rpc('buat_pesanan', {
+    p_items: cart.map(i => ({ variantId: i.variantId, qty: i.qty })),
+    p_voucher_code: voucher ? voucher.code : null,
+    p_address_id: shippingAddress.id,
+    p_shipping_cost: ongkirBiaya
+  });
+  if (checkoutBtn) checkoutBtn.disabled = false;
+  if (orderErr) {
+    const m = orderErr.message || 'Gagal membuat pesanan';
+    if (m.startsWith('VOUCHER: ') && voucher) {
+      // Voucher ditolak server: lepas klaimnya supaya tidak terpasang otomatis lagi
+      claimedCodes = claimedCodes.filter(c => c !== voucher.code);
+      localStorage.setItem('zenot_claimed_vouchers', JSON.stringify(claimedCodes));
+      voucher = null;
+      updateCartUI();
+      showToast(m.slice(9) + ' - voucher dilepas, coba checkout lagi');
+    } else {
+      showToast(m);
+    }
+    return;
+  }
+
+  const lines = order.items.map(i=>`• ${i.name} (${i.color}, ${i.size}) x${i.qty} — ${fRp(i.price*i.qty)}`);
+  let msg = `Halo Zenoot, saya mau order:\n\n${lines.join('\n')}\n\nSubtotal Pesanan: ${fRp(order.subtotal)}`;
+  if (order.discount>0) msg += `\nDiskon Voucher: -${fRp(order.discount)}`;
   if (ongkirCheapestCart) {
-    msg += `\nOngkos Kirim (${ongkirCheapestCart.name || ''} ${ongkirCheapestCart.service || ''}): ${fRp(ongkirBiaya)}\n\nTotal: ${fRp(total)}\n\n`;
+    msg += `\nOngkos Kirim (${ongkirCheapestCart.name || ''} ${ongkirCheapestCart.service || ''}): ${fRp(order.shipping_cost)}\n\nTotal: ${fRp(order.total)}\n\n`;
   } else {
-    msg += `\nOngkos Kirim: Dikonfirmasi kemudian\n\nTotal (belum termasuk ongkir): ${fRp(total)}\n\n`;
+    msg += `\nOngkos Kirim: Dikonfirmasi kemudian\n\nTotal (belum termasuk ongkir): ${fRp(order.total)}\n\n`;
   }
   msg += `Alamat Pengiriman:\n${shippingAddress.recipient_name} (${shippingAddress.phone})\n${shippingAddress.address_detail}`;
   if (shippingAddress.address_note) msg += `, ${shippingAddress.address_note}`;
   msg += `\n${shippingAddress.village ? shippingAddress.village+', ' : ''}${shippingAddress.district}, ${shippingAddress.city}, ${shippingAddress.province}`;
   if (shippingAddress.postal_code) msg += ` ${shippingAddress.postal_code}`;
   msg += `\n\nMohon konfirmasi ketersediaan. Terima kasih!`;
-
-  await sb.from('orders').insert({
-    user_id: buyerUser.id,
-    items: cart,
-    subtotal, discount: disc, total,
-    voucher_code: voucher ? voucher.code : null,
-    shipping_address: shippingAddress,
-    status: 'menunggu_pembayaran',
-    payment_method: 'wa_manual',
-    payment_status: 'pending'
-  });
 
   window.open(`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(msg)}`, '_blank');
 }
