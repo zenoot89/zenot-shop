@@ -183,7 +183,6 @@ async function render(){
   let socialHtml = '';
   if (data.ig_url) socialHtml += `<a href="${normalizeUrl(data.ig_url)}" target="_blank" rel="noopener" aria-label="Instagram">${SOCIAL_ICONS.ig}</a>`;
   if (data.tiktok_url) socialHtml += `<a href="${normalizeUrl(data.tiktok_url)}" target="_blank" rel="noopener" aria-label="TikTok">${SOCIAL_ICONS.tiktok}</a>`;
-  if (data.shopee_url) socialHtml += `<a href="${normalizeUrl(data.shopee_url)}" target="_blank" rel="noopener" aria-label="Shopee">${SOCIAL_ICONS.shopee}</a>`;
   social.innerHTML = socialHtml;
 }
 
