@@ -157,6 +157,7 @@
     .footer-bottom a{color:var(--muted);text-decoration:none;margin-left:16px}
     .footer-bottom a:hover{color:var(--ink)}
     @media(max-width:900px){.footer-grid{grid-template-columns:1fr 1fr}}
+    @media(max-width:768px){.footer-bottom{padding-bottom:84px}}
     @media(max-width:560px){.footer-grid{grid-template-columns:1fr;gap:28px}.footer-bottom a{margin:0 16px 0 0}}
     .icon-btn{background:none;border:none;cursor:pointer;padding:6px;display:flex;align-items:center;justify-content:center;color:var(--ink)}
     .header-cart-count{position:absolute;top:0;right:0;background:var(--accent);color:#fff;border-radius:50%;min-width:16px;height:16px;font-size:9px;display:flex;align-items:center;justify-content:center;padding:0 2px}
@@ -1136,14 +1137,14 @@ function renderDrawerCategories() {
     }).join('');
   }
 
-  // Footer "Belanja": gabungan sub-kategori dari semua gender
+  // Footer "Belanja": hanya kategori induk (Pria, Wanita, Anak), urutan khusus footer
   const belanjaEl = document.getElementById('footer-belanja-links');
   if (belanjaEl) {
-    const allLeaves = topCats.flatMap(top => categoryLeavesForGender(top.name.toLowerCase()));
-    const seen = new Set();
-    const uniqueLeaves = allLeaves.filter(c => { if (seen.has(c.name)) return false; seen.add(c.name); return true; });
-    belanjaEl.innerHTML = uniqueLeaves.length
-      ? uniqueLeaves.map(c => `<a href="#" onclick="event.preventDefault();setFilterGender('all','${c.name}');showControls();document.getElementById('controls').scrollIntoView({behavior:'smooth'})">${c.name}</a>`).join('')
+    const FOOTER_BELANJA_ORDER = ['pria','wanita','anak'];
+    const footerRank = c => { const i = FOOTER_BELANJA_ORDER.indexOf(c.name.toLowerCase()); return i === -1 ? FOOTER_BELANJA_ORDER.length : i; };
+    const footerCats = [...topCats].sort((a, b) => footerRank(a) - footerRank(b));
+    belanjaEl.innerHTML = footerCats.length
+      ? footerCats.map(c => { const g = c.name.toLowerCase(); return `<a href="#" onclick="event.preventDefault();setFilterGender('${g}','all');showControls();document.getElementById('controls').scrollIntoView({behavior:'smooth'})">${capitalize(c.name)}</a>`; }).join('')
       : `<a href="#" onclick="return false">Semua Produk</a>`;
   }
 }
