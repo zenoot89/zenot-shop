@@ -2838,8 +2838,26 @@ function applyHashRoute() {
 window.addEventListener('popstate', applyHashRoute);
 
 // ===================== FOOTER EXTRAS (sosmed & metode pembayaran) =====================
-// Isi URL profil (harus https://) supaya tombolnya muncul; kosong = disembunyikan.
+// Link Instagram & TikTok diambil otomatis dari Seller Center > Link Toko (tabel bio_links, baris id=1).
+// Kosong atau bukan link instagram.com / tiktok.com = tombol disembunyikan.
 const FOOTER_SOCIAL = { instagram: '', tiktok: '' };
+function footerSafeSocial(raw, baseHost) {
+  let u = String(raw || '').trim();
+  if (!u) return '';
+  if (!/^https?:\/\//i.test(u)) u = 'https://' + u;
+  u = u.replace(/^http:\/\//i, 'https://');
+  try {
+    const host = new URL(u).hostname.toLowerCase();
+    return (host === baseHost || host.endsWith('.' + baseHost)) ? u : '';
+  } catch (e) { return ''; }
+}
+async function loadFooterSocial() {
+  const { data, error } = await sb.from('bio_links').select('ig_url,tiktok_url').eq('id', 1).maybeSingle();
+  if (error || !data) { if (error) console.error('footer social', error); return; }
+  FOOTER_SOCIAL.instagram = footerSafeSocial(data.ig_url, 'instagram.com');
+  FOOTER_SOCIAL.tiktok = footerSafeSocial(data.tiktok_url, 'tiktok.com');
+  renderFooterExtras();
+}
 // Isi hanya metode yang SUDAH aktif di checkout, mis. ['QRIS', 'GoPay']; kosong = baris disembunyikan.
 const FOOTER_PAYMENTS = [];
 
@@ -3082,6 +3100,7 @@ loadCategories().then(() => applyHashRoute());
 trackEvent('view_store');
 document.getElementById('footer-year').textContent = new Date().getFullYear();
 renderFooterExtras();
+loadFooterSocial();
 loadVouchersForPromo().then(() => {
   if (!sessionStorage.getItem('zenot_promo_seen')) {
     sessionStorage.setItem('zenot_promo_seen', '1');
