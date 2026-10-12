@@ -532,6 +532,7 @@
     .chat-secondary svg{width:18px;height:18px}
     .chat-err{font-size:12px;color:#c0392b;min-height:16px;margin:-4px 0 0}
     .chat-note{font-size:11.5px;color:var(--muted);text-align:center;margin:0}
+    .chat-panel[data-view="pick"]{height:auto}
     .chat-conv-bar{display:flex;justify-content:space-between;align-items:center;padding:8px 14px;border-bottom:1px solid var(--border);font-size:12px;color:var(--sec);flex-shrink:0}
     .chat-link{background:none;border:none;color:var(--ink);text-decoration:underline;font-size:12px;cursor:pointer;font-family:inherit}
     .chat-msgs{flex:1;min-height:0;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:8px;background:var(--bg)}
@@ -545,7 +546,10 @@
     .chat-compose button{padding:10px 16px;border:none;border-radius:10px;background:var(--ink);color:#fff;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit}
     .chat-compose button:disabled{opacity:.5;cursor:default}
     @media(max-width:768px){
-      .chat-panel{inset:0;width:auto;max-width:none;height:100dvh;max-height:none;border-radius:0}
+      .chat-panel{inset:auto;left:0;right:0;top:var(--chat-vvt,0px);width:auto;max-width:none;height:var(--chat-vvh,100dvh);max-height:none;border-radius:0}
+      .chat-panel[data-view="pick"]{height:var(--chat-vvh,100dvh)}
+      .chat-msgs{overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+      html.chat-open,html.chat-open body{overflow:hidden}
     }
 
     /* ===== TOAST ===== */
@@ -897,8 +901,8 @@
     <div class="chat-conv-bar"><span id="chat-conv-label"></span><button class="chat-link" onclick="chatShowPick()">Ganti divisi</button></div>
     <div class="chat-msgs" id="chat-msgs"></div>
     <div class="chat-compose">
-      <textarea id="chat-input" rows="1" maxlength="1000" placeholder="Tulis pesan..." onkeydown="chatKey(event)" oninput="chatAutoGrow(this)"></textarea>
-      <button id="chat-send-btn" onclick="chatSend()">Kirim</button>
+      <textarea id="chat-input" rows="1" maxlength="1000" placeholder="Tulis pesan..." onkeydown="chatKey(event)" oninput="chatAutoGrow(this)" onfocus="chatOnComposeFocus()"></textarea>
+      <button id="chat-send-btn" onclick="chatSend()" onpointerdown="event.preventDefault()">Kirim</button>
     </div>
   </div>
 </div>
@@ -3071,9 +3075,30 @@ function chatTeardown() {
 function chatToggle() {
   if (chatIsOpen) chatClose(); else chatOpenPanel();
 }
+// ----- HP: panel chat mengikuti area yang terlihat, jadi kolom balasan tetap di atas keyboard -----
+function chatSyncViewport() {
+  const vv = window.visualViewport;
+  const root = document.documentElement;
+  if (!vv) { root.style.removeProperty('--chat-vvh'); root.style.removeProperty('--chat-vvt'); return; }
+  root.style.setProperty('--chat-vvh', Math.round(vv.height) + 'px');
+  root.style.setProperty('--chat-vvt', Math.round(vv.offsetTop) + 'px');
+  if (chatIsOpen) {
+    const m = chatEl('chat-msgs');
+    if (m) m.scrollTop = m.scrollHeight;
+  }
+}
+function chatOnComposeFocus() { setTimeout(chatSyncViewport, 350); }
+if (window.visualViewport) {
+  window.visualViewport.addEventListener('resize', chatSyncViewport);
+  window.visualViewport.addEventListener('scroll', chatSyncViewport);
+}
+window.addEventListener('orientationchange', () => setTimeout(chatSyncViewport, 300));
+chatSyncViewport();
 async function chatOpenPanel() {
   chatIsOpen = true;
   chatEl('chat-panel').classList.add('open');
+  document.documentElement.classList.add('chat-open');
+  chatSyncViewport();
   await chatInit();
   const saved = chatSavedDiv();
   if (saved && chatThreads[saved]) await chatEnterConv(saved); else chatShowPick();
@@ -3081,6 +3106,7 @@ async function chatOpenPanel() {
 function chatClose() {
   chatIsOpen = false;
   chatEl('chat-panel').classList.remove('open');
+  document.documentElement.classList.remove('chat-open');
 }
 function chatFormError(msg) {
   const el = chatEl('chat-form-err');
@@ -3250,7 +3276,7 @@ sb.auth.getSession().then(async ({data}) => {
   let startY = 0, pulling = false, currentPull = 0;
 
   function overlayLagiTerbuka() {
-    return !!document.querySelector('#product-modal.open, .cart-drawer.open, .ongkir-sheet-overlay.open, .promo-overlay.open, .login-overlay.open, .side-panel.open, .drawer-scrim.open');
+    return !!document.querySelector('#product-modal.open, .cart-drawer.open, .ongkir-sheet-overlay.open, .promo-overlay.open, .login-overlay.open, .side-panel.open, .drawer-scrim.open, .chat-panel.open');
   }
 
   document.addEventListener('touchstart', (e) => {
