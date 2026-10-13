@@ -7,7 +7,6 @@
   <title>Zenoot — Sweater Rajut & Knitwear Bandung | Grosir & Eceran</title>
   <meta name="description" content="Produsen sweater rajut & knitwear di Bandung. Tersedia turtleneck, cardigan, half zip, polo rajut pria & wanita. Harga grosir & eceran. Buka reseller & dropship."/>
   <meta name="keywords" content="sweater rajut bandung, knitwear bandung, turtleneck rajut, cardigan rajut, sweater rajut pria, sweater rajut wanita, grosir sweater bandung, zenoot"/>
-  <link rel="canonical" href="https://zenoot.web.id/"/>
   <!-- PWA -->
   <link rel="manifest" href="manifest.json"/>
   <meta name="theme-color" content="#e8e8e8"/>
@@ -21,6 +20,9 @@
   <meta property="og:description" content="Produsen sweater rajut & knitwear di Bandung. Turtleneck, cardigan, half zip, polo rajut. Grosir & eceran, buka reseller & dropship."/>
   <meta property="og:type" content="website"/>
   <meta property="og:url" content="https://zenoot.web.id/"/>
+  <meta property="og:site_name" content="Zenoot"/>
+  <meta property="og:image" content="https://zenoot.web.id/icon-512.png"/>
+  <meta name="twitter:card" content="summary"/>
   <!-- JSON-LD Structured Data -->
   <script type="application/ld+json">
   {
@@ -31,12 +33,7 @@
         "@id": "https://zenoot.web.id/#website",
         "url": "https://zenoot.web.id/",
         "name": "Zenoot",
-        "description": "Produsen sweater rajut & knitwear di Bandung",
-        "potentialAction": {
-          "@type": "SearchAction",
-          "target": "https://zenoot.web.id/#search?q={search_term_string}",
-          "query-input": "required name=search_term_string"
-        }
+        "description": "Produsen sweater rajut & knitwear di Bandung"
       },
       {
         "@type": "ClothingStore",
@@ -73,22 +70,10 @@
         ],
         "hasMap": "https://maps.google.com/?q=Zenoot+Bandung",
         "priceRange": "Rp25.000 - Rp150.000"
-      },
-      {
-        "@type": "BreadcrumbList",
-        "itemListElement": [
-          {"@type":"ListItem","position":1,"name":"Wanita","item":"https://zenoot.web.id/#wanita"},
-          {"@type":"ListItem","position":2,"name":"Pria","item":"https://zenoot.web.id/#pria"},
-          {"@type":"ListItem","position":3,"name":"Anak","item":"https://zenoot.web.id/#anak"},
-          {"@type":"ListItem","position":4,"name":"Turtleneck","item":"https://zenoot.web.id/#wanita/turtleneck"},
-          {"@type":"ListItem","position":5,"name":"Cardigan","item":"https://zenoot.web.id/#wanita/cardigan"},
-          {"@type":"ListItem","position":6,"name":"Half Zip","item":"https://zenoot.web.id/#pria/half-zip"}
-        ]
       }
     ]
   }
   </script>
-  <meta property="og:type" content="website"/>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,wght@0,300;0,400;0,600;1,400&family=Space+Grotesk:wght@500;700&family=Inter:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet"/>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -577,6 +562,9 @@
       .hero{padding:28px 16px 20px}
       .controls,.promo-section,.catalog{padding-left:8px;padding-right:8px}
     }
+    /* ===== SEO helper ===== */
+    .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+    .card-link{color:inherit;text-decoration:none}
   </style>
 </head>
 <body>
@@ -659,6 +647,7 @@
 
 <!-- CATALOG -->
 <main class="catalog">
+  <h1 class="sr-only">Sweater Rajut &amp; Knitwear Bandung — Zenoot</h1>
   <div class="product-grid" id="product-grid">
     <div class="loading-state">Memuat produk...</div>
   </div>
@@ -1031,7 +1020,7 @@ function renderProducts() {
           </button>
         </div>
         <p class="card-cat">${capitalize(p.gender)} · ${p.category}</p>
-        <h3 class="card-name">${p.name}</h3>
+        <h3 class="card-name"><a class="card-link" href="/?p=${p.id}" onclick="cardLinkClick(event)">${p.name}</a></h3>
         <div class="card-price-row">
           <span class="price-final">${fRp(minPrice)}</span>
           ${disc ? `<button type="button" class="price-voucher-icon" onclick="event.stopPropagation();openPriceDetail('${p.id}')" aria-label="Rincian harga">
@@ -1961,6 +1950,147 @@ async function doBuyerLogout() {
   showToast('Berhasil keluar');
 }
 
+// ===================== SEO (judul, canonical, data terstruktur per halaman) =====================
+// Semua produk berbagi satu index.html (dibuka sebagai modal), jadi judul, canonical, og, dan JSON-LD
+// diganti lewat JS setiap produk dibuka, lalu dikembalikan ke versi beranda saat modal ditutup.
+const SEO_SITE = 'https://zenoot.web.id/';
+const SEO_HOME = {
+  title: document.title,
+  desc: (document.querySelector('meta[name="description"]') || {}).content || '',
+  ogTitle: (document.querySelector('meta[property="og:title"]') || {}).content || '',
+  ogDesc: (document.querySelector('meta[property="og:description"]') || {}).content || '',
+  ogImage: (document.querySelector('meta[property="og:image"]') || {}).content || ''
+};
+
+function seoText(s) {
+  // buang teks placeholder dalam kurung siku, rapikan spasi
+  return String(s == null ? '' : s).replace(/\[[^\]]*\]/g, '').replace(/\s+/g, ' ').trim();
+}
+function seoCut(s, max) {
+  if (s.length <= max) return s;
+  const cut = s.slice(0, max - 1);
+  const sp = cut.lastIndexOf(' ');
+  return cut.slice(0, sp > 40 ? sp : cut.length).replace(/[\s.,;:\-]+$/, '') + '…';
+}
+function seoMeta(selector, value) {
+  const el = document.querySelector(selector);
+  if (el && value) el.setAttribute('content', value);
+}
+function seoCanonical(url) {
+  let l = document.querySelector('link[rel="canonical"]');
+  if (!l) { l = document.createElement('link'); l.setAttribute('rel', 'canonical'); document.head.appendChild(l); }
+  l.setAttribute('href', url);
+}
+function seoRemoveLd() {
+  const old = document.getElementById('ld-product');
+  if (old) old.remove();
+}
+function seoSetProduct(p, reviews) {
+  if (!p) return;
+  try {
+    const url = SEO_SITE + '?p=' + encodeURIComponent(p.id);
+    const vars = (p.variants || []).filter(v => v.is_active !== false && Number(v.price) > 0);
+    const prices = vars.map(v => Number(v.price));
+    const minPrice = prices.length ? Math.min(...prices) : 0;
+    const maxPrice = prices.length ? Math.max(...prices) : 0;
+    const inStock = vars.some(v => Number(v.stock) > 0);
+    const colors = [...new Set(vars.map(v => v.color_name).filter(Boolean))];
+    const mainImgs = (p.image_urls && p.image_urls.length) ? p.image_urls : (p.image_url ? [p.image_url] : []);
+    const imgs = [...new Set([...mainImgs, ...vars.map(v => v.image_url).filter(Boolean)])].slice(0, 8);
+    const name = seoText(p.name);
+
+    const specs = [
+      p.bahan && 'Bahan ' + seoText(p.bahan),
+      p.ketebalan && 'Ketebalan ' + seoText(p.ketebalan),
+      p.motif && 'Motif ' + seoText(p.motif)
+    ].filter(Boolean);
+    // nama produk sering panjang: dipotong supaya harga, warna, dan bahan tetap muat di deskripsi
+    const parts = [seoCut(name, 50) + ' - Zenoot Bandung.'];
+    if (minPrice) parts.push('Harga mulai ' + fRp(minPrice) + '.');
+    if (colors.length) parts.push(colors.length + ' pilihan warna.');
+    if (specs.length) parts.push(specs.join(', ') + '.');
+    parts.push('Grosir & eceran.');
+    const metaDesc = seoCut(parts.join(' '), 158);
+    const longDesc = seoCut(seoText(p.description).replace(/^Deskripsi\s*/i, ''), 300) || metaDesc;
+
+    document.title = name + ' | Zenoot';
+    seoMeta('meta[name="description"]', metaDesc);
+    seoMeta('meta[property="og:title"]', name + ' | Zenoot');
+    seoMeta('meta[property="og:description"]', metaDesc);
+    seoMeta('meta[property="og:url"]', url);
+    if (imgs[0]) seoMeta('meta[property="og:image"]', imgs[0]);
+    seoCanonical(url);
+
+    const product = {
+      '@type': 'Product',
+      '@id': url + '#product',
+      name: name,
+      url: url,
+      sku: String(p.id),
+      brand: { '@type': 'Brand', name: 'Zenoot' },
+      description: longDesc
+    };
+    if (imgs.length) product.image = imgs;
+    if (p.category) product.category = seoText(p.category);
+    if (vars.length) {
+      product.offers = {
+        '@type': 'AggregateOffer',
+        priceCurrency: 'IDR',
+        lowPrice: minPrice,
+        highPrice: maxPrice,
+        offerCount: vars.length,
+        availability: inStock ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
+        url: url,
+        seller: { '@id': SEO_SITE + '#store' }
+      };
+    }
+    if (Array.isArray(reviews) && reviews.length) {
+      const ratings = reviews.map(r => Number(r.rating)).filter(n => n >= 1 && n <= 5);
+      if (ratings.length) {
+        product.aggregateRating = {
+          '@type': 'AggregateRating',
+          ratingValue: Math.round(ratings.reduce((a, b) => a + b, 0) / ratings.length * 10) / 10,
+          reviewCount: ratings.length,
+          bestRating: 5,
+          worstRating: 1
+        };
+      }
+    }
+    const breadcrumb = {
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'Beranda', item: SEO_SITE },
+        { '@type': 'ListItem', position: 2, name: name, item: url }
+      ]
+    };
+    seoRemoveLd();
+    const s = document.createElement('script');
+    s.type = 'application/ld+json';
+    s.id = 'ld-product';
+    s.textContent = JSON.stringify({ '@context': 'https://schema.org', '@graph': [product, breadcrumb] });
+    document.head.appendChild(s);
+  } catch (e) {
+    console.error('SEO produk gagal diperbarui:', e);
+  }
+}
+function seoResetHome() {
+  document.title = SEO_HOME.title;
+  seoMeta('meta[name="description"]', SEO_HOME.desc);
+  seoMeta('meta[property="og:title"]', SEO_HOME.ogTitle);
+  seoMeta('meta[property="og:description"]', SEO_HOME.ogDesc);
+  seoMeta('meta[property="og:url"]', SEO_SITE);
+  seoMeta('meta[property="og:image"]', SEO_HOME.ogImage);
+  seoCanonical(SEO_SITE);
+  seoRemoveLd();
+}
+// Klik biasa pada nama produk: jangan pindah halaman, biarkan onclick kartu membuka modal.
+// Ctrl/Cmd/Shift/Alt + klik: biarkan browser membuka tab baru, jangan ikut membuka modal di halaman ini.
+function cardLinkClick(e) {
+  if (e.ctrlKey || e.metaKey || e.shiftKey || e.altKey || e.button !== 0) { e.stopPropagation(); return; }
+  e.preventDefault();
+}
+seoResetHome();
+
 // ===================== PRODUCT MODAL =====================
 async function openProduct(id) {
   activeProduct = products.find(p=>p.id===id);
@@ -1973,6 +2103,7 @@ async function openProduct(id) {
   document.getElementById('modal-name').textContent = activeProduct.name;
   document.getElementById('modal-wish-btn').classList.toggle('active', wishlistIds.has(activeProduct.id));
   history.replaceState(null, '', '?p=' + activeProduct.id);
+  seoSetProduct(activeProduct);
   document.getElementById('qty-val').textContent = 1;
   document.getElementById('btn-add-cart').disabled = true;
   document.getElementById('stok-label').textContent = 'Stok: pilih varian dulu';
@@ -2012,7 +2143,8 @@ async function openProduct(id) {
   updateModalPrice(firstVar);
 
   // Reviews
-  await loadReviews(id);
+  const productReviews = await loadReviews(id);
+  if (activeProduct && activeProduct.id === id) seoSetProduct(activeProduct, productReviews);
 
   document.getElementById('product-modal').classList.add('open');
   document.body.style.overflow = 'hidden';
@@ -2197,6 +2329,7 @@ function closeProductModal() {
   document.getElementById('product-modal').classList.remove('open');
   document.body.style.overflow = '';
   history.replaceState(null, '', location.pathname);
+  seoResetHome();
 }
 
 function shareProduct() {
@@ -2232,6 +2365,7 @@ async function loadReviews(productId) {
       </div>`).join('')}
   ` : '';
   reviewRating = 0;
+  return reviews;
 }
 
 function setReviewStar(n) {
