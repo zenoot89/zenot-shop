@@ -60,8 +60,8 @@
         "openingHoursSpecification": {
           "@type": "OpeningHoursSpecification",
           "dayOfWeek": ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"],
-          "opens": "08:00",
-          "closes": "22:00"
+          "opens": "00:00",
+          "closes": "23:59"
         },
         "sameAs": [
           "https://id.shp.ee/3xZ8WSgR",
@@ -231,6 +231,7 @@
     .product-card:hover{transform:translateY(-3px);box-shadow:0 8px 24px rgba(0,0,0,.08)}
     .card-img{position:relative;aspect-ratio:1/1;background:#f0ede8;overflow:hidden}
     .card-img img{width:100%;height:100%;object-fit:cover}
+    .card-img-link{position:absolute;top:0;right:0;bottom:0;left:0;display:block}
     .card-img-ph{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-family:'Source Serif 4',serif;font-size:13px;color:var(--muted);font-style:italic}
     .badge-disc{position:absolute;top:10px;left:10px;background:var(--accent);color:#fff;font-family:'IBM Plex Mono',monospace;font-size:11px;padding:3px 8px;border-radius:4px}
     .badge-var{position:absolute;top:10px;right:10px;background:rgba(255,255,255,.92);color:var(--sec);font-family:'IBM Plex Mono',monospace;font-size:10px;padding:3px 8px;border-radius:4px}
@@ -1008,7 +1009,7 @@ function renderProducts() {
     return `
     <div class="product-card" onclick="openProduct('${p.id}')">
       <div class="card-img">
-        ${img ? `<img src="${img}" alt="${p.name}" loading="lazy"/>` : `<div class="card-img-ph"><em>${p.name}</em></div>`}
+        ${img ? `<a class="card-link card-img-link" href="/?p=${p.id}" onclick="cardLinkClick(event)" tabindex="-1" aria-hidden="true"><img src="${img}" alt="${p.name}" loading="lazy"/></a>` : `<div class="card-img-ph"><em>${p.name}</em></div>`}
         ${disc ? `<span class="badge-disc">-${disc}%</span>` : ''}
         <span class="badge-var">${colors.length} warna</span>
       </div>
@@ -1972,6 +1973,13 @@ function seoCut(s, max) {
   const sp = cut.lastIndexOf(' ');
   return cut.slice(0, sp > 40 ? sp : cut.length).replace(/[\s.,;:\-]+$/, '') + '…';
 }
+function seoCutSentence(s, max) {
+  // potong di akhir kalimat terakhir yang muat; kalau tidak ada, potong di batas kata
+  if (s.length <= max) return s;
+  const m = s.slice(0, max).match(/^[\s\S]*[.!?](?=\s|$)/);
+  if (m && m[0].length >= 80) return m[0].trim();
+  return seoCut(s, max);
+}
 function seoMeta(selector, value) {
   const el = document.querySelector(selector);
   if (el && value) el.setAttribute('content', value);
@@ -2011,7 +2019,7 @@ function seoSetProduct(p, reviews) {
     if (specs.length) parts.push(specs.join(', ') + '.');
     parts.push('Grosir & eceran.');
     const metaDesc = seoCut(parts.join(' '), 158);
-    const longDesc = seoCut(seoText(p.description).replace(/^Deskripsi\s*/i, ''), 300) || metaDesc;
+    const longDesc = seoCutSentence(seoText(p.description).replace(/^Deskripsi\s*/i, ''), 300) || metaDesc;
 
     document.title = name + ' | Zenoot';
     seoMeta('meta[name="description"]', metaDesc);
