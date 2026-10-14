@@ -1,0 +1,97 @@
+name: Update sitemap
+
+on:
+  schedule:
+    - cron: '0 20 * * *'   # tiap hari 03.00 WIB
+  workflow_dispatch:        # tombol manual di tab Actions
+
+permissions:
+  contents: write
+
+concurrency:
+  group: sitemap
+  cancel-in-progress: false
+
+jobs:
+  sitemap:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ambil kode repo
+        uses: actions/checkout@v4
+
+      - name: Ambil daftar produk aktif dari Supabase
+        env:
+          SUPABASE_URL: https://xvaxwxnvjzrazxgdxsrt.supabase.co
+          SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh2YXh3eG52anpyYXp4Z2R4c3J0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU3ODk4OTQsImV4cCI6MjEwMTM2NTg5NH0.JbL_0Q_zq0LGLnKIro8wzpvPvRxMj3OqWZTxYUYAj5o
+        run: |
+          curl -fsS --retry 3 --retry-delay 5 \
+            -H "apikey: $SUPABASE_ANON_KEY" \
+            -H "Authorization: Bearer $SUPABASE_ANON_KEY" \
+            "$SUPABASE_URL/rest/v1/products?select=id&is_active=eq.true&order=created_at.desc&limit=1000" \
+            -o products.json
+
+      - name: Susun sitemap.xml
+        run: |
+          python3 - <<'PY'
+          import json, re, sys, datetime
+          import xml.etree.ElementTree as ET
+          from xml.sax.saxutils import escape
+
+          SITE = 'https://zenoot.web.id/'
+          NS = '{http://www.sitemaps.org/schemas/sitemap/0.9}'
+          today = datetime.datetime.now(datetime.timezone.utc).strftime('%Y-%m-%d')
+
+          data = json.load(open('products.json'))
+          if not isinstance(data, list):
+              sys.exit('Respons Supabase bukan daftar, sitemap TIDAK diubah: %r' % (data,))
+          ids = [str(r.get('id', '')) for r in data]
+          ids = [i for i in ids if re.fullmatch(r'[0-9a-fA-F-]{8,64}', i)]
+          if not ids:
+              sys.exit('Tidak ada produk aktif terbaca, sitemap TIDAK diubah (pengaman).')
+
+          # lastmod lama dipertahankan supaya file tidak berubah tiap hari
+          old = {}
+          try:
+              for u in ET.parse('sitemap.xml').getroot().iter(NS + 'url'):
+                  loc = u.find(NS + 'loc').text.strip()
+                  lm = u.find(NS + 'lastmod')
+                  old[loc] = lm.text.strip() if lm is not None and lm.text else today
+          except Exception:
+              pass
+
+          static_top = [(SITE, 'daily', '1.0'), (SITE + 'bio/', 'weekly', '0.9')]
+          static_end = [(SITE + 'privacy.html', 'monthly', '0.5')]
+          rows = [(u, c, p) for u, c, p in static_top]
+          rows += [(SITE + '?p=' + i, 'weekly', '0.8') for i in ids]
+          rows += static_end
+
+          # beranda ikut diperbarui hanya kalau daftar produk berubah
+          prev_products = {u for u in old if '?p=' in u}
+          new_products = {r[0] for r in rows if '?p=' in r[0]}
+          changed = prev_products != new_products
+
+          out = ['<?xml version="1.0" encoding="UTF-8"?>',
+                 '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">']
+          for loc, cf, pr in rows:
+              if loc == SITE and changed:
+                  lm = today
+              else:
+                  lm = old.get(loc, today)
+              out.append('  <url>\n    <loc>%s</loc>\n    <lastmod>%s</lastmod>\n    <changefreq>%s</changefreq>\n    <priority>%s</priority>\n  </url>' % (escape(loc), lm, cf, pr))
+          out.append('</urlset>')
+          open('sitemap.xml', 'w').write('\n'.join(out) + '\n')
+          print('Produk aktif:', len(ids), '| daftar berubah:', changed)
+          PY
+
+      - name: Simpan kalau ada perubahan
+        run: |
+          rm -f products.json
+          if git diff --quiet -- sitemap.xml; then
+            echo "Sitemap tidak berubah, tidak ada yang disimpan."
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add sitemap.xml
+            git commit -m "Update sitemap otomatis"
+            git push
+          fi
