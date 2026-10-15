@@ -1,4 +1,4 @@
-name: Update sitemap
+name: Update sitemap dan halaman bagikan
 
 on:
   schedule:
@@ -27,7 +27,7 @@ jobs:
           curl -fsS --retry 3 --retry-delay 5 \
             -H "apikey: $SUPABASE_ANON_KEY" \
             -H "Authorization: Bearer $SUPABASE_ANON_KEY" \
-            "$SUPABASE_URL/rest/v1/products?select=id&is_active=eq.true&order=created_at.desc&limit=1000" \
+            "$SUPABASE_URL/rest/v1/products?select=*,variants(*)&is_active=eq.true&order=created_at.desc&limit=1000" \
             -o products.json
 
       - name: Susun sitemap.xml
@@ -83,15 +83,188 @@ jobs:
           print('Produk aktif:', len(ids), '| daftar berubah:', changed)
           PY
 
+      - name: Pasang Pillow (untuk gambar pratinjau)
+        continue-on-error: true
+        run: python3 -m pip install --quiet --break-system-packages pillow
+
+      - name: Susun halaman bagikan per produk
+        continue-on-error: true
+        run: |
+          python3 - <<'PY'
+          import hashlib, html, io, json, os, re, sys, urllib.parse, urllib.request
+          from PIL import Image, ImageOps
+
+          SITE = 'https://zenoot.web.id'
+          ALLOW_SUFFIX = '.supabase.co'
+          BG = (232, 232, 232)
+
+          def text(s):
+              s = re.sub(r'\[[^\]]*\]', '', str(s if s is not None else ''))
+              return re.sub(r'\s+', ' ', s).strip()
+
+          def cut(s, n):
+              if len(s) <= n:
+                  return s
+              c = s[:n - 1]
+              sp = c.rfind(' ')
+              c = c[:sp] if sp > 25 else c
+              return re.sub(r'[\s.,;:\-]+$', '', c) + '…'
+
+          def rp(n):
+              return 'Rp ' + format(int(round(n)), ',').replace(',', '.')
+
+          def ok_url(u):
+              try:
+                  p = urllib.parse.urlparse(u)
+              except Exception:
+                  return False
+              host = p.hostname or ''
+              if p.scheme == 'https' and host.endswith(ALLOW_SUFFIX):
+                  return True
+              return p.scheme == 'http' and host in ('localhost', '127.0.0.1')
+
+          def make_og(src, dest):
+              """Unduh foto produk, taruh di kanvas 1200x630 (abu-abu seperti tema toko), simpan JPEG ringan."""
+              if not ok_url(src):
+                  raise ValueError('alamat foto tidak diizinkan: %s' % src)
+              req = urllib.request.Request(src, headers={'User-Agent': 'zenoot-sitemap-bot'})
+              raw = urllib.request.urlopen(req, timeout=25).read(12 * 1024 * 1024)
+              im = ImageOps.exif_transpose(Image.open(io.BytesIO(raw)))
+              if im.mode in ('RGBA', 'LA') or (im.mode == 'P' and 'transparency' in im.info):
+                  im = im.convert('RGBA')
+                  bg = Image.new('RGB', im.size, (255, 255, 255))
+                  bg.paste(im, mask=im.split()[-1])
+                  im = bg
+              else:
+                  im = im.convert('RGB')
+              W, H = 1200, 630
+              w, h = im.size
+              scale = min(W / w, H / h)
+              nw, nh = max(1, int(w * scale)), max(1, int(h * scale))
+              im = im.resize((nw, nh), Image.LANCZOS)
+              canvas = Image.new('RGB', (W, H), BG)
+              canvas.paste(im, ((W - nw) // 2, (H - nh) // 2))
+              for q in (84, 76, 68, 60):
+                  buf = io.BytesIO()
+                  canvas.save(buf, 'JPEG', quality=q, optimize=True)
+                  if buf.tell() <= 200 * 1024:
+                      break
+              os.makedirs(os.path.dirname(dest), exist_ok=True)
+              with open(dest, 'wb') as f:
+                  f.write(buf.getvalue())
+
+          def page_html(p, code, name, desc, og_img, src):
+              pid = p['id']
+              e = lambda s: html.escape(s, quote=True)
+              home = '/?p=' + pid
+              return ('<!doctype html>\n<html lang="id">\n<head>\n<meta charset="utf-8">\n'
+                  '<meta name="viewport" content="width=device-width,initial-scale=1">\n'
+                  '<title>%s | Zenoot</title>\n'
+                  '<meta name="description" content="%s">\n'
+                  '<link rel="canonical" href="%s%s">\n'
+                  '<meta property="og:type" content="website">\n'
+                  '<meta property="og:site_name" content="Zenoot">\n'
+                  '<meta property="og:title" content="%s">\n'
+                  '<meta property="og:description" content="%s">\n'
+                  '<meta property="og:url" content="%s/p/%s/">\n'
+                  '<meta property="og:image" content="%s">\n'
+                  '<meta property="og:image:width" content="1200">\n'
+                  '<meta property="og:image:height" content="630">\n'
+                  '<meta name="twitter:card" content="summary_large_image">\n'
+                  '<meta http-equiv="refresh" content="0;url=%s">\n'
+                  '<style>body{font-family:system-ui,sans-serif;background:#e8e8e8;color:#222;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;text-align:center}a{color:#222}</style>\n'
+                  '</head>\n<body data-src="%s">\n'
+                  '<p>Membuka produk&hellip; <a href="%s">Klik di sini</a> kalau tidak berpindah.</p>\n'
+                  '<script>location.replace(%s);</script>\n'
+                  '</body>\n</html>\n') % (
+                  e(name), e(desc), SITE, home,
+                  e(name), e(desc), SITE, code, e(og_img), home,
+                  e(src or ''), home, json.dumps(home))
+
+          data = json.load(open('products.json'))
+          if not isinstance(data, list) or not data:
+              sys.exit('Data produk kosong atau tidak valid, halaman bagikan TIDAK diubah.')
+
+          seen = {}
+          made = skipped = img_fail = 0
+          for p in data:
+              pid = str(p.get('id', ''))
+              if not re.fullmatch(r'[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}', pid):
+                  print('Lewati ID tidak dikenal:', pid)
+                  continue
+              code = pid[:8]
+              if code in seen and seen[code] != pid:
+                  sys.exit('Kode pendek bentrok antara %s dan %s, hentikan supaya link tidak salah.' % (seen[code], pid))
+              seen[code] = pid
+
+              vars_ = [v for v in (p.get('variants') or [])
+                       if v.get('is_active') is not False and float(v.get('price') or 0) > 0]
+              prices = [float(v['price']) for v in vars_]
+              colors = []
+              for v in vars_:
+                  c = text(v.get('color_name'))
+                  if c and c not in colors:
+                      colors.append(c)
+              name = text(p.get('name')) or 'Produk Zenoot'
+              parts = []
+              if prices:
+                  parts.append(('Mulai ' if len(set(prices)) > 1 else '') + rp(min(prices)))
+              if colors:
+                  parts.append('%d pilihan warna' % len(colors))
+              if text(p.get('bahan')):
+                  parts.append('Bahan ' + text(p.get('bahan')))
+              parts.append('Zenoot Bandung')
+              desc = cut(' · '.join(parts), 110)
+              title = cut(name, 70)
+
+              imgs = p.get('image_urls') or ([p['image_url']] if p.get('image_url') else [])
+              imgs = [u for u in imgs if u]
+              if not imgs:
+                  imgs = [v['image_url'] for v in vars_ if v.get('image_url')]
+              src = imgs[0] if imgs else ''
+
+              d = os.path.join('p', code)
+              idx = os.path.join(d, 'index.html')
+              og = os.path.join(d, 'og.jpg')
+              old = open(idx, encoding='utf-8').read() if os.path.exists(idx) else ''
+              m = re.search(r'data-src="([^"]*)"', old)
+              old_src = html.unescape(m.group(1)) if m else None
+              os.makedirs(d, exist_ok=True)
+
+              if src and not (old_src == src and os.path.exists(og)):
+                  try:
+                      make_og(src, og)
+                  except Exception as ex:
+                      img_fail += 1
+                      print('Foto %s gagal dibuat (%s): %s' % (code, type(ex).__name__, ex))
+                      src = old_src or ''   # pertahankan foto lama kalau ada
+              if os.path.exists(og):
+                  ver = hashlib.md5(src.encode()).hexdigest()[:8]
+                  og_img = '%s/p/%s/og.jpg?v=%s' % (SITE, code, ver)
+              else:
+                  og_img = SITE + '/icon-512.png'
+                  src = ''
+
+              new = page_html(p, code, title, desc, og_img, src)
+              if new != old:
+                  open(idx, 'w', encoding='utf-8').write(new)
+                  made += 1
+              else:
+                  skipped += 1
+          print('Halaman bagikan: %d dibuat/diubah, %d tetap, %d foto gagal' % (made, skipped, img_fail))
+          PY
+
       - name: Simpan kalau ada perubahan
         run: |
           rm -f products.json
-          if git diff --quiet -- sitemap.xml; then
-            echo "Sitemap tidak berubah, tidak ada yang disimpan."
+          git add sitemap.xml
+          if [ -d p ]; then git add p; fi
+          if git diff --cached --quiet; then
+            echo "Tidak ada perubahan, tidak ada yang disimpan."
           else
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add sitemap.xml
-            git commit -m "Update sitemap otomatis"
+            git commit -m "Update sitemap dan halaman bagikan otomatis"
+            git pull --rebase --autostash
             git push
           fi
