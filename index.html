@@ -2112,6 +2112,7 @@ async function openProduct(id) {
   document.getElementById('modal-wish-btn').classList.toggle('active', wishlistIds.has(activeProduct.id));
   history.replaceState(null, '', '?p=' + activeProduct.id);
   seoSetProduct(activeProduct);
+  warmShortLink(activeProduct.id);
   document.getElementById('qty-val').textContent = 1;
   document.getElementById('btn-add-cart').disabled = true;
   document.getElementById('stok-label').textContent = 'Stok: pilih varian dulu';
@@ -2340,9 +2341,35 @@ function closeProductModal() {
   seoResetHome();
 }
 
+// Link bagikan pendek: halaman /p/KODE/ dibuat otomatis tiap malam oleh GitHub Actions
+// (judul, harga, dan foto produk untuk kartu pratinjau WhatsApp). Produk yang baru ditambah
+// belum punya halamannya sampai workflow jalan, jadi ada tidaknya dicek di latar belakang
+// saat produk dibuka. Kalau belum ada, tombol bagikan memakai link panjang biasa.
+const shortLinkState = {};     // id produk -> true kalau halaman bagikannya sudah ada
+const shortLinkInFlight = {};  // id produk -> sedang dicek
+function shortLinkOf(id) { return SEO_SITE + 'p/' + String(id).slice(0, 8) + '/'; }
+function warmShortLink(id) {
+  if (!id || shortLinkState[id] === true || shortLinkInFlight[id]) return;
+  shortLinkInFlight[id] = true;
+  let timer = null;
+  try {
+    const ctrl = new AbortController();
+    timer = setTimeout(() => ctrl.abort(), 5000);
+    fetch(shortLinkOf(id), { cache: 'no-store', signal: ctrl.signal })
+      .then(r => { shortLinkState[id] = r.ok; })
+      .catch(() => {})
+      .finally(() => { clearTimeout(timer); delete shortLinkInFlight[id]; });
+  } catch (e) {
+    clearTimeout(timer);
+    delete shortLinkInFlight[id];
+  }
+}
+
 function shareProduct() {
   if (!activeProduct) return;
-  const url = location.origin + location.pathname + '?p=' + activeProduct.id;
+  const url = shortLinkState[activeProduct.id] === true
+    ? shortLinkOf(activeProduct.id)
+    : SEO_SITE + '?p=' + encodeURIComponent(activeProduct.id);
   const shareData = { title: activeProduct.name, text: `${activeProduct.name} - Zenoot`, url };
   if (navigator.share) {
     navigator.share(shareData).catch(()=>{});
