@@ -96,7 +96,8 @@ jobs:
 
           SITE = 'https://zenoot.web.id'
           ALLOW_SUFFIX = '.supabase.co'
-          BG = (232, 232, 232)
+          BG = (255, 255, 255)   # latar kartu pratinjau: putih (pinggir putih di foto produk jadi menyatu)
+          BG_VER = 'w1'          # naikkan kalau tampilan gambar berubah lagi -> semua og.jpg dibuat ulang + link gambar berganti
 
           def text(s):
               s = re.sub(r'\[[^\]]*\]', '', str(s if s is not None else ''))
@@ -124,7 +125,7 @@ jobs:
               return p.scheme == 'http' and host in ('localhost', '127.0.0.1')
 
           def make_og(src, dest):
-              """Unduh foto produk, taruh di kanvas 1200x630 (abu-abu seperti tema toko), simpan JPEG ringan."""
+              """Unduh foto produk, taruh di kanvas putih 1200x630, simpan JPEG ringan."""
               if not ok_url(src):
                   raise ValueError('alamat foto tidak diizinkan: %s' % src)
               req = urllib.request.Request(src, headers={'User-Agent': 'zenoot-sitemap-bot'})
@@ -153,7 +154,7 @@ jobs:
               with open(dest, 'wb') as f:
                   f.write(buf.getvalue())
 
-          def page_html(p, code, name, desc, og_img, src):
+          def page_html(p, code, name, desc, og_img, src, bgv):
               pid = p['id']
               e = lambda s: html.escape(s, quote=True)
               home = '/?p=' + pid
@@ -173,13 +174,13 @@ jobs:
                   '<meta name="twitter:card" content="summary_large_image">\n'
                   '<meta http-equiv="refresh" content="0;url=%s">\n'
                   '<style>body{font-family:system-ui,sans-serif;background:#e8e8e8;color:#222;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;text-align:center}a{color:#222}</style>\n'
-                  '</head>\n<body data-src="%s">\n'
+                  '</head>\n<body data-src="%s" data-bg="%s">\n'
                   '<p>Membuka produk&hellip; <a href="%s">Klik di sini</a> kalau tidak berpindah.</p>\n'
                   '<script>location.replace(%s);</script>\n'
                   '</body>\n</html>\n') % (
                   e(name), e(desc), SITE, home,
                   e(name), e(desc), SITE, code, e(og_img), home,
-                  e(src or ''), home, json.dumps(home))
+                  e(src or ''), bgv, home, json.dumps(home))
 
           data = json.load(open('products.json'))
           if not isinstance(data, list) or not data:
@@ -229,23 +230,27 @@ jobs:
               old = open(idx, encoding='utf-8').read() if os.path.exists(idx) else ''
               m = re.search(r'data-src="([^"]*)"', old)
               old_src = html.unescape(m.group(1)) if m else None
+              m2 = re.search(r'data-bg="([^"]*)"', old)
+              old_bgv = m2.group(1) if m2 else ''
+              bgv = BG_VER
               os.makedirs(d, exist_ok=True)
 
-              if src and not (old_src == src and os.path.exists(og)):
+              if src and not (old_src == src and os.path.exists(og) and old_bgv == BG_VER):
                   try:
                       make_og(src, og)
                   except Exception as ex:
                       img_fail += 1
                       print('Foto %s gagal dibuat (%s): %s' % (code, type(ex).__name__, ex))
                       src = old_src or ''   # pertahankan foto lama kalau ada
+                      bgv = old_bgv         # gambar lama belum berlatar baru -> dicoba lagi besok malam
               if os.path.exists(og):
-                  ver = hashlib.md5(src.encode()).hexdigest()[:8]
+                  ver = hashlib.md5((src + '|' + bgv).encode()).hexdigest()[:8]
                   og_img = '%s/p/%s/og.jpg?v=%s' % (SITE, code, ver)
               else:
                   og_img = SITE + '/icon-512.png'
                   src = ''
 
-              new = page_html(p, code, title, desc, og_img, src)
+              new = page_html(p, code, title, desc, og_img, src, bgv)
               if new != old:
                   open(idx, 'w', encoding='utf-8').write(new)
                   made += 1
