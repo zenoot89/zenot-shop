@@ -597,6 +597,18 @@
     /* ===== SEO helper ===== */
     .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
     .card-link{color:inherit;text-decoration:none}
+    /* ===== Bar bawah halaman produk + panel varian: ramping ala Gomuda (nominal di atas tombol) ===== */
+    .modal-sticky-bar{padding:10px 16px;padding-bottom:calc(10px + env(safe-area-inset-bottom))}
+    .modal-bar-total{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;font-size:12px;color:var(--sec)}
+    .modal-bar-total-val{font-family:'IBM Plex Mono',monospace;font-size:16px;font-weight:600;color:var(--text)}
+    .modal-buy-bar{gap:8px}
+    .modal-buy-bar button,.variant-sheet-btns .btn-add-cart,.variant-sheet-btns .btn-buy-now{height:44px;padding:0 8px;font-size:13px;line-height:1;white-space:nowrap;display:flex;align-items:center;justify-content:center;box-sizing:border-box}
+    @media(max-width:340px){.modal-buy-bar button,.variant-sheet-btns .btn-add-cart,.variant-sheet-btns .btn-buy-now{font-size:12px;padding:0 4px}}
+    .variant-sheet-foot{padding:10px 16px;padding-bottom:calc(10px + env(safe-area-inset-bottom))}
+    .variant-sheet-foot .modal-sticky-total{margin-bottom:8px}
+    /* iPhone iOS 26 (Safari / browser dalam WhatsApp): bar tombol berhenti di atas toolbar melayang, dan halaman beranda
+       masih kelihatan di bawahnya. Latar putih diperpanjang ke bawah supaya tampilannya bersih. */
+    .modal-overlay.open::after,.variant-sheet-overlay.open::after{content:"";position:absolute;left:50%;top:100%;width:100%;max-width:480px;height:260px;transform:translateX(-50%);background:var(--surface);pointer-events:none}
   </style>
 </head>
 <body>
@@ -790,6 +802,10 @@
       <div id="modal-related"></div>
     </div>
     <div class="modal-sticky-bar">
+      <div class="modal-bar-total" id="modal-bar-total-row">
+        <span id="modal-bar-total-label">Harga</span>
+        <span class="modal-bar-total-val" id="modal-bar-total">Rp 0</span>
+      </div>
       <div class="modal-buy-bar">
         <button type="button" class="btn-bar-cart" onclick="openVariantSheet('cart')">Tambah ke Keranjang</button>
         <button type="button" class="btn-bar-buy" onclick="openVariantSheet('buy')">Beli Sekarang</button>
@@ -2449,9 +2465,30 @@ function updateModalPrice(v) {
 
 function updateStickyTotal() {
   const el = document.getElementById('modal-sticky-total');
-  if (!el) return;
-  el.textContent = selectedVariant ? fRp(selectedVariant.price * qty) : 'Rp 0';
-  updateVoucherBadge();
+  if (el) el.textContent = selectedVariant ? fRp(selectedVariant.price * qty) : 'Rp 0';
+  updateBarTotal();
+  if (el) updateVoucherBadge();
+}
+
+// Nominal di atas tombol bar bawah halaman produk. Varian dipilih: "Total" = harga x jumlah.
+// Belum dipilih: "Harga" produk ("Mulai ..." kalau harga antarvarian beda). Tanpa harga: baris disembunyikan.
+function updateBarTotal() {
+  const row = document.getElementById('modal-bar-total-row');
+  const valEl = document.getElementById('modal-bar-total');
+  const labEl = document.getElementById('modal-bar-total-label');
+  if (!row || !valEl) return;
+  if (selectedVariant) {
+    row.style.display = '';
+    valEl.textContent = fRp(selectedVariant.price * qty);
+    if (labEl) labEl.textContent = 'Total';
+    return;
+  }
+  const prices = (activeVariants || []).filter(v => v.is_active !== false && Number(v.price) > 0).map(v => Number(v.price));
+  if (!prices.length) { row.style.display = 'none'; return; }
+  const min = Math.min(...prices), max = Math.max(...prices);
+  row.style.display = '';
+  valEl.textContent = (min === max ? '' : 'Mulai ') + fRp(min);
+  if (labEl) labEl.textContent = 'Harga';
 }
 
 function updateVoucherBadge() {
