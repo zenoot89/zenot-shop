@@ -1689,7 +1689,7 @@ function buildDistrictSearchIndex() {
     const regName = regByCode[regCode] || '';
     const provName = provByCode[provCode] || '';
     return {
-      districtName: name, regCode, regName, provCode, provName,
+      code, districtName: name, regCode, regName, provCode, provName,
       label: `${name}, ${regName}, ${provName}`,
       searchText: `${name} ${regName} ${provName}`.toLowerCase(),
     };
@@ -1770,68 +1770,139 @@ async function useCurrentLocation() {
   }, { enableHighAccuracy: true, timeout: 12000 });
 }
 
-async function applyGeoResult(addr) {
-  const idx = buildDistrictSearchIndex();
-  // Buat kecamatan: aman di-strip prefix "Kec."/"Kecamatan" (nggak ada isu Kota vs Kabupaten di level ini)
-  const normDistrict = s => (s || '').toLowerCase().replace(/^(kec\.?|kecamatan)\s+/, '').trim();
-  // Buat kabupaten/kota: JANGAN gabungin "Kota" & "Kabupaten" jadi satu — itu dua entitas beda
-  // (Kota Bandung != Kabupaten Bandung, Kota Bogor != Kabupaten Bogor, dst)
-  const normBase = s => (s || '').toLowerCase().trim();
-  const stripKotaKab = s => normBase(s).replace(/^(kabupaten|kota)\s+/, '');
+// ---- Deteksi lokasi (GPS) -> cocokkan ke data wilayah ----
+// OpenStreetMap di Indonesia sering menaruh kecamatan/kelurahan di kolom yang tertukar (suburb, city_district,
+// village...), jadi pencocokan TIDAK bergantung pada satu kolom: semua kolom nama tempat dikumpulkan, lalu dicocokkan
+// ke nama kecamatan, dan kalau belum pasti, ke nama desa/kelurahan di dalam kabupaten/kota yang sudah ketemu.
+const GEO_KEC_KEYS = ['city_district', 'subdistrict', 'municipality', 'district'];
+const GEO_KEL_KEYS = ['village', 'hamlet', 'suburb', 'neighbourhood', 'quarter', 'city_block'];
+const GEO_PLACE_KEYS = ['city_district', 'subdistrict', 'municipality', 'district', 'village', 'hamlet', 'suburb', 'neighbourhood', 'quarter', 'city_block', 'town'];
+// Nama dibandingkan tanpa awalan (Kec./Kecamatan/Kel./Kelurahan/Desa), tanpa spasi dan tanda baca
+const geoNorm = s => String(s || '').toLowerCase().trim().replace(/^(kecamatan|kec\.?|kelurahan|kel\.?|desa)\s+/, '').replace(/[^a-z0-9]+/g, '');
 
-  const geoDistrict = addr.city_district || addr.suburb || addr.subdistrict || addr.municipality || '';
-  const geoRegency = addr.county || addr.city || addr.regency || '';
+function geoProvMatch(provName, geoProvince, loose) {
+  const a = (provName || '').toLowerCase().trim(), b = (geoProvince || '').toLowerCase().trim();
+  if (!a || !b) return false;
+  if (!loose) return a.includes(b) || b.includes(a);
+  // Longgar: "DKI Jakarta" vs "Daerah Khusus Ibukota Jakarta" -> ada kata kunci yang sama
+  const stop = new Set(['daerah', 'khusus', 'provinsi', 'istimewa', 'ibukota', 'kepulauan']);
+  const tok = s => s.split(/[^a-z]+/).filter(t => t.length >= 5 && !stop.has(t));
+  const tb = new Set(tok(b));
+  return tok(a).some(t => tb.has(t));
+}
+
+// Kabupaten/kota: exact dulu (Kota Bandung != Kabupaten Bandung); kalau tidak ada, coba tanpa awalan Kota/Kabupaten
+// dengan petunjuk dari kolomnya (city -> Kota, county -> Kabupaten). Hanya dipakai kalau hasilnya tepat 1.
+function geoFindRegency(addr, idx) {
+  const norm = s => (s || '').toLowerCase().trim();
+  const strip = s => norm(s).replace(/^(kabupaten|kab\.?|kotamadya|kota)\s+(administrasi\s+)?/, '');
+  const byCode = new Map();
+  idx.forEach(d => { if (!byCode.has(d.regCode)) byCode.set(d.regCode, { regCode: d.regCode, regName: d.regName, provCode: d.provCode, provName: d.provName }); });
+  const regList = [...byCode.values()];
   const geoProvince = addr.state || '';
-  const geoVillage = addr.village || addr.hamlet || addr.neighbourhood || '';
-
-  // Langkah 1: cocokkan kabupaten/kota dulu — nama kabupaten/kota jarang kembar dalam 1 provinsi,
-  // jadi ini penanda paling aman buat dijadiin patokan. Coba exact match dulu (termasuk beda Kota/
-  // Kabupaten); kalau nggak ketemu, baru coba tanpa prefix — TAPI cuma dipakai kalau hasilnya nggak
-  // ambigu (persis 1 kandidat), biar nggak ketuker Kota X vs Kabupaten X yang namanya mirip.
-  let regencyCandidates = [];
-  if (geoRegency) {
-    regencyCandidates = idx.filter(d => normBase(d.regName) === normBase(geoRegency));
-    if (!regencyCandidates.length) {
-      const stripped = idx.filter(d => stripKotaKab(d.regName) === stripKotaKab(geoRegency));
-      if (stripped.length === 1) regencyCandidates = stripped;
+  const sources = [['county', addr.county], ['city', addr.city], ['regency', addr.regency], ['state_district', addr.state_district]];
+  for (const [src, val] of sources) {
+    if (!val) continue;
+    let cands = regList.filter(r => norm(r.regName) === norm(val));
+    if (!cands.length) {
+      cands = regList.filter(r => strip(r.regName) === strip(val));
+      if (cands.length > 1) {
+        const hint = src === 'city' ? 'kota' : (src === 'county' ? 'kabupaten' : '');
+        if (hint) { const h = cands.filter(r => norm(r.regName).startsWith(hint)); if (h.length) cands = h; }
+      }
     }
-    if (regencyCandidates.length > 1 && geoProvince) {
-      regencyCandidates = regencyCandidates.filter(d => normBase(d.provName).includes(normBase(geoProvince)) || normBase(geoProvince).includes(normBase(d.provName)));
+    if (cands.length > 1 && geoProvince) {
+      let f = cands.filter(r => geoProvMatch(r.provName, geoProvince, false));
+      if (!f.length) f = cands.filter(r => geoProvMatch(r.provName, geoProvince, true));
+      if (f.length) cands = f;
     }
+    if (cands.length === 1) return cands[0];
   }
-  const regMatch = regencyCandidates[0] || null;
+  return null;
+}
 
-  // Langkah 2: baru cari kecamatan, TAPI WAJIB di dalam kabupaten yang sudah ketemu di langkah 1.
-  // Banyak nama kecamatan/kelurahan kembar antar kabupaten se-Indonesia (mis. "Binong" ada di Kab.
-  // Subang, tapi juga nama kelurahan di Kec. Batununggal, Kota Bandung) — kalau dicari nasional tanpa
-  // dibatasi kabupatennya dulu, gampang nyantol ke daerah yang salah sama sekali.
-  let match = null;
-  if (regMatch && geoDistrict) {
-    match = idx.find(d => d.regCode === regMatch.regCode && normDistrict(d.districtName) === normDistrict(geoDistrict));
-  }
-  if (!match && regMatch) {
-    match = { ...regMatch, districtName: null }; // kabupaten yakin, kecamatan biar dipilih manual
+// Kecamatan di dalam kabupaten/kota yang sudah ketemu. Mengembalikan entri indeks kecamatan, atau null kalau belum pasti.
+async function geoResolveDistrict(addr, regMatch, idx) {
+  const places = [];
+  GEO_PLACE_KEYS.forEach(k => {
+    const n = geoNorm(addr[k]);
+    if (!n) return;
+    const ex = places.find(p => p.n === n);
+    if (ex) ex.keys.push(k); else places.push({ n, keys: [k] });
+  });
+  if (!places.length) return null;
+  const regDistricts = idx.filter(d => d.regCode === regMatch.regCode);
+  const hasKey = (p, keys) => p.keys.some(k => keys.includes(k));
+  const distHits = list => regDistricts.filter(d => list.some(p => p.n === geoNorm(d.districtName)));
+
+  // 1) nama kecamatan: kolom bertingkat kecamatan dulu, baru kolom lain. Dipakai kalau tepat 1 yang cocok.
+  let hits = distHits(places.filter(p => hasKey(p, GEO_KEC_KEYS)));
+  if (hits.length === 1) return hits[0];
+  if (!hits.length) {
+    hits = distHits(places.filter(p => !hasKey(p, GEO_KEC_KEYS)));
+    if (hits.length === 1) return hits[0];
   }
 
-  if (match && match.districtName) {
-    document.getElementById('addr-quicksearch-input').value = match.label;
+  // 2) belum pasti: cari lewat nama desa/kelurahan di dalam kabupaten/kota ini (butuh data desa)
+  const kelPlaces = places.filter(p => hasKey(p, GEO_KEL_KEYS));
+  if (!kelPlaces.length) return null;
+  try {
+    await fetchVillagesForDistrict(regDistricts[0].code);
+  } catch (e) {
+    console.error('Gagal memuat data desa untuk cocokkan lokasi:', e);
+    return null;
+  }
+  const names = new Set(kelPlaces.map(p => p.n));
+  const pool = hits.length > 1 ? hits : regDistricts;
+  const found = [];
+  pool.forEach(d => {
+    const v = (_villagesByDistrict[d.code] || []).filter(([vn]) => names.has(geoNorm(vn)));
+    if (v.length) found.push({ d, v });
+  });
+  if (found.length === 1) return found[0].d;
+  const postcode = String(addr.postcode || '').trim();
+  if (found.length > 1 && postcode) {
+    const byPostal = found.filter(f => f.v.some(([, pc]) => String(pc) === postcode));
+    if (byPostal.length === 1) return byPostal[0].d;
+  }
+  return null;
+}
+
+async function applyGeoResult(addr) {
+  const formAlive = () => !!document.getElementById('addr-province-input');
+  if (!formAlive()) return;
+  const idx = buildDistrictSearchIndex();
+  const regMatch = geoFindRegency(addr, idx);
+  const match = regMatch ? await geoResolveDistrict(addr, regMatch, idx) : null;
+  if (!formAlive()) return; // form ditutup selagi menunggu
+
+  if (match) {
+    const qs = document.getElementById('addr-quicksearch-input');
+    if (qs) qs.value = match.label;
     document.getElementById('addr-province-input').value = match.provName;
     document.getElementById('addr-province').value = match.provCode;
     await onAddrProvincePicked(match.provCode, match.regName, match.districtName);
-    if (geoVillage) {
-      setTimeout(() => {
-        const vData = _sselData['addr-village'];
-        if (vData) {
-          const vMatch = vData.options.find(v => v.name.toLowerCase() === geoVillage.toLowerCase());
-          if (vMatch) sselPick('addr-village', vMatch);
-        }
-      }, 600);
+
+    // Desa/kelurahan: daftar desa sudah termuat begitu kecamatan terpilih. Nama yang sama dengan kecamatannya
+    // dilewati (tidak bisa dipastikan itu kelurahan atau kecamatan).
+    let villagePicked = false;
+    const vData = formAlive() ? _sselData['addr-village'] : null;
+    if (vData && vData.options && vData.options.length) {
+      const own = geoNorm(match.districtName);
+      const names = new Set();
+      GEO_KEL_KEYS.forEach(k => { const n = geoNorm(addr[k]); if (n && n !== own) names.add(n); });
+      let vm = vData.options.filter(o => names.has(geoNorm(o.name)));
+      const postcode = String(addr.postcode || '').trim();
+      if (vm.length > 1 && postcode) vm = vm.filter(o => String(o.postal) === postcode);
+      if (vm.length === 1) { sselPick('addr-village', vm[0]); villagePicked = true; }
     }
-    showToast('Lokasi terdeteksi ✓ cek lagi ya, lalu lengkapi nama jalan');
-  } else if (match) {
-    document.getElementById('addr-province-input').value = match.provName;
-    document.getElementById('addr-province').value = match.provCode;
-    await onAddrProvincePicked(match.provCode, match.regName, null);
+    showToast(villagePicked
+      ? 'Lokasi terdeteksi ✓ cek lagi ya, lalu lengkapi nama jalan'
+      : 'Lokasi terdeteksi ✓ tolong pilih desa/kelurahan, lalu lengkapi nama jalan');
+  } else if (regMatch) {
+    document.getElementById('addr-province-input').value = regMatch.provName;
+    document.getElementById('addr-province').value = regMatch.provCode;
+    await onAddrProvincePicked(regMatch.provCode, regMatch.regName, null);
     showToast('Kota/Kabupaten kedeteksi ✓ tapi kecamatannya kurang presisi — tolong pilih manual ya');
   } else {
     showToast('Lokasi terdeteksi tapi nama wilayahnya nggak persis cocok — tolong pilih manual ya');
