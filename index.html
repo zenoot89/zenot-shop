@@ -307,6 +307,37 @@
     .ongkir-courier-price{font-size:13px;font-weight:600;white-space:nowrap}
     .ongkir-sheet-footer{padding:14px 20px;border-top:1px solid var(--border);flex-shrink:0}
     .ongkir-sheet-footer button{width:100%;padding:13px;background:var(--ink);color:var(--bg);border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer}
+    /* Panel pilih varian + bar beli ala marketplace */
+    .variant-row{margin-top:-16px;border-top:none}
+    .variant-row-value{flex:1;min-width:0;display:flex;align-items:center;justify-content:flex-end;gap:5px;font-size:12px;color:var(--muted);overflow:hidden;white-space:nowrap}
+    .vr-dot{width:16px;height:16px;border-radius:50%;border:1px solid var(--border);flex-shrink:0}
+    .vr-more{font-size:11px;color:var(--muted);margin-left:2px}
+    .modal-buy-bar{display:flex;gap:10px}
+    .modal-buy-bar button{flex:1;padding:14px 8px;border-radius:var(--radius-sm);font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;transition:opacity .15s}
+    .btn-bar-cart{background:none;border:1.5px solid var(--accent);color:var(--accent)}
+    .btn-bar-buy{background:var(--accent);border:1.5px solid var(--accent);color:#fff}
+    .variant-sheet-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:650;align-items:flex-end;justify-content:center}
+    .variant-sheet-overlay.open{display:flex}
+    @media(min-width:600px){.variant-sheet-overlay{align-items:center}}
+    .variant-sheet{background:var(--surface);border-radius:var(--radius) var(--radius) 0 0;width:100%;max-width:480px;max-height:85vh;display:flex;flex-direction:column;overflow:hidden}
+    @media(min-width:600px){.variant-sheet{border-radius:var(--radius)}}
+    .variant-sheet-head{display:flex;align-items:flex-end;gap:14px;padding:16px 48px 14px 20px;border-bottom:1px solid var(--border);flex-shrink:0;position:relative}
+    .variant-sheet-thumb{width:84px;height:84px;object-fit:cover;border-radius:8px;background:var(--bg);border:1px solid var(--border);flex-shrink:0}
+    .variant-sheet-info{min-width:0;padding-bottom:2px}
+    .variant-sheet-price{font-family:'IBM Plex Mono',monospace;font-size:20px;font-weight:600;color:var(--text)}
+    .variant-sheet-stock{font-size:12px;color:var(--muted);margin-top:4px}
+    .variant-sheet-head .ongkir-sheet-close{top:22px;transform:none}
+    .variant-sheet-body{overflow-y:auto;flex:1;min-height:0;padding:16px 20px 4px}
+    .variant-sheet-qty{display:flex;align-items:center;justify-content:space-between;margin:20px 0 16px}
+    .variant-sheet-foot{padding:14px 20px;padding-bottom:calc(14px + env(safe-area-inset-bottom));border-top:1px solid var(--border);flex-shrink:0}
+    .variant-sheet-btns{display:flex;gap:10px}
+    .variant-sheet-btns .btn-add-cart,.variant-sheet-btns .btn-buy-now{flex:1;width:auto}
+    .btn-buy-now{padding:14px;background:var(--accent);color:#fff;border:1.5px solid var(--accent);border-radius:var(--radius-sm);font-size:14px;font-weight:600;letter-spacing:.04em;cursor:pointer;transition:all .15s}
+    .btn-buy-now:disabled{opacity:.4;cursor:not-allowed}
+    .variant-sheet[data-mode="cart"] #btn-buy-now{display:none}
+    .variant-sheet[data-mode="buy"] #btn-add-cart{display:none}
+    .variant-sheet[data-mode="both"] #btn-add-cart{background:none;color:var(--accent);border:1.5px solid var(--accent)}
+    .variant-sheet[data-mode="both"] #btn-add-cart:hover:not(:disabled){background:none}
     .modal-specs{margin-top:6px}
     .spec-row{display:flex;justify-content:space-between;gap:16px;padding:10px 0;border-bottom:1px solid var(--border);font-size:13px}
     .spec-row-label{color:var(--muted);flex-shrink:0}
@@ -739,23 +770,11 @@
         <span class="ongkir-row-value" id="ongkir-row-summary">Cek ongkir</span>
         <svg class="ongkir-row-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg>
       </button>
-      <p class="modal-sec-label">Warna</p>
-      <div class="modal-colors" id="modal-colors"></div>
-      <div class="modal-size-qty-row">
-        <div class="modal-size-col">
-          <p class="modal-sec-label">Ukuran</p>
-          <div class="modal-sizes" id="modal-sizes"></div>
-          <p class="modal-sec-label" id="stok-label" style="margin-top:8px;margin-bottom:0">Stok: -</p>
-        </div>
-        <div class="modal-qty-col">
-          <p class="modal-sec-label">Jumlah</p>
-          <div class="modal-qty">
-            <button class="qty-btn" onclick="changeQty(-1)">−</button>
-            <span class="qty-val" id="qty-val">1</span>
-            <button class="qty-btn" onclick="changeQty(1)">+</button>
-          </div>
-        </div>
-      </div>
+      <button type="button" class="ongkir-row variant-row" id="variant-row" onclick="openVariantSheet('both')">
+        <span class="ongkir-row-label">Pilih Warna &amp; Ukuran</span>
+        <span class="variant-row-value" id="variant-row-value"></span>
+        <svg class="ongkir-row-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg>
+      </button>
       <!-- Trust badges -->
       <div class="trust-badges">
         <div class="trust-badge">✓ Rajutan kualitas premium, dicek sebelum dikirim</div>
@@ -771,11 +790,50 @@
       <div id="modal-related"></div>
     </div>
     <div class="modal-sticky-bar">
+      <div class="modal-buy-bar">
+        <button type="button" class="btn-bar-cart" onclick="openVariantSheet('cart')">Tambah ke Keranjang</button>
+        <button type="button" class="btn-bar-buy" onclick="openVariantSheet('buy')">Beli Sekarang</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PANEL PILIH VARIAN (gaya marketplace): Warna, Ukuran, Jumlah -->
+<div class="variant-sheet-overlay" id="variant-sheet-overlay" onclick="if(event.target===this)closeVariantSheet()">
+  <div class="variant-sheet" id="variant-sheet" data-mode="both">
+    <div class="variant-sheet-head">
+      <img class="variant-sheet-thumb" id="vs-thumb" alt="">
+      <div class="variant-sheet-info">
+        <div class="variant-sheet-price" id="vs-price"></div>
+        <div class="variant-sheet-stock" id="stok-label">Stok: -</div>
+      </div>
+      <button class="ongkir-sheet-close" onclick="closeVariantSheet()" aria-label="Tutup">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="variant-sheet-body" id="variant-sheet-body">
+      <p class="modal-sec-label">Warna</p>
+      <div class="modal-colors" id="modal-colors"></div>
+      <p class="modal-sec-label">Ukuran</p>
+      <div class="modal-sizes" id="modal-sizes"></div>
+      <div class="variant-sheet-qty">
+        <p class="modal-sec-label" style="margin:0">Jumlah</p>
+        <div class="modal-qty">
+          <button class="qty-btn" onclick="changeQty(-1)">−</button>
+          <span class="qty-val" id="qty-val">1</span>
+          <button class="qty-btn" onclick="changeQty(1)">+</button>
+        </div>
+      </div>
+    </div>
+    <div class="variant-sheet-foot">
       <div class="modal-sticky-total">
         <span class="modal-sticky-total-label">Total</span>
         <span class="modal-sticky-total-val" id="modal-sticky-total">Rp 0</span>
       </div>
-      <button class="btn-add-cart" id="btn-add-cart" onclick="addToCart()" disabled>Tambah ke Keranjang</button>
+      <div class="variant-sheet-btns">
+        <button class="btn-add-cart" id="btn-add-cart" onclick="addToCart()" disabled>Tambah ke Keranjang</button>
+        <button class="btn-buy-now" id="btn-buy-now" onclick="addToCart(true)" disabled>Beli Sekarang</button>
+      </div>
     </div>
   </div>
 </div>
@@ -950,6 +1008,7 @@ let activeGender = 'all';
 let activeProduct = null;
 let activeVariants = [];
 let selectedVariant = null;
+let selectedColorName = null;
 let qty = 1;
 let cart = [];
 let voucher = null;
@@ -2106,7 +2165,9 @@ async function openProduct(id) {
   trackEvent('view_product', id);
   activeVariants = activeProduct.variants || [];
   selectedVariant = null;
+  selectedColorName = null;
   qty = 1;
+  closeVariantSheet();
 
   document.getElementById('modal-name').textContent = activeProduct.name;
   document.getElementById('modal-wish-btn').classList.toggle('active', wishlistIds.has(activeProduct.id));
@@ -2114,7 +2175,7 @@ async function openProduct(id) {
   seoSetProduct(activeProduct);
   warmShortLink(activeProduct.id);
   document.getElementById('qty-val').textContent = 1;
-  document.getElementById('btn-add-cart').disabled = true;
+  setVariantButtons(false);
   document.getElementById('stok-label').textContent = 'Stok: pilih varian dulu';
   // Hitung ulang ongkir kalau destinasi sudah pernah dipilih (berat produk bisa beda)
   ongkirMode = 'product';
@@ -2150,6 +2211,10 @@ async function openProduct(id) {
   // Price
   const firstVar = activeVariants.find(v=>v.color_name===firstColor);
   updateModalPrice(firstVar);
+  selectedColorName = firstColor || null;
+  autoPickSingleSize(firstColor);
+  updateVariantRow();
+  updateVariantSheetHead();
 
   // Reviews
   const productReviews = await loadReviews(id);
@@ -2201,12 +2266,17 @@ function selectColor(el, colorName) {
   document.querySelectorAll('.modal-color-btn').forEach(b=>b.classList.remove('active'));
   el.classList.add('active');
   selectedVariant = null;
-  document.getElementById('btn-add-cart').disabled = true;
+  selectedColorName = colorName;
+  setVariantButtons(false);
+  document.getElementById('stok-label').textContent = 'Stok: pilih ukuran dulu';
   renderSizes(colorName);
   const variantWithPhoto = activeVariants.find(v => v.color_name === colorName && v.image_url);
   if (variantWithPhoto) scrollCarouselToImage(variantWithPhoto.image_url);
   const firstVar = activeVariants.find(v=>v.color_name===colorName);
   updateModalPrice(firstVar);
+  autoPickSingleSize(colorName);
+  updateVariantRow();
+  updateVariantSheetHead();
 }
 
 function renderSizes(colorName) {
@@ -2227,14 +2297,23 @@ function selectSize(el, variantId) {
   selectedVariant = activeVariants.find(v=>v.id===variantId);
   document.querySelectorAll('.modal-size-btn').forEach(b=>b.classList.remove('active'));
   el.classList.add('active');
-  document.getElementById('btn-add-cart').disabled = false;
+  setVariantButtons(true);
   document.getElementById('stok-label').textContent = `Stok: ${selectedVariant.stock} pcs`;
+  // jumlah tidak boleh melebihi stok varian yang baru dipilih
+  if (selectedVariant.stock > 0 && qty > selectedVariant.stock) {
+    qty = selectedVariant.stock;
+    document.getElementById('qty-val').textContent = qty;
+  }
   updateModalPrice(selectedVariant);
+  updateVariantRow();
+  updateVariantSheetHead();
 }
 
 function updateModalPrice(v) {
   if (!v) return;
   document.getElementById('modal-price-final').textContent = fRp(v.price);
+  const vsPrice = document.getElementById('vs-price');
+  if (vsPrice) vsPrice.textContent = fRp(v.price);
   const iconEl = document.getElementById('modal-price-voucher-icon');
   const discEl = document.getElementById('modal-disc-label');
   if (v.original_price) {
@@ -2335,6 +2414,7 @@ function changeQty(d) {
 
 function closeModalBg(e) { if(e.target===document.getElementById('product-modal')) closeProductModal(); }
 function closeProductModal() {
+  closeVariantSheet();
   document.getElementById('product-modal').classList.remove('open');
   document.body.style.overflow = '';
   history.replaceState(null, '', location.pathname);
@@ -2422,7 +2502,71 @@ async function submitReview(productId) {
 }
 
 // ===================== CART =====================
-function addToCart() {
+// ===================== PANEL PILIH VARIAN (ala marketplace) =====================
+function setVariantButtons(enabled) {
+  const a = document.getElementById('btn-add-cart');
+  const b = document.getElementById('btn-buy-now');
+  if (a) a.disabled = !enabled;
+  if (b) b.disabled = !enabled;
+}
+
+function openVariantSheet(mode) {
+  if (!activeProduct) return;
+  const sheet = document.getElementById('variant-sheet');
+  if (sheet) sheet.setAttribute('data-mode', mode || 'both');
+  updateVariantSheetHead();
+  document.getElementById('variant-sheet-overlay').classList.add('open');
+  const body = document.getElementById('variant-sheet-body');
+  if (body) body.scrollTop = 0;
+}
+
+function closeVariantSheet() {
+  const o = document.getElementById('variant-sheet-overlay');
+  if (o) o.classList.remove('open');
+}
+
+// Warna yang hanya punya satu ukuran dan masih tersedia (misal "All Size") langsung terpilih
+function autoPickSingleSize(colorName) {
+  if (!colorName) return;
+  const sizes = activeVariants.filter(v => v.color_name === colorName);
+  if (sizes.length !== 1) return;
+  const v = sizes[0];
+  if (v.stock === 0 || v.is_active === false) return;
+  const btn = document.querySelector('#modal-sizes .modal-size-btn');
+  if (btn) selectSize(btn, v.id);
+}
+
+// Baris "Pilih Warna & Ukuran" di halaman: titik warna sebelum dipilih, ringkasan setelah dipilih
+function updateVariantRow() {
+  const row = document.getElementById('variant-row');
+  const el = document.getElementById('variant-row-value');
+  if (!row || !el) return;
+  row.style.display = activeVariants.length ? '' : 'none';
+  if (selectedVariant) {
+    el.textContent = selectedVariant.color_name + ' · ' + selectedVariant.size;
+    return;
+  }
+  const colors = [...new Map(activeVariants.map(v => [v.color_name, v.color_hex])).entries()];
+  el.innerHTML = colors.slice(0, 6).map(([n, h]) => `<span class="vr-dot" style="background:${h}"></span>`).join('')
+    + (colors.length > 6 ? `<span class="vr-more">+${colors.length - 6}</span>` : '');
+}
+
+function variantThumbUrl() {
+  if (!activeProduct) return '';
+  const col = selectedVariant ? selectedVariant.color_name : selectedColorName;
+  const v = activeVariants.find(x => x.color_name === col && x.image_url);
+  return (v && v.image_url) || (activeProduct.image_urls && activeProduct.image_urls[0]) || activeProduct.image_url || '';
+}
+
+function updateVariantSheetHead() {
+  const img = document.getElementById('vs-thumb');
+  if (!img) return;
+  const url = variantThumbUrl();
+  if (url) { if (img.getAttribute('src') !== url) img.setAttribute('src', url); img.style.display = ''; }
+  else { img.removeAttribute('src'); img.style.display = 'none'; }
+}
+
+function addToCart(goCart) {
   if (!selectedVariant) return;
   const key = `${activeProduct.id}-${selectedVariant.id}`;
   const ex = cart.find(i=>i.key===key);
@@ -2432,8 +2576,10 @@ function addToCart() {
   const startRect = startEl ? startEl.getBoundingClientRect() : null;
   const imgUrl = activeProduct.image_url;
   updateCartUI();
+  closeVariantSheet();
   closeProductModal();
-  flyToCart(imgUrl, startRect);
+  if (goCart === true) openCart();
+  else flyToCart(imgUrl, startRect);
 }
 
 function flyToCart(imgUrl, startRect) {
@@ -3445,7 +3591,7 @@ sb.auth.getSession().then(async ({data}) => {
   let startY = 0, pulling = false, currentPull = 0;
 
   function overlayLagiTerbuka() {
-    return !!document.querySelector('#product-modal.open, .cart-drawer.open, .ongkir-sheet-overlay.open, .promo-overlay.open, .login-overlay.open, .side-panel.open, .drawer-scrim.open, .chat-panel.open');
+    return !!document.querySelector('#product-modal.open, .cart-drawer.open, .ongkir-sheet-overlay.open, .variant-sheet-overlay.open, .promo-overlay.open, .login-overlay.open, .side-panel.open, .drawer-scrim.open, .chat-panel.open');
   }
 
   document.addEventListener('touchstart', (e) => {
