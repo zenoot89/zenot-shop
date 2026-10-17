@@ -1057,6 +1057,7 @@ async function loadProducts() {
   renderProducts();
   const sharedId = new URLSearchParams(location.search).get('p');
   if (sharedId && products.some(p=>p.id===sharedId)) openProduct(sharedId);
+  else if (sharedId) { seoCanonical(SEO_SITE); seoMeta('meta[property="og:url"]', SEO_SITE); }
 }
 
 function getProductImage(p) {
@@ -2322,6 +2323,15 @@ function cardLinkClick(e) {
   e.preventDefault();
 }
 seoResetHome();
+// Halaman produk (?p=UUID): canonical dan og:url langsung diset ke URL produk itu sejak script dimuat,
+// tanpa menunggu data Supabase, supaya Google tidak sempat membaca canonical beranda.
+(function() {
+  const sid = new URLSearchParams(location.search).get('p');
+  if (!sid || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(sid)) return;
+  const purl = SEO_SITE + '?p=' + encodeURIComponent(sid);
+  seoCanonical(purl);
+  seoMeta('meta[property="og:url"]', purl);
+})();
 
 // ===================== PRODUCT MODAL =====================
 async function openProduct(id) {
