@@ -606,9 +606,20 @@
     @media(max-width:340px){.modal-buy-bar button,.variant-sheet-btns .btn-add-cart,.variant-sheet-btns .btn-buy-now{font-size:12px;padding:0 4px}}
     .variant-sheet-foot{padding:10px 16px;padding-bottom:calc(10px + env(safe-area-inset-bottom))}
     .variant-sheet-foot .modal-sticky-total{margin-bottom:8px}
-    /* iPhone iOS 26 (Safari / browser dalam WhatsApp): bar tombol berhenti di atas toolbar melayang, dan halaman beranda
-       masih kelihatan di bawahnya. Latar putih diperpanjang ke bawah supaya tampilannya bersih. */
-    .modal-overlay.open::after,.variant-sheet-overlay.open::after{content:"";position:absolute;left:50%;top:100%;width:100%;max-width:480px;height:260px;transform:translateX(-50%);background:var(--surface);pointer-events:none}
+    /* iPhone iOS 26 (Safari / browser dalam WhatsApp): bar tombol berhenti di atas toolbar melayang dan isi beranda
+       masih kelihatan di celah bawahnya. Saat halaman produk terbuka, isi beranda disembunyikan (posisi scroll tetap
+       terjaga karena hanya visibility) dan latar halaman dibuat putih sama dengan bar, jadi bersih seperti Gomuda. */
+    html:has(#product-modal.open),body:has(#product-modal.open){background:var(--surface)}
+    body:has(#product-modal.open) > :is(header,.controls,.promo-section,main.catalog,.site-footer,#ptr-indicator){visibility:hidden}
+    /* Toast kosong tidak boleh mengintip sebagai pil hitam di bawah layar */
+    .toast{opacity:0;visibility:hidden;transition:transform .3s,opacity .3s,visibility .3s}
+    .toast.show{opacity:1;visibility:visible}
+    /* Header halaman produk: transparan di atas foto; setelah di-scroll jadi solid dan judul mengecil (ala Gomuda),
+       supaya teks di bawahnya tidak menumpuk dengan tombol kembali/keranjang. */
+    .modal-top-bar-brand{transition:font-size .2s ease}
+    .modal.is-scrolled .modal-top-bar{background:var(--surface);box-shadow:0 1px 0 var(--border);padding-top:6px;padding-bottom:6px;pointer-events:auto}
+    .modal.is-scrolled .modal-top-bar-brand{font-size:11px;color:var(--text);text-shadow:none}
+    .modal.is-scrolled .modal-top-bar .modal-icon-btn{background:none;width:28px;height:28px}
   </style>
 </head>
 <body>
@@ -2361,6 +2372,7 @@ async function openProduct(id) {
   document.body.style.overflow = 'hidden';
   const scrollEl = document.querySelector('.modal-scroll');
   if (scrollEl) scrollEl.scrollTop = 0;
+  initModalHeaderScroll(scrollEl);
 }
 
 let modalCarouselImages = [];
@@ -2568,6 +2580,18 @@ function changeQty(d) {
   qty = Math.max(1, Math.min(max, qty + d));
   document.getElementById('qty-val').textContent = qty;
   updateStickyTotal();
+}
+
+// Header halaman produk jadi solid + judul mengecil setelah isi di-scroll sedikit (lihat CSS .is-scrolled)
+function initModalHeaderScroll(scrollEl) {
+  const modalEl = scrollEl && scrollEl.closest('.modal');
+  if (!modalEl) return;
+  modalEl.classList.remove('is-scrolled');
+  if (scrollEl._hdrBound) return;
+  scrollEl._hdrBound = true;
+  scrollEl.addEventListener('scroll', () => {
+    modalEl.classList.toggle('is-scrolled', scrollEl.scrollTop > 40);
+  }, { passive: true });
 }
 
 function closeModalBg(e) { if(e.target===document.getElementById('product-modal')) closeProductModal(); }
