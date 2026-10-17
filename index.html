@@ -2162,6 +2162,31 @@ const SEO_HOME = {
   ogImage: (document.querySelector('meta[property="og:image"]') || {}).content || ''
 };
 
+// Deskripsi hasil tempel dari AI sering berisi simbol markdown (# judul, **tebal**, * butir). Tanda # hanya dianggap
+// judul kalau diikuti spasi, jadi tagar seperti #fashion tetap utuh.
+function mdToPlain(s) {
+  return String(s == null ? '' : s)
+    .replace(/\r/g, '')
+    .replace(/^[ \t]*(?:-{3,}|\*{3,}|_{3,})[ \t]*$/gm, '')
+    .replace(/^[ \t]{0,3}#{1,6}[ \t]+/gm, '')
+    .replace(/^[ \t]*(?:[*+\u2022]|-(?!-))[ \t]+/gm, '\u2022 ')
+    .replace(/\*\*(.+?)\*\*/g, '$1')
+    .replace(/(^|[^*\w])\*(?![\s*])([^*\n]+?)\*(?![*\w])/g, '$1$2')
+    .replace(/`([^`\n]+)`/g, '$1')
+    .replace(/\[([^\]\n]+)\]\((?:[^)\n]+)\)/g, '$1');
+}
+// Versi tampilan: markdown jadi teks rapi (judul dan **tebal** dicetak tebal, butir jadi titik); HTML di-escape.
+function descToHtml(raw) {
+  const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  return esc(String(raw == null ? '' : raw).replace(/\r/g, ''))
+    .replace(/^[ \t]*(?:-{3,}|\*{3,}|_{3,})[ \t]*$/gm, '')
+    .replace(/^[ \t]{0,3}#{1,6}[ \t]+(.+)$/gm, '<strong>$1</strong>')
+    .replace(/^[ \t]*(?:[*+\u2022]|-(?!-))[ \t]+/gm, '\u2022 ')
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/(^|[^*\w])\*(?![\s*])([^*\n]+?)\*(?![*\w])/g, '$1<em>$2</em>')
+    .replace(/`([^`\n]+)`/g, '$1')
+    .replace(/\[([^\]\n]+)\]\((?:[^)\n]+)\)/g, '$1');
+}
 function seoText(s) {
   // buang teks placeholder dalam kurung siku, rapikan spasi
   return String(s == null ? '' : s).replace(/\[[^\]]*\]/g, '').replace(/\s+/g, ' ').trim();
@@ -2218,7 +2243,7 @@ function seoSetProduct(p, reviews) {
     if (specs.length) parts.push(specs.join(', ') + '.');
     parts.push('Grosir & eceran.');
     const metaDesc = seoCut(parts.join(' '), 158);
-    const longDesc = seoCutSentence(seoText(p.description).replace(/^Deskripsi\s*/i, ''), 300) || metaDesc;
+    const longDesc = seoCutSentence(seoText(mdToPlain(p.description).replace(/\u2022\s*/g, '')).replace(/^Deskripsi\s*/i, ''), 300) || metaDesc;
 
     document.title = name + ' | Zenoot';
     seoMeta('meta[name="description"]', metaDesc);
@@ -2331,7 +2356,7 @@ async function openProduct(id) {
   if (activeProduct.description) {
     descEl.innerHTML = `
       <p style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:10px">Deskripsi</p>
-      <p style="font-size:13px;color:var(--sec);line-height:1.7;white-space:pre-line">${activeProduct.description}</p>`;
+      <p style="font-size:13px;color:var(--sec);line-height:1.7;white-space:pre-line">${descToHtml(activeProduct.description)}</p>`;
   } else {
     descEl.innerHTML = '';
   }
