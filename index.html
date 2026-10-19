@@ -1477,9 +1477,12 @@ function courierTrackingUrl(resi) {
 }
 
 async function doGoogleAuth() {
+  // Hash di alamat (mis. #wanita) membuat token login dari Google tidak terbaca setelah kembali ke toko.
+  // Jadi login dikirim dari alamat TANPA hash, dan hash yang sedang dibuka disimpan untuk dipulihkan sesudah login.
+  try { sessionStorage.setItem('zenot_after_login', location.hash || ''); } catch (_) {}
   await sb.auth.signInWithOAuth({
     provider: 'google',
-    options: { redirectTo: window.location.href }
+    options: { redirectTo: location.origin + location.pathname + location.search }
   });
 }
 
@@ -3376,6 +3379,11 @@ async function buyerPayOrder(orderId, btn) {
     if (!res.ok || !data.redirect_url) { showToast(data.error || 'Gagal menyiapkan pembayaran, coba lagi', 4000); return; }
     // Hanya mau membuka halaman bayar resmi Midtrans
     if (!/^https:\/\/app(\.sandbox)?\.midtrans\.com\//.test(data.redirect_url)) { showToast('Alamat pembayaran tidak valid', 3000); return; }
+    // Ongkir dihitung ulang server dari alamat kirim: beri tahu pembeli kalau totalnya berubah sebelum pindah ke halaman bayar
+    if (data.shipping_adjusted && Number.isFinite(Number(data.total))) {
+      showToast('Ongkir disesuaikan dengan alamat kirim: ' + fRp(data.shipping_cost) + '. Total ' + fRp(data.total), 2600);
+      await new Promise(r => setTimeout(r, 2300));
+    }
     try { sessionStorage.setItem('zenot_pay_started', '1'); } catch (_) {}
     window.location.href = data.redirect_url;
   } catch (e) {
@@ -3418,7 +3426,8 @@ function showToast(msg, ms = 1500) {
 // ===================== HASH ROUTER =====================
 function applyHashRoute() {
   const hash = location.hash.replace('#', '').trim();
-  if (!hash) { setFilterGender('all', 'all', null, true); return; }
+  // Hash berisi parameter login (token/error dari Google) bukan rute toko: abaikan
+  if (!hash || /(^|&)(access_token|refresh_token|provider_token|expires_in|token_type|error|error_code|error_description)=/.test(hash)) { setFilterGender('all', 'all', null, true); return; }
   const parts = hash.split('/');
   const gender = parts[0] ? parts[0].toLowerCase() : 'all';
   const catSlug = parts[1] ? parts[1].toLowerCase() : 'all';
@@ -3846,6 +3855,14 @@ sb.auth.getSession().then(async ({data}) => {
     await loadWishlistIds();
     renderProducts();
   }
+  // Kembali dari login Google: buka lagi halaman/filter yang tadi dibuka (hash sudah bersih setelah sesi terbaca)
+  try {
+    const savedHash = sessionStorage.getItem('zenot_after_login');
+    if (savedHash !== null) {
+      sessionStorage.removeItem('zenot_after_login');
+      if (savedHash && !location.hash) { history.replaceState(null, '', location.pathname + location.search + savedHash); applyHashRoute(); }
+    }
+  } catch (_) {}
 });
 
 // ===================== PULL TO REFRESH (ala Shopee) =====================
