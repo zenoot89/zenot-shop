@@ -1005,6 +1005,9 @@
 const SUPABASE_URL = 'https://xvaxwxnvjzrazxgdxsrt.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh2YXh3eG52anpyYXp4Z2R4c3J0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU3ODk4OTQsImV4cCI6MjEwMTM2NTg5NH0.JbL_0Q_zq0LGLnKIro8wzpvPvRxMj3OqWZTxYUYAj5o';
 const WA_NUMBER = '628136664023';
+// Pembayaran online (Midtrans): tombol "Bayar Sekarang" TERSEMBUNYI untuk pembeli sampai ini diubah jadi true
+// (ubah setelah Midtrans Production disetujui). Untuk tes: jalankan localStorage.setItem('zenot_pay_test','1') di Console.
+const PAYMENT_ONLINE_ENABLED = false;
 
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
@@ -1454,6 +1457,10 @@ function courierTrackingUrl(resi) {
         </div>
       </div>` : '';
 
+    // Tombol bayar online — hanya untuk pesanan yang menunggu pembayaran dan belum lunas
+    const bayarBtn = (payOnlineEnabled() && o.status === 'menunggu_pembayaran' && o.payment_status !== 'paid') ? `
+      <button onclick="buyerPayOrder('${o.id}', this)" style="margin-top:10px;width:100%;padding:11px;background:var(--ink);color:#fff;border:none;border-radius:8px;font-size:13.5px;font-weight:600;cursor:pointer">Bayar Sekarang</button>` : '';
+
     return `
     <div class="order-item">
       <div class="order-item-top">
@@ -1463,6 +1470,7 @@ function courierTrackingUrl(resi) {
       <div class="order-item-lines">${lines}</div>
       <div class="order-item-total">${fRp(o.total)}</div>
       ${resiBlock}
+      ${bayarBtn}
       ${ubahPanel}
     </div>`;
   }).join('');
@@ -3345,6 +3353,48 @@ async function buyerSaveVariasi(orderId, itemCount) {
   renderAccountProfile();
 }
 
+// ===================== BAYAR ONLINE (Midtrans) =====================
+function payOnlineEnabled() {
+  if (PAYMENT_ONLINE_ENABLED) return true;
+  try { return localStorage.getItem('zenot_pay_test') === '1'; } catch (_) { return false; }
+}
+let _payBusy = false;
+async function buyerPayOrder(orderId, btn) {
+  if (_payBusy) return;
+  _payBusy = true;
+  const label = btn ? btn.textContent : '';
+  if (btn) { btn.disabled = true; btn.textContent = 'Menyiapkan pembayaran...'; }
+  try {
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) { showToast('Sesi habis, silakan masuk lagi', 3000); return; }
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/midtrans-create`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
+      body: JSON.stringify({ order_id: orderId })
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || !data.redirect_url) { showToast(data.error || 'Gagal menyiapkan pembayaran, coba lagi', 4000); return; }
+    // Hanya mau membuka halaman bayar resmi Midtrans
+    if (!/^https:\/\/app(\.sandbox)?\.midtrans\.com\//.test(data.redirect_url)) { showToast('Alamat pembayaran tidak valid', 3000); return; }
+    try { sessionStorage.setItem('zenot_pay_started', '1'); } catch (_) {}
+    window.location.href = data.redirect_url;
+  } catch (e) {
+    showToast('Koneksi bermasalah, coba lagi', 3000);
+  } finally {
+    _payBusy = false;
+    if (btn && document.body.contains(btn)) { btn.disabled = false; btn.textContent = label; }
+  }
+}
+// Kembali dari halaman bayar lewat tombol Back (halaman dipulihkan dari memori): muat ulang riwayat sekali
+window.addEventListener('pageshow', e => {
+  try {
+    if (e.persisted && sessionStorage.getItem('zenot_pay_started') === '1') {
+      sessionStorage.removeItem('zenot_pay_started');
+      if (buyerUser && document.getElementById('order-history-render')) renderAccountProfile();
+    }
+  } catch (_) {}
+});
+
 // ===================== CATEGORIES (filter toko) =====================
 async function loadCategories() {
   const { data } = await sb.from('categories').select('*').order('name');
@@ -3358,11 +3408,11 @@ async function loadCategories() {
 }
 
 // ===================== TOAST =====================
-function showToast(msg) {
+function showToast(msg, ms = 1500) {
   const t = document.getElementById('toast');
   t.textContent = msg;
   t.classList.add('show');
-  setTimeout(()=>t.classList.remove('show'), 1500);
+  setTimeout(()=>t.classList.remove('show'), ms);
 }
 
 // ===================== HASH ROUTER =====================
