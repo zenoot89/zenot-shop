@@ -797,11 +797,6 @@
         </div>
       </div>
       <div id="modal-disc-label"></div>
-      <button type="button" class="ongkir-row" onclick="openOngkirSheet()">
-        <span class="ongkir-row-label">🚚 Ongkos Kirim</span>
-        <span class="ongkir-row-value" id="ongkir-row-summary">Cek ongkir</span>
-        <svg class="ongkir-row-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg>
-      </button>
       <button type="button" class="ongkir-row variant-row" id="variant-row" onclick="openVariantSheet('both')">
         <span class="ongkir-row-label">Pilih Warna &amp; Ukuran</span>
         <span class="variant-row-value" id="variant-row-value"></span>
@@ -874,22 +869,6 @@
   </div>
 </div>
 
-<!-- SHEET INFORMASI ONGKIR (gaya marketplace) -->
-<div class="ongkir-sheet-overlay" id="ongkir-sheet-overlay" onclick="if(event.target===this)closeOngkirSheet()">
-  <div class="ongkir-sheet">
-    <div class="ongkir-sheet-header">
-      <span>Informasi Ongkir</span>
-      <button class="ongkir-sheet-close" onclick="closeOngkirSheet()" aria-label="Tutup">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M18 6L6 18M6 6l12 12"/></svg>
-      </button>
-    </div>
-    <div class="ongkir-sheet-body" id="ongkir-sheet-body"></div>
-    <div class="ongkir-sheet-footer">
-      <button onclick="closeOngkirSheet()">OK</button>
-    </div>
-  </div>
-</div>
-
 <!-- SHEET RINCIAN HARGA (gaya marketplace) -->
 <div class="ongkir-sheet-overlay" id="price-detail-overlay" onclick="if(event.target===this)closePriceDetail()">
   <div class="ongkir-sheet">
@@ -942,17 +921,18 @@
       <div class="summary-row" id="subtotal-row">
         <span>Subtotal Pesanan</span><span id="subtotal-val">Rp 0</span>
       </div>
-      <div class="summary-row" id="shipping-row" onclick="openOngkirSheet('cart')" style="cursor:pointer;align-items:center">
-        <span>🚚 Ongkos Kirim</span><span id="cart-ongkir-summary" style="color:var(--ink);display:flex;align-items:center;gap:4px">Cek ongkir <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg></span>
+      <div class="summary-row" id="shipping-row">
+        <span>🚚 Ongkos Kirim</span><span style="color:var(--muted);font-size:12px;text-align:right">Dihitung sesuai alamat saat pembayaran</span>
       </div>
       <div class="summary-row" id="pay-method-row" onclick="openPayMethodSheet()" style="cursor:pointer;align-items:center">
         <span>💳 Metode Pembayaran</span><span id="pay-method-summary" style="color:var(--ink);display:flex;align-items:center;gap:4px">Midtrans <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg></span>
       </div>
+      <div id="pay-test-note" style="display:none;font-size:11.5px;line-height:1.45;color:var(--muted);padding:2px 0 10px">Masa uji coba: pembayaran online belum menerima uang sungguhan. Untuk memesan sekarang, pilih metode WhatsApp.</div>
       <div class="discount-row hidden" id="discount-row">
         <span>Diskon voucher</span><span id="discount-val"></span>
       </div>
       <div class="cart-total-row">
-        <span class="cart-total-label">Total Pembayaran</span>
+        <span class="cart-total-label">Total Belanja</span>
         <span class="cart-total-val" id="cart-total">Rp 0</span>
       </div>
       <button class="btn-checkout" id="btn-checkout-main" onclick="cartCheckout()">
@@ -1033,6 +1013,9 @@ const WA_NUMBER = '628136664023';
 // Pembayaran online (Midtrans): tombol "Bayar Sekarang" TERSEMBUNYI untuk pembeli sampai ini diubah jadi true
 // (ubah setelah Midtrans Production disetujui). Untuk tes: jalankan localStorage.setItem('zenot_pay_test','1') di Console.
 const PAYMENT_ONLINE_ENABLED = true;
+// Selama Midtrans masih Sandbox (masa review): Bayar Online tetap jadi pilihan bawaan supaya alur ke halaman Midtrans
+// terlihat, dengan keterangan masa uji coba di keranjang. Ubah jadi false saat Midtrans Production aktif.
+const PAYMENT_ONLINE_TEST_MODE = true;
 
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
@@ -2388,11 +2371,6 @@ async function openProduct(id) {
   document.getElementById('qty-val').textContent = 1;
   setVariantButtons(false);
   document.getElementById('stok-label').textContent = 'Stok: pilih varian dulu';
-  // Hitung ulang ongkir kalau destinasi sudah pernah dipilih (berat produk bisa beda)
-  ongkirMode = 'product';
-  ongkirCheapestProduct = null;
-  updateOngkirRowSummary();
-  if (ongkirDestId) hitungDanTampilkanOngkir().catch(()=>{});
   updateStickyTotal();
   renderModalSpecs(activeProduct);
   renderModalRelated(activeProduct);
@@ -2871,8 +2849,7 @@ function updateCartUI() {
   autoApplyBestVoucher(subtotal);
   let disc = 0;
   if (voucher) disc = discAmountFor(voucher, subtotal);
-  const ongkir = ongkirCheapestCart ? ongkirCheapestCart.cost : 0;
-  const total = Math.max(0, subtotal - disc + ongkir);
+  const total = Math.max(0, subtotal - disc); // ongkir dihitung server dari alamat saat pembayaran
   const count = cart.reduce((s,i)=>s+i.qty,0);
   
   document.getElementById('cart-count').textContent = count;
@@ -2881,7 +2858,6 @@ function updateCartUI() {
   document.getElementById('header-cart-count').classList.toggle('hidden', count===0);
   document.getElementById('cart-total').textContent = fRp(total);
   document.getElementById('subtotal-val').textContent = fRp(subtotal);
-  updateCartOngkirSummary();
   updatePayMethodUI();
   
   const discRow = document.getElementById('discount-row');
@@ -2920,216 +2896,13 @@ function cartQty(key, d) {
   updateCartUI();
 }
 
-// CEK ONGKIR (RajaOngkir by Komerce - via proxy Cloudflare Worker untuk hindari CORS)
-const ONGKIR_PROXY = 'https://zenoot-ongkir.zenootid.workers.dev';
-const ORIGIN_ID = 4816; // Kota Bandung
-const ORIGIN_CITY = 'Bandung';
-const KURIR_LIST = ['jne','tiki','pos'];
-const KURIR_LABEL = { jne:'JNE', tiki:'TIKI', pos:'POS Indonesia' };
-
-let ongkirDestId = null;      // id lokasi tujuan yang sudah dipilih/ditemukan (dipakai bareng, sama-sama alamat kirim)
-let ongkirDestLabel = null;   // label lengkap lokasi tujuan
-let ongkirSearchTimer = null;
-let ongkirMode = 'product';          // 'product' (dari modal produk) atau 'cart' (dari keranjang)
-let ongkirCheapestProduct = null;    // termurah utk produk yang lagi dibuka
-let ongkirCheapestCart = null;       // termurah utk keseluruhan isi keranjang
-
-function openOngkirSheet(mode) {
-  ongkirMode = mode || 'product';
-  document.getElementById('ongkir-sheet-overlay').classList.add('open');
-  renderOngkirSheet();
-}
-
-function closeOngkirSheet() {
-  document.getElementById('ongkir-sheet-overlay').classList.remove('open');
-}
-
-function getCartWeight() {
-  const total = cart.reduce((sum, i) => {
-    const p = products.find(pp => pp.id === i.productId);
-    return sum + (p?.weight || 300) * i.qty;
-  }, 0);
-  return total || 300;
-}
-
-async function renderOngkirSheet() {
-  const body = document.getElementById('ongkir-sheet-body');
-
-  // Kalau destinasi belum ada sama sekali, dan user sudah login & punya alamat default -> coba auto-resolve
-  if (!ongkirDestId && buyerUser && buyerAddresses.length) {
-    const addr = buyerAddresses.find(a => a.is_default) || buyerAddresses[0];
-    if (addr) {
-      body.innerHTML = `<p style="font-size:12px;color:var(--muted);padding:20px 0;text-align:center">Menyiapkan estimasi ke alamatmu...</p>`;
-      const query = `${addr.district}, ${addr.city}`;
-      const found = await cariLokasiTerbaik(query, addr.city);
-      if (found) { ongkirDestId = found.id; ongkirDestLabel = found.label; }
-    }
-  }
-
-  if (!ongkirDestId) {
-    renderOngkirPicker();
-    return;
-  }
-
-  renderOngkirKirimKe();
-  await hitungDanTampilkanOngkir();
-}
-
-function renderOngkirKirimKe() {
-  const body = document.getElementById('ongkir-sheet-body');
-  body.innerHTML = `
-    <div class="ongkir-kirim-ke" onclick="renderOngkirPicker()">
-      <span class="ongkir-kirim-ke-label">Kirim ke</span>
-      <span class="ongkir-kirim-ke-value">${ongkirDestLabel} <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg></span>
-    </div>
-    <div id="ongkir-courier-list"><p style="font-size:12px;color:var(--muted);padding:16px 0;text-align:center">Menghitung ongkir...</p></div>`;
-}
-
-function renderOngkirPicker() {
-  const body = document.getElementById('ongkir-sheet-body');
-  body.innerHTML = `
-    <div style="padding:16px 0 8px;position:relative">
-      <input id="ongkir-search-input" class="form-input" placeholder="Ketik kota/kecamatan tujuan" style="font-size:13px;width:100%;box-sizing:border-box" autocomplete="off" oninput="ongkirAutocomplete(this.value)"/>
-      <div id="ongkir-dropdown" style="display:none;position:relative;background:var(--surface);border:1px solid var(--border);border-radius:8px;margin-top:6px;max-height:280px;overflow-y:auto"></div>
-    </div>`;
-  document.getElementById('ongkir-search-input').focus();
-}
-
-function ongkirAutocomplete(q) {
-  const dd = document.getElementById('ongkir-dropdown');
-  clearTimeout(ongkirSearchTimer);
-  if (!q || q.length < 3) { dd.style.display = 'none'; return; }
-  dd.innerHTML = `<div style="padding:10px 12px;font-size:12px;color:var(--muted)">Mencari...</div>`;
-  dd.style.display = 'block';
-  ongkirSearchTimer = setTimeout(async () => {
-    try {
-      const res = await fetch(`${ONGKIR_PROXY}/search?search=${encodeURIComponent(q)}`).then(r => r.json());
-      const list = (res?.data || []).slice(0, 10);
-      if (!list.length) {
-        dd.innerHTML = `<div style="padding:10px 12px;font-size:12px;color:var(--muted)">Lokasi tidak ditemukan</div>`;
-        return;
-      }
-      dd.innerHTML = list.map(d => `
-        <div onclick='pilihOngkirLokasi(${d.id}, ${JSON.stringify(d.label)})' style="padding:10px 12px;cursor:pointer;font-size:12px;border-bottom:1px solid var(--border)" onmouseover="this.style.background='var(--border)'" onmouseout="this.style.background=''">
-          ${d.label}
-        </div>`).join('');
-    } catch(e) {
-      dd.innerHTML = `<div style="padding:10px 12px;font-size:12px;color:#c0392b">Gagal mencari, coba lagi</div>`;
-    }
-  }, 400);
-}
-
-// Buat auto-resolve alamat member: cari by "kecamatan, kota", kalau tidak ketemu match persis fallback ke kota saja
-async function cariLokasiTerbaik(query, kotaFallback) {
-  try {
-    const res = await fetch(`${ONGKIR_PROXY}/search?search=${encodeURIComponent(query)}`).then(r => r.json());
-    let list = res?.data || [];
-    if (!list.length && kotaFallback) {
-      const res2 = await fetch(`${ONGKIR_PROXY}/search?search=${encodeURIComponent(kotaFallback)}`).then(r => r.json());
-      list = res2?.data || [];
-    }
-    return list[0] || null;
-  } catch(e) { return null; }
-}
-
-function pilihOngkirLokasi(id, label) {
-  ongkirDestId = id;
-  ongkirDestLabel = label;
-  renderOngkirKirimKe();
-  hitungDanTampilkanOngkir();
-}
-
-async function hitungDanTampilkanOngkir() {
-  const listEl = document.getElementById('ongkir-courier-list');
-  const berat = ongkirMode === 'cart' ? getCartWeight() : (activeProduct?.weight || 300);
-  try {
-    const results = await Promise.all(KURIR_LIST.map(k => {
-      const body = new URLSearchParams({ origin: ORIGIN_ID, destination: ongkirDestId, weight: berat, courier: k, price: 'lowest' });
-      return fetch(`${ONGKIR_PROXY}/cost`, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body })
-        .then(r => r.json()).catch(() => null);
-    }));
-    const rows = [];
-    results.forEach((res) => {
-      const list = res?.data || [];
-      if (!res || res.meta?.status !== 'success' || !list.length) return;
-      list.forEach(c => rows.push(c));
-    });
-    let cheapest = null;
-    if (!rows.length) {
-      if (listEl) listEl.innerHTML = `<p style="font-size:12px;color:#c0392b;padding:16px 0;text-align:center">Ongkir tidak tersedia untuk lokasi ini.</p>`;
-    } else {
-      rows.sort((a,b) => a.cost - b.cost);
-      cheapest = rows[0];
-      if (listEl) {
-        listEl.innerHTML = rows.map(c => `
-          <div class="ongkir-courier-row">
-            <div>
-              <div class="ongkir-courier-name">${c.name || KURIR_LABEL[c.code] || c.code} <span style="font-weight:400;color:var(--muted)">${c.service || ''}</span></div>
-              <div class="ongkir-courier-etd">Estimasi ${c.etd || '-'} hari</div>
-            </div>
-            <span class="ongkir-courier-price">${fRp(c.cost)}</span>
-          </div>`).join('');
-      }
-    }
-    if (ongkirMode === 'cart') {
-      ongkirCheapestCart = cheapest;
-      updateCartOngkirSummary();
-      updateCartUI();
-    } else {
-      ongkirCheapestProduct = cheapest;
-      updateOngkirRowSummary();
-    }
-  } catch(e) {
-    if (listEl) listEl.innerHTML = `<p style="font-size:12px;color:#c0392b;padding:16px 0;text-align:center">Gagal mengambil data ongkir.</p>`;
-  }
-}
-
-function updateOngkirRowSummary() {
-  const el = document.getElementById('ongkir-row-summary');
-  if (!el) return;
-  if (ongkirDestLabel && ongkirCheapestProduct) {
-    const kotaSingkat = ongkirDestLabel.split(',')[1]?.trim() || ongkirDestLabel;
-    el.textContent = `Ke ${kotaSingkat} · mulai ${fRp(ongkirCheapestProduct.cost)}`;
-  } else if (ongkirDestLabel) {
-    el.textContent = `Ke ${ongkirDestLabel.split(',')[1]?.trim() || ongkirDestLabel}`;
-  } else {
-    el.textContent = 'Cek ongkir';
-  }
-}
-
-function updateCartOngkirSummary() {
-  const el = document.getElementById('cart-ongkir-summary');
-  if (!el) return;
-  const chevron = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg>`;
-  if (ongkirDestLabel && ongkirCheapestCart) {
-    const kotaSingkat = ongkirDestLabel.split(',')[1]?.trim() || ongkirDestLabel;
-    el.innerHTML = `Ke ${kotaSingkat} · ${fRp(ongkirCheapestCart.cost)} ${chevron}`;
-  } else if (ongkirDestLabel) {
-    el.innerHTML = `Ke ${ongkirDestLabel.split(',')[1]?.trim() || ongkirDestLabel} ${chevron}`;
-  } else {
-    el.innerHTML = `Cek ongkir ${chevron}`;
-  }
-}
-
 function openCart() {
   updateCartUI();
   document.getElementById('cart-drawer').classList.add('open');
   document.body.style.overflow='hidden';
   showVoucherPopup();
-  ongkirMode = 'cart';
-  ensureOngkirUntukKeranjang();
 }
 
-async function ensureOngkirUntukKeranjang() {
-  if (!ongkirDestId && buyerUser && buyerAddresses.length) {
-    const addr = buyerAddresses.find(a => a.is_default) || buyerAddresses[0];
-    if (addr) {
-      const found = await cariLokasiTerbaik(`${addr.district}, ${addr.city}`, addr.city);
-      if (found) { ongkirDestId = found.id; ongkirDestLabel = found.label; }
-    }
-  }
-  if (ongkirDestId) await hitungDanTampilkanOngkir();
-}
 function closeCart() { document.getElementById('cart-drawer').classList.remove('open'); document.body.style.overflow=''; }
 
 // ===================== VOUCHER PROMO (popup + auto-apply) =====================
@@ -3284,7 +3057,7 @@ async function checkoutWA(payOnline) {
     return;
   }
 
-  const ongkirBiaya = ongkirCheapestCart ? ongkirCheapestCart.cost : 0;
+  const ongkirBiaya = 0; // ongkir dihitung server dari alamat pesanan saat pembayaran, bukan dari browser
 
   // Harga, voucher, dan nomor pesanan dihitung di server (fungsi buat_pesanan), bukan di browser
   const checkoutBtn = document.querySelector('.btn-checkout');
@@ -3313,6 +3086,9 @@ async function checkoutWA(payOnline) {
 
   // Bayar online: pesanan sudah dibuat server, langsung lanjut ke halaman pembayaran Midtrans (tanpa WhatsApp)
   if (payOnline) {
+    // Pesanan sudah dibuat: kosongkan keranjang supaya tidak membuat pesanan ganda.
+    // Kalau pembayaran gagal dibuka, pesanan tetap bisa dibayar dari Akun Saya > Riwayat Pesanan.
+    cart = []; voucher = null; updateCartUI();
     let orderId = order.id || order.order_id;
     if (!orderId) {
       const { data: last } = await sb.from('orders').select('id').eq('user_id', buyerUser.id).eq('status', 'menunggu_pembayaran').order('created_at', { ascending: false }).limit(1);
@@ -3334,11 +3110,7 @@ async function checkoutWA(payOnline) {
   const lines = order.items.map(i=>`• ${i.name} (${i.color}, ${i.size}) x${i.qty} — ${fRp(i.price*i.qty)}`);
   let msg = `Halo Zenoot, saya mau order:\n\n${lines.join('\n')}\n\nSubtotal Pesanan: ${fRp(order.subtotal)}`;
   if (order.discount>0) msg += `\nDiskon Voucher: -${fRp(order.discount)}`;
-  if (ongkirCheapestCart) {
-    msg += `\nOngkos Kirim (${ongkirCheapestCart.name || ''} ${ongkirCheapestCart.service || ''}): ${fRp(order.shipping_cost)}\n\nTotal: ${fRp(order.total)}\n\n`;
-  } else {
-    msg += `\nOngkos Kirim: Dikonfirmasi kemudian\n\nTotal (belum termasuk ongkir): ${fRp(order.total)}\n\n`;
-  }
+  msg += `\nOngkos Kirim: Dikonfirmasi kemudian\n\nTotal (belum termasuk ongkir): ${fRp(order.total)}\n\n`;
   msg += `Alamat Pengiriman:\n${shippingAddress.recipient_name} (${shippingAddress.phone})\n${shippingAddress.address_detail}`;
   if (shippingAddress.address_note) msg += `, ${shippingAddress.address_note}`;
   msg += `\n${shippingAddress.village ? shippingAddress.village+', ' : ''}${shippingAddress.district}, ${shippingAddress.city}, ${shippingAddress.province}`;
@@ -3360,6 +3132,8 @@ function updatePayMethodUI() {
   row.style.display = payOnlineEnabled() ? '' : 'none';
   const chevron = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg>';
   document.getElementById('pay-method-summary').innerHTML = (online ? 'Bayar Online (Midtrans)' : 'WhatsApp') + ' ' + chevron;
+  const testNote = document.getElementById('pay-test-note');
+  if (testNote) testNote.style.display = (online && PAYMENT_ONLINE_TEST_MODE) ? '' : 'none';
   btn.classList.toggle('pay-online', online);
   const ico = btn.querySelector('svg');
   if (ico) ico.style.display = online ? 'none' : '';
@@ -3369,7 +3143,7 @@ function openPayMethodSheet() {
   const cur = getPayMethod();
   const opt = (id, title, sub) => `<button class="paym-opt${cur === id ? ' sel' : ''}" onclick="selectPayMethod('${id}')"><span class="paym-opt-main"><div class="paym-opt-title">${title}</div><div class="paym-opt-sub">${sub}</div></span><span class="paym-radio"></span></button>`;
   document.getElementById('pay-method-body').innerHTML =
-    opt('midtrans', 'Bayar Online (Midtrans)', 'Pilih metode bayar di halaman pembayaran resmi Midtrans') +
+    opt('midtrans', 'Bayar Online (Midtrans)', 'Pilih metode bayar di halaman pembayaran resmi Midtrans' + (PAYMENT_ONLINE_TEST_MODE ? ' — masa uji coba, belum menerima pembayaran sungguhan' : '')) +
     opt('wa', 'Pesan via WhatsApp', 'Konfirmasi pesanan dan pembayaran lewat chat admin');
   document.getElementById('pay-method-overlay').classList.add('open');
 }
@@ -3460,7 +3234,7 @@ async function buyerPayOrder(orderId, btn) {
     if (!/^https:\/\/app(\.sandbox)?\.midtrans\.com\//.test(data.redirect_url)) { showToast('Alamat pembayaran tidak valid', 3000); return; }
     // Ongkir dihitung ulang server dari alamat kirim: beri tahu pembeli kalau totalnya berubah sebelum pindah ke halaman bayar
     if (data.shipping_adjusted && Number.isFinite(Number(data.total))) {
-      showToast('Ongkir disesuaikan dengan alamat kirim: ' + fRp(data.shipping_cost) + '. Total ' + fRp(data.total), 2600);
+      showToast('Ongkos kirim ke alamatmu ' + fRp(data.shipping_cost) + '. Total ' + fRp(data.total), 2600);
       await new Promise(r => setTimeout(r, 2300));
     }
     try { sessionStorage.setItem('zenot_pay_started', '1'); } catch (_) {}
