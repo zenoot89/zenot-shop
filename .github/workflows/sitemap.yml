@@ -60,7 +60,14 @@ jobs:
               pass
 
           static_top = [(SITE, 'daily', '1.0'), (SITE + 'bio/', 'weekly', '0.9')]
-          static_end = [(SITE + 'privacy.html', 'monthly', '0.5')]
+          static_end = [
+              (SITE + 'tentang-kami.html', 'monthly', '0.6'),
+              (SITE + 'kontak.html', 'monthly', '0.5'),
+              (SITE + 'syarat-ketentuan.html', 'monthly', '0.4'),
+              (SITE + 'kebijakan-pengiriman.html', 'monthly', '0.4'),
+              (SITE + 'kebijakan-pengembalian.html', 'monthly', '0.4'),
+              (SITE + 'privacy.html', 'monthly', '0.4'),
+          ]
           rows = [(u, c, p) for u, c, p in static_top]
           rows += [(SITE + '?p=' + i, 'weekly', '0.8') for i in ids]
           rows += static_end
