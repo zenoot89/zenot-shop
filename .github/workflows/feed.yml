@@ -1,0 +1,39 @@
+name: Update feed produk (Meta dan Google)
+
+on:
+  schedule:
+    - cron: '15 */4 * * *'   # tiap 4 jam, menit ke-15 (sitemap jalan 03.00 WIB, tidak bentrok)
+  workflow_dispatch:          # tombol manual di tab Actions
+
+permissions:
+  contents: write
+
+concurrency:
+  group: feed
+  cancel-in-progress: false
+
+jobs:
+  feed:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Ambil kode repo
+        uses: actions/checkout@v4
+
+      - name: Susun feed.tsv dari Supabase
+        env:
+          SUPABASE_URL: https://xvaxwxnvjzrazxgdxsrt.supabase.co
+          SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh2YXh3eG52anpyYXp4Z2R4c3J0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU3ODk4OTQsImV4cCI6MjEwMTM2NTg5NH0.JbL_0Q_zq0LGLnKIro8wzpvPvRxMj3OqWZTxYUYAj5o
+        run: node .github/scripts/build-feed.mjs feed.tsv
+
+      - name: Simpan kalau ada perubahan
+        run: |
+          git add feed.tsv
+          if git diff --cached --quiet; then
+            echo "Feed tidak berubah, tidak ada yang disimpan."
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git commit -m "Update feed produk otomatis"
+            git pull --rebase --autostash
+            git push
+          fi
