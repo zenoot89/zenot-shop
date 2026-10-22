@@ -19,15 +19,15 @@ jobs:
       - name: Ambil kode repo
         uses: actions/checkout@v4
 
-      - name: Susun feed.tsv dari Supabase
+      - name: Susun feed.tsv dan feed-meta.xml dari Supabase
         env:
           SUPABASE_URL: https://xvaxwxnvjzrazxgdxsrt.supabase.co
           SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh2YXh3eG52anpyYXp4Z2R4c3J0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU3ODk4OTQsImV4cCI6MjEwMTM2NTg5NH0.JbL_0Q_zq0LGLnKIro8wzpvPvRxMj3OqWZTxYUYAj5o
-        run: node .github/scripts/build-feed.mjs feed.tsv
+        run: node .github/scripts/build-feed.mjs feed.tsv feed-meta.xml
 
       - name: Simpan kalau ada perubahan
         run: |
-          git add feed.tsv
+          git add feed.tsv feed-meta.xml
           if git diff --cached --quiet; then
             echo "Feed tidak berubah, tidak ada yang disimpan."
           else
