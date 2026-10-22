@@ -1,6 +1,8 @@
 // Susun feed.tsv (satu baris per varian) untuk Meta Commerce Manager dan Google Merchant Center.
 // Dipanggil oleh .github/workflows/feed.yml. Hanya membaca produk aktif dari Supabase (kunci anon, sama seperti sitemap).
-// Pakai: node .github/scripts/build-feed.mjs [nama-file-keluaran]
+// Pakai: node .github/scripts/build-feed.mjs [feed.tsv] [feed-meta.xml]
+// feed.tsv       -> Google Merchant Center (satu baris per varian, deskripsi satu baris)
+// feed-meta.xml  -> Meta (Instagram/WhatsApp), deskripsi mempertahankan jeda baris
 import { writeFileSync } from 'node:fs';
 
 // ====== PENGATURAN ======
@@ -9,6 +11,7 @@ const BRAND = 'Zenoot';
 const CURRENCY = 'IDR';
 const GOOGLE_CATEGORY = '212'; // Apparel & Accessories > Clothing > Shirts & Tops
 const OUT = process.argv[2] || 'feed.tsv';
+const OUT_META = process.argv[3] || 'feed-meta.xml';
 // ========================
 
 const COLUMNS = [
@@ -29,6 +32,28 @@ function clean(value, max = 0) {
   return s;
 }
 
+// Sama seperti clean(), tetapi jeda baris dipertahankan (untuk feed XML Meta).
+function cleanKeepBreaks(value, max = 0) {
+  let s = String(value ?? '')
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<\/(p|div|li|h[1-6])>/gi, '\n')
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/\r\n?/g, '\n')
+    .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, '')
+    .replace(/[\t\f\v ]+/g, ' ')
+    .replace(/ *\n */g, '\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+  if (max && s.length > max) s = s.slice(0, max - 1).trimEnd() + '…';
+  return s;
+}
+
+const xmlEscape = (v) =>
+  String(v ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+
 function mapGender(raw) {
   const g = String(raw ?? '').toLowerCase();
   if (/anak|kid|bocah/.test(g)) return { gender: 'unisex', ageGroup: 'kids' };
@@ -39,8 +64,9 @@ function mapGender(raw) {
 
 const money = (n) => `${Math.round(n)} ${CURRENCY}`;
 
-export function buildFeed(products) {
-  const lines = [COLUMNS.join('\t')];
+// Kumpulkan baris produk (satu per varian). cleanDesc menentukan cara deskripsi dibersihkan.
+function collectRows(products, cleanDesc) {
+  const rows = [];
   const skipped = { noImage: 0, noPrice: 0 };
 
   for (const p of products) {
@@ -68,8 +94,8 @@ export function buildFeed(products) {
       const size = clean(v.size);
       const { gender, ageGroup } = mapGender(p.gender);
       const desc =
-        clean(p.description, 5000) ||
-        clean([p.name, p.bahan ? `Bahan ${p.bahan}` : ''].filter(Boolean).join('. '), 5000);
+        cleanDesc(p.description, 5000) ||
+        cleanDesc([p.name, p.bahan ? `Bahan ${p.bahan}` : ''].filter(Boolean).join('. '), 5000);
 
       const row = {
         id: v.id,
@@ -94,10 +120,48 @@ export function buildFeed(products) {
         pattern: clean(p.motif),
         product_type: clean(p.category),
       };
-      lines.push(COLUMNS.map((c) => clean(row[c])).join('\t'));
+      rows.push(row);
     }
   }
+  return { rows, skipped };
+}
+
+// feed.tsv untuk Google Merchant Center dan Meta lama: satu baris per varian (isi tidak berubah).
+export function buildFeed(products) {
+  const { rows, skipped } = collectRows(products, clean);
+  const lines = [COLUMNS.join('\t')];
+  for (const row of rows) lines.push(COLUMNS.map((c) => clean(row[c])).join('\t'));
   return { text: lines.join('\n') + '\n', rows: lines.length - 1, skipped };
+}
+
+// feed-meta.xml (RSS 2.0) untuk Meta: deskripsi mempertahankan jeda baris.
+export function buildMetaFeed(products) {
+  const { rows, skipped } = collectRows(products, cleanKeepBreaks);
+  const out = [
+    '<?xml version="1.0" encoding="UTF-8"?>',
+    '<rss version="2.0" xmlns:g="http://base.google.com/ns/1.0">',
+    '<channel>',
+    `<title>${xmlEscape(BRAND)}</title>`,
+    `<link>${xmlEscape(SITE)}</link>`,
+    `<description>${xmlEscape('Katalog produk ' + BRAND)}</description>`,
+  ];
+  for (const row of rows) {
+    out.push('<item>');
+    for (const c of COLUMNS) {
+      if (c === 'additional_image_link') {
+        for (const u of String(row[c] || '').split(',').filter(Boolean)) {
+          out.push(`<g:additional_image_link>${xmlEscape(u)}</g:additional_image_link>`);
+        }
+        continue;
+      }
+      const v = c === 'description' ? cleanKeepBreaks(row[c]) : clean(row[c]);
+      if (v === '') continue;
+      out.push(`<g:${c}>${xmlEscape(v)}</g:${c}>`);
+    }
+    out.push('</item>');
+  }
+  out.push('</channel>', '</rss>');
+  return { text: out.join('\n') + '\n', rows: rows.length, skipped };
 }
 
 async function fetchProducts() {
@@ -126,11 +190,13 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   try {
     const products = await fetchProducts();
     const { text, rows, skipped } = buildFeed(products);
-    if (rows === 0) {
+    const meta = buildMetaFeed(products);
+    if (rows === 0 || meta.rows === 0) {
       console.error('Tidak ada baris produk yang valid, feed lama TIDAK diubah (pengaman).');
       process.exit(1);
     }
     writeFileSync(OUT, text);
+    writeFileSync(OUT_META, meta.text);
     console.log(`Produk: ${products.length} | baris feed (varian): ${rows} | dilewati tanpa gambar: ${skipped.noImage}, tanpa harga: ${skipped.noPrice}`);
   } catch (err) {
     console.error('Gagal menyusun feed, feed lama TIDAK diubah:', err.message);
