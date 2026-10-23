@@ -76,16 +76,16 @@
   }
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
-  <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,wght@0,300;0,400;0,600;1,400&family=Space+Grotesk:wght@500;700&family=Inter:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,wght@0,300;0,400;0,600;1,400&family=Space+Grotesk:wght@500;700&family=Inter:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Montserrat:wght@500;600;700;800&family=Karla:wght@400;500;700&display=swap" rel="stylesheet"/>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
     .hidden{display:none !important}
     :root{
-      --bg:#f5f4f2;--surface:#fff;--border:#e0ddd8;--sep:#b5a898;
+      --bg:#f3f1ed;--surface:#fff;--border:#e2ded7;--sep:#b5a898;
       --text:#000;--muted:#4d4d4d;--sec:#1f1f1f;
       --accent:#000;--radius:12px;--radius-sm:8px;
-      --green:#25D366;--ink:#000;
+      --green:#25D366;--ink:#000;--cta:#e98a23;--sale:#e11d1d;
     }
     body{font-family:'Inter',sans-serif;font-weight:500;background:var(--bg);color:var(--text);min-height:100vh}
 
@@ -626,7 +626,7 @@
        masih kelihatan di celah bawahnya. Saat halaman produk terbuka, isi beranda disembunyikan (posisi scroll tetap
        terjaga karena hanya visibility) dan latar halaman dibuat putih sama dengan bar, jadi bersih seperti Gomuda. */
     html:has(#product-modal.open),body:has(#product-modal.open){background:var(--surface)}
-    body:has(#product-modal.open) > :is(header,.controls,.promo-section,main.catalog,.site-footer,#ptr-indicator){visibility:hidden}
+    body:has(#product-modal.open) > :is(header,.controls,.home-view,main.catalog,.site-footer,#ptr-indicator){visibility:hidden}
     /* Toast kosong tidak boleh mengintip sebagai pil hitam di bawah layar */
     .toast{opacity:0;visibility:hidden;transition:transform .3s,opacity .3s,visibility .3s}
     .toast.show{opacity:1;visibility:visible}
@@ -636,9 +636,82 @@
     .modal.is-scrolled .modal-top-bar{background:var(--surface);box-shadow:0 1px 0 var(--border);padding-top:6px;padding-bottom:6px;pointer-events:auto}
     .modal.is-scrolled .modal-top-bar-brand{font-size:11px;color:var(--text);text-shadow:none}
     .modal.is-scrolled .modal-top-bar .modal-icon-btn{background:none;width:28px;height:28px}
+
+    /* ===== TEMA RYUSEI: krem, teks hitam, aksen oranye, judul Montserrat kapital ===== */
+    body{font-family:'Karla','Inter',sans-serif;font-weight:500;background:var(--bg)}
+    header{background:var(--bg);border-bottom:1px solid var(--border)}
+    .logo,.drawer-header .logo{font-family:'Montserrat',sans-serif;font-weight:800;letter-spacing:.12em}
+    .catalog-heading,.side-panel-title,.cart-panel-title,.admin-topbar-title{font-family:'Montserrat',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.04em}
+    .catalog-heading{font-size:20px}
+    .filter-tab{border-radius:0}
+    .product-card{background:transparent;border:none;border-radius:0;box-shadow:none}
+    .product-card:hover{transform:none;box-shadow:none}
+    .card-img{background:#fff;aspect-ratio:4/5}
+    .badge-disc{top:0;left:0;border-radius:0;background:#000;color:#fff;font-family:'Montserrat',sans-serif;font-weight:600;font-size:11px;padding:6px 10px}
+    .badge-var{display:none}
+    .card-body{padding:12px 2px 6px}
+    .card-cat{font-family:'Karla',sans-serif;font-weight:700;font-size:10px;letter-spacing:.14em}
+    .card-name{font-family:'Montserrat',sans-serif;font-weight:700;font-size:12px;text-transform:uppercase;letter-spacing:.03em;line-height:1.5;margin-bottom:8px}
+    .card-price-row{flex-wrap:wrap;gap:2px 8px}
+    .price-final{font-family:'Montserrat',sans-serif;font-weight:700;font-size:13px}
+    .price-final.price-sale{color:var(--sale)}
+    .price-orig{font-family:'Montserrat',sans-serif;font-weight:600;font-size:11px;color:var(--sec)}
+    .price-voucher-icon{border-radius:50%}
+
+    /* ===== BERANDA ===== */
+    .home-view{max-width:1240px;margin:0 auto;padding:0 20px 20px}
+    body.view-home #controls,body.view-home main.catalog{display:none !important}
+    body.view-catalog .home-view{display:none}
+    body.view-catalog #controls{display:block}
+    .home-btn{display:inline-block;background:var(--cta);color:#fff;border:none;border-radius:0;padding:13px 26px;font-family:'Montserrat',sans-serif;font-weight:700;font-size:12px;letter-spacing:.18em;cursor:pointer}
+    .home-hero{position:relative;margin:0 -20px}
+    .hero-track{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none}
+    .hero-track::-webkit-scrollbar{display:none}
+    .hero-slide{position:relative;flex:0 0 100%;scroll-snap-align:start;aspect-ratio:4/5;max-height:78vh;overflow:hidden;cursor:pointer;background:#fff}
+    .hero-slide img{width:100%;height:100%;object-fit:cover;object-position:center top;display:block}
+    .hero-shade{position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.72),rgba(0,0,0,0) 55%)}
+    .hero-copy{position:absolute;left:20px;right:20px;bottom:44px;color:#fff;display:flex;flex-direction:column;align-items:flex-start;gap:10px}
+    .hero-tag{background:#000;color:#fff;font-family:'Montserrat',sans-serif;font-weight:700;font-size:11px;letter-spacing:.16em;padding:6px 10px}
+    .hero-copy h2{font-family:'Montserrat',sans-serif;font-weight:800;font-size:22px;line-height:1.25;text-transform:uppercase;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+    .hero-copy p{font-family:'Montserrat',sans-serif;font-weight:700;font-size:15px}
+    .hero-copy p s{font-weight:500;opacity:.75;margin-left:6px;font-size:13px}
+    .hero-dots{position:absolute;left:0;right:0;bottom:18px;display:flex;justify-content:center;gap:6px}
+    .hero-dots span{width:22px;height:3px;background:rgba(255,255,255,.45);transition:background .25s}
+    .hero-dots span.on{background:#fff}
+    .home-genders{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:20px 0 8px}
+    .home-gender{position:relative;aspect-ratio:3/4;border:none;padding:0;background:#fff;cursor:pointer;overflow:hidden}
+    .home-gender img{width:100%;height:100%;object-fit:cover;object-position:center top;display:block}
+    .home-gender::after{content:"";position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.6),rgba(0,0,0,0) 50%)}
+    .home-gender span{position:absolute;left:0;right:0;bottom:12px;z-index:1;text-align:center;color:#fff;font-family:'Montserrat',sans-serif;font-weight:700;font-size:13px;letter-spacing:.2em}
+    .home-view .promo-section{padding:12px 0 0}
+    .home-sec{margin-top:36px}
+    .home-sec[hidden]{display:none}
+    .home-sec-head{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:16px}
+    .home-sec-head h2{font-family:'Montserrat',sans-serif;font-weight:800;font-size:16px;letter-spacing:.06em;text-transform:uppercase}
+    .home-sec-head button{background:none;border:none;border-bottom:1.5px solid var(--ink);padding:0 0 1px;font-family:'Montserrat',sans-serif;font-weight:600;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink);cursor:pointer}
+    .home-rail{display:flex;gap:12px;overflow-x:auto;scroll-snap-type:x proximity;scrollbar-width:none;padding-bottom:4px}
+    .home-rail::-webkit-scrollbar{display:none}
+    .rail-item{flex:0 0 44vw;max-width:230px;scroll-snap-align:start}
+    .home-story{margin-top:48px;padding:36px 8px 8px;text-align:center;border-top:1px solid var(--border)}
+    .home-story img{width:170px;height:auto;margin:0 auto 18px;display:block}
+    .home-story p{font-size:14px;line-height:1.7;max-width:420px;margin:0 auto 6px}
+    .home-story .home-story-sub{color:var(--sec);font-size:13px;margin-bottom:20px}
+    @media(min-width:900px){
+      .home-hero{margin:0}
+      .hero-slide{aspect-ratio:21/9;max-height:560px}
+      .hero-slide img{object-position:center 22%}
+      .hero-copy{left:48px;bottom:56px;max-width:520px}
+      .hero-copy h2{font-size:30px}
+      .home-genders{gap:16px;margin-top:28px}
+      .home-gender{aspect-ratio:4/3}
+      .rail-item{flex-basis:230px}
+      .home-sec{margin-top:52px}
+    }
+    .menu-drawer:not(.open),.side-panel:not(.open){box-shadow:none}
+    @media(max-width:480px){.home-view{padding-left:8px;padding-right:8px}.home-hero{margin:0 -8px}.hero-copy{left:16px;right:16px}}
   </style>
 </head>
-<body>
+<body class="view-home">
 
 <!-- PULL TO REFRESH INDICATOR -->
 <div class="ptr-indicator" id="ptr-indicator">
@@ -679,7 +752,8 @@
     <button class="drawer-close" onclick="toggleDrawer(false)">✕</button>
   </div>
   <div class="drawer-items">
-    <button class="drawer-item" onclick="setFilterGender('all','all');toggleDrawer(false)">Semua Produk</button>
+    <button class="drawer-item" onclick="goHome();toggleDrawer(false)">Beranda</button>
+    <button class="drawer-item" onclick="goAllProducts();toggleDrawer(false)">Semua Produk</button>
     <div id="drawer-gender-sections"></div>
     <button class="drawer-item" onclick="openWishlist()">Wishlist</button>
     <button class="drawer-item" onclick="openCart();toggleDrawer(false)" style="display:flex;justify-content:space-between;align-items:center">
@@ -703,18 +777,36 @@
   <div class="side-panel-body" id="side-panel-body"></div>
 </div>
 
+<!-- BERANDA -->
+<section class="home-view" id="home-view">
+  <div class="home-hero" id="home-hero"><div class="loading-state">Memuat...</div></div>
+  <div class="home-genders" id="home-genders"></div>
+  <section class="promo-section">
+    <div class="promo-section-list" id="promo-section-list"></div>
+  </section>
+  <section class="home-sec" id="home-sec-new" hidden>
+    <div class="home-sec-head"><h2>Produk Terbaru</h2><button type="button" onclick="goAllProducts()">Lihat Semua</button></div>
+    <div class="home-rail" id="home-rail-new"></div>
+  </section>
+  <section class="home-sec" id="home-sec-disc" hidden>
+    <div class="home-sec-head"><h2>Diskon Spesial</h2><button type="button" onclick="goAllProducts()">Lihat Semua</button></div>
+    <div class="home-rail" id="home-rail-disc"></div>
+  </section>
+  <section class="home-story">
+    <img src="zenoot-shop-logo-black.png" alt="Zenoot Knitwear" width="1000" height="235" loading="lazy" decoding="async">
+    <p>Rajutan yang tetap nyaman dipakai seharian, dari kerja sampai jalan-jalan.</p>
+    <p class="home-story-sub">Produsen sweater rajut &amp; knitwear di Bandung, Jawa Barat.</p>
+    <button type="button" class="home-btn" onclick="goAllProducts()">LIHAT SEMUA PRODUK</button>
+  </section>
+</section>
+
 <!-- CONTROLS (tersembunyi di awal, cuma muncul saat buyer klik "Semua Koleksi") -->
 <div class="controls" id="controls">
-  <h2 class="catalog-heading">Semua Koleksi</h2>
+  <h2 class="catalog-heading">Semua Produk</h2>
   <div class="catalog-meta-row">
     <span id="catalog-count">0 produk</span>
   </div>
 </div>
-
-<!-- VOUCHER BAR -->
-<section class="promo-section">
-  <div class="promo-section-list" id="promo-section-list"></div>
-</section>
 
 <!-- CATALOG -->
 <main class="catalog">
@@ -1073,6 +1165,7 @@ async function loadProducts() {
   if (error) { console.error(error); return; }
   products = data || [];
   renderProducts();
+  renderHome();
   renderDrawerSubs();
   renderFooterBelanja();
   const sharedId = new URLSearchParams(location.search).get('p');
@@ -1083,6 +1176,82 @@ async function loadProducts() {
 function getProductImage(p) {
   if (p.image_url) return p.image_url;
   return null;
+}
+
+
+// ===================== BERANDA =====================
+let heroTimer = null;
+function discOf(p) {
+  const vars = p.variants || [];
+  const minPrice = vars.length ? Math.min(...vars.map(v => v.price)) : 0;
+  const maxOrig = vars.length ? Math.max(...vars.map(v => v.original_price || 0)) : 0;
+  return { minPrice, maxOrig, disc: maxOrig && minPrice ? discPct(maxOrig, minPrice) : 0 };
+}
+function renderHome() {
+  const heroEl = document.getElementById('home-hero');
+  if (!heroEl) return;
+  const list = products.filter(p => p.image_url);
+  if (!list.length) { heroEl.innerHTML = ''; return; }
+
+  // Hero: diskon terbesar dulu, lalu yang terbaru (maks 5 slide)
+  const byDisc = [...list].map(p => ({ p, d: discOf(p) })).filter(x => x.d.disc > 0).sort((a, b) => b.d.disc - a.d.disc).slice(0, 3).map(x => x.p);
+  const slides = [...byDisc];
+  list.forEach(p => { if (slides.length < 5 && !slides.includes(p)) slides.push(p); });
+  heroEl.innerHTML = `<div class="hero-track" id="hero-track">` + slides.map(p => {
+    const d = discOf(p);
+    const tag = d.disc ? `-${d.disc}%` : 'NEW ARRIVAL';
+    return `<div class="hero-slide" onclick="openProduct('${p.id}')">
+      <img src="${chatEsc(p.image_url)}" alt="${chatEsc(p.name)}" ${p === slides[0] ? '' : 'loading="lazy"'} decoding="async">
+      <div class="hero-shade"></div>
+      <div class="hero-copy">
+        <span class="hero-tag">${tag}</span>
+        <h2>${chatEsc(p.name)}</h2>
+        <p>${fRp(d.minPrice)}${d.disc ? ` <s>${fRp(d.maxOrig)}</s>` : ''}</p>
+        <span class="home-btn">LIHAT PRODUK</span>
+      </div>
+    </div>`;
+  }).join('') + `</div>` +
+  (slides.length > 1 ? `<div class="hero-dots" id="hero-dots">${slides.map((_, i) => `<span class="${i === 0 ? 'on' : ''}"></span>`).join('')}</div>` : '');
+
+  const track = document.getElementById('hero-track');
+  const dots = document.querySelectorAll('#hero-dots span');
+  if (heroTimer) { clearInterval(heroTimer); heroTimer = null; }
+  if (track && slides.length > 1) {
+    track.addEventListener('scroll', () => {
+      const i = Math.round(track.scrollLeft / track.clientWidth);
+      dots.forEach((d, k) => d.classList.toggle('on', k === i));
+    }, { passive: true });
+    let paused = false;
+    ['touchstart', 'pointerdown', 'mouseenter'].forEach(ev => track.addEventListener(ev, () => { paused = true; }, { passive: true }));
+    ['touchend', 'mouseleave'].forEach(ev => track.addEventListener(ev, () => { paused = false; }, { passive: true }));
+    heroTimer = setInterval(() => {
+      if (paused || document.hidden || !document.body.classList.contains('view-home')) return;
+      const i = Math.round(track.scrollLeft / track.clientWidth);
+      track.scrollTo({ left: ((i + 1) % slides.length) * track.clientWidth, behavior: 'smooth' });
+    }, 5000);
+  }
+
+  // Ubin gender (hanya gender yang punya produk), urutan Pria · Anak · Wanita
+  const ORDER = ['pria', 'anak', 'wanita'];
+  const gs = [...new Set(list.map(p => (p.gender || '').toLowerCase()).filter(Boolean))]
+    .sort((a, b) => { const ia = ORDER.indexOf(a), ib = ORDER.indexOf(b); return (ia < 0 ? 9 : ia) - (ib < 0 ? 9 : ib) || a.localeCompare(b); });
+  const gEl = document.getElementById('home-genders');
+  if (gEl) gEl.innerHTML = gs.map(g => {
+    const rep = list.find(p => (p.gender || '').toLowerCase() === g);
+    return `<button type="button" class="home-gender" onclick="catalogAll=false;setFilterGender('${chatEsc(g)}','all');showControls();window.scrollTo({top:0})">
+      <img src="${chatEsc(rep.image_url)}" alt="" loading="lazy" decoding="async"><span>${chatEsc(g.toUpperCase())}</span></button>`;
+  }).join('');
+
+  // Rel produk
+  const fill = (secId, railId, arr) => {
+    const sec = document.getElementById(secId), rail = document.getElementById(railId);
+    if (!sec || !rail) return;
+    sec.hidden = !arr.length;
+    rail.innerHTML = arr.map(p => `<div class="rail-item">${cardHtml(p)}</div>`).join('');
+  };
+  fill('home-sec-new', 'home-rail-new', products.slice(0, 10));
+  fill('home-sec-disc', 'home-rail-disc',
+    products.map(p => ({ p, d: discOf(p) })).filter(x => x.d.disc > 0).sort((a, b) => b.d.disc - a.d.disc).slice(0, 10).map(x => x.p));
 }
 
 function getAvgRating(reviews) {
@@ -1106,7 +1275,11 @@ function renderProducts() {
     grid.innerHTML = '<div class="empty-state"><p>Produk tidak ditemukan.</p></div>';
     return;
   }
-  grid.innerHTML = filtered.map(p => {
+  grid.innerHTML = filtered.map(cardHtml).join('');
+}
+
+// Kartu produk (dipakai grid Semua Produk dan rel di beranda)
+function cardHtml(p) {
     const vars = p.variants || [];
     const minPrice = vars.length ? Math.min(...vars.map(v=>v.price)) : 0;
     const maxOrig = vars.length ? Math.max(...vars.map(v=>v.original_price||0)) : 0;
@@ -1130,21 +1303,41 @@ function renderProducts() {
         <p class="card-cat">${capitalize(p.gender)} · ${p.category}</p>
         <h3 class="card-name"><a class="card-link" href="/?p=${p.id}" onclick="cardLinkClick(event)">${p.name}</a></h3>
         <div class="card-price-row">
-          <span class="price-final">${fRp(minPrice)}</span>
+          <span class="price-final${disc ? ' price-sale' : ''}">${fRp(minPrice)}</span>${disc ? `<s class="price-orig">${fRp(maxOrig)}</s>` : ''}
           ${disc ? `<button type="button" class="price-voucher-icon" onclick="event.stopPropagation();openPriceDetail('${p.id}')" aria-label="Rincian harga">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v1.5a1.5 1.5 0 0 0 0 3V15a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-1.5a1.5 1.5 0 0 0 0-3V9Z"/><path d="M10 7v10" stroke-dasharray="1.5 2.5"/></svg>
           </button>` : ''}
         </div>
       </div>
     </div>`;
-  }).join('');
 }
 
 function showControls() {
   document.getElementById('controls').classList.add('show');
 }
+// Dua tampilan: Beranda (home) dan katalog (Semua Produk / per gender / per kategori / hasil cari)
+let catalogAll = false;
+function updateView() {
+  const catalog = catalogAll || activeGender !== 'all' || activeFilter !== 'all';
+  document.body.classList.toggle('view-catalog', catalog);
+  document.body.classList.toggle('view-home', !catalog);
+  return catalog;
+}
+function goHome() {
+  catalogAll = false;
+  const si = document.getElementById('search-input'); if (si) si.value = '';
+  setFilterGender('all', 'all');
+  window.scrollTo({top: 0, behavior: 'smooth'});
+}
+function goAllProducts() {
+  catalogAll = true;
+  setFilterGender('all', 'all');
+  window.scrollTo({top: 0});
+}
 function bottomNavGo(target, el) {
-  setFilterGender(target === 'home' ? 'all' : target, 'all');
+  if (target === 'home') { goHome(); return; }
+  catalogAll = false;
+  setFilterGender(target, 'all');
   showControls();
   document.getElementById('controls').scrollIntoView({behavior:'smooth', block:'start'});
 }
@@ -1158,8 +1351,9 @@ function setFilterGender(gender, category, el, skipHistory, catSlug) {
   const bnEl = document.getElementById(bnId);
   if (bnEl) bnEl.classList.add('active');
   // Update URL hash
+  updateView();
   if (!skipHistory) {
-    let hash = '';
+    let hash = catalogAll && (!gender || gender === 'all') && (!category || category === 'all') ? 'semua' : '';
     if (gender && gender !== 'all') {
       hash = gender;
       const slug = catSlug || (category && category !== 'all' ? category.toLowerCase().replace(/\s+/g,'-') : '');
@@ -1169,7 +1363,11 @@ function setFilterGender(gender, category, el, skipHistory, catSlug) {
   }
   renderProducts();
 }
-function filterProducts() { renderProducts(); }
+function filterProducts() {
+  const si = document.getElementById('search-input');
+  if (si && si.value.trim() && !document.body.classList.contains('view-catalog')) { catalogAll = true; updateView(); }
+  renderProducts();
+}
 
 // ===================== MENU DRAWER =====================
 function toggleDrawer(open) {
@@ -1292,6 +1490,7 @@ document.addEventListener('click', e => {
   if (!a) return;
   e.preventDefault();
   const gender = a.dataset.fbGender, cat = a.dataset.fbCat;
+  catalogAll = false;
   if (cat === 'all') setFilterGender(gender, 'all');
   else setFilterGender(gender, cat, null, null, cat.toLowerCase().replace(/\s+/g, '-'));
   showControls();
@@ -2661,6 +2860,7 @@ function renderModalRelated(p) {
 
 function goToAllProducts() {
   closeProductModal();
+  catalogAll = true;
   setFilterGender('all','all');
   showControls();
   setTimeout(() => document.getElementById('controls').scrollIntoView({behavior:'smooth', block:'start'}), 150);
@@ -3321,6 +3521,8 @@ function showToast(msg, ms = 1500) {
 // ===================== HASH ROUTER =====================
 function applyHashRoute() {
   const hash = location.hash.replace('#', '').trim();
+  catalogAll = hash === 'semua';
+  if (catalogAll) { setFilterGender('all', 'all', null, true); return; }
   // Hash berisi parameter login (token/error dari Google) bukan rute toko: abaikan
   if (!hash || /(^|&)(access_token|refresh_token|provider_token|expires_in|token_type|error|error_code|error_description)=/.test(hash)) { setFilterGender('all', 'all', null, true); return; }
   const parts = hash.split('/');
