@@ -9,6 +9,7 @@ const BRAND = 'Zenoot';
 const CURRENCY = 'IDR';
 const GOOGLE_CATEGORY = '212'; // Apparel & Accessories > Clothing > Shirts & Tops
 const OUT = process.argv[2] || 'feed.tsv';
+const MAX_ID = 50; // batas panjang atribut id di Google Merchant Center (Meta lebih longgar)
 // ========================
 
 const COLUMNS = [
@@ -39,7 +40,8 @@ function mapGender(raw) {
 
 const money = (n) => `${Math.round(n)} ${CURRENCY}`;
 
-// ID item yang STABIL: dibentuk dari produk + warna + ukuran, bukan dari ID varian.
+// ID item yang STABIL: dibentuk dari 8 karakter pertama ID produk + warna + ukuran, bukan dari ID varian.
+// Maksimal 50 karakter (batas Google), jadi UUID produk penuh tidak dipakai di sini.
 // Alasan: admin menghapus lalu membuat ulang semua varian setiap produk disimpan, jadi ID varian
 // berubah terus. Kalau ID item ikut berubah, tag produk di Instagram putus dan peninjauan Google mengulang.
 const slug = (s) =>
@@ -52,14 +54,18 @@ const slug = (s) =>
 export function buildFeed(products) {
   const lines = [COLUMNS.join('\t')];
   const skipped = { noImage: 0, noPrice: 0 };
+  const usedIds = new Set(); // berlaku untuk seluruh feed, supaya dua produk tidak pernah berbagi ID
 
   for (const p of products) {
     if (p.is_active === false || !p.name) continue;
-    const usedIds = new Set();
     const stableId = (v) => {
-      const base = [p.id, slug(v.color_name), slug(v.size)].filter(Boolean).join('-').slice(0, 95);
+      const code = String(p.id ?? '').replace(/[^a-zA-Z0-9]/g, '').slice(0, 8).toLowerCase();
+      const base = [code, slug(v.color_name), slug(v.size)].filter(Boolean).join('-').slice(0, MAX_ID);
       let id = base;
-      for (let n = 2; usedIds.has(id); n++) id = `${base}-${n}`; // warna+ukuran kembar dalam satu produk
+      for (let n = 2; usedIds.has(id); n++) {
+        const suffix = `-${n}`;
+        id = base.slice(0, MAX_ID - suffix.length) + suffix; // warna+ukuran kembar dalam satu produk
+      }
       usedIds.add(id);
       return id;
     };
