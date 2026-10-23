@@ -131,6 +131,15 @@
     .footer-col h4{color:var(--ink);font-size:12px;letter-spacing:.1em;text-transform:uppercase;margin-bottom:16px;font-weight:700}
     .footer-col a{display:block;color:var(--sec);font-size:13px;text-decoration:none;margin-bottom:12px}
     .footer-col a:hover{color:var(--ink)}
+    .fb-genders{display:flex;flex-wrap:wrap;align-items:center;margin-bottom:16px}
+    .fb-gender{font-family:inherit;font-size:13px;font-weight:500;color:var(--sec);background:none;border:none;padding:0;cursor:pointer}
+    .fb-gender+.fb-gender::before{content:"·";display:inline-block;margin:0 10px;color:var(--muted);font-weight:400;text-decoration:none}
+    .fb-gender{display:inline-flex;align-items:center}
+    .fb-gender span{padding-bottom:2px;border-bottom:1.5px solid transparent}
+    .fb-gender:hover{color:var(--ink)}
+    .fb-gender.active{color:var(--ink);font-weight:700}
+    .fb-gender.active span{border-bottom-color:var(--ink)}
+    .fb-empty{font-size:13px;color:var(--muted)}
     .footer-contact{display:flex;gap:10px;font-size:13px;line-height:1.6;margin-bottom:14px}
     .footer-contact svg{width:18px;height:18px;flex-shrink:0;margin-top:2px;color:var(--ink)}
     .footer-chat-link{display:inline-flex;align-items:center;gap:8px;padding:9px 16px;border:1.5px solid var(--ink);border-radius:50px;background:none;color:var(--ink);font-size:13px;font-weight:600;cursor:pointer;font-family:inherit}
@@ -1069,6 +1078,7 @@ async function loadProducts() {
   if (error) { console.error(error); return; }
   products = data || [];
   renderProducts();
+  renderFooterBelanja();
   const sharedId = new URLSearchParams(location.search).get('p');
   if (sharedId && products.some(p=>p.id===sharedId)) openProduct(sharedId);
   else if (sharedId) { seoCanonical(SEO_SITE); seoMeta('meta[property="og:url"]', SEO_SITE); }
@@ -1246,17 +1256,51 @@ function renderDrawerCategories() {
     }).join('');
   }
 
-  // Footer "Belanja": hanya kategori induk (Pria, Wanita, Anak), urutan khusus footer
-  const belanjaEl = document.getElementById('footer-belanja-links');
-  if (belanjaEl) {
-    const FOOTER_BELANJA_ORDER = ['pria','wanita','anak'];
-    const footerRank = c => { const i = FOOTER_BELANJA_ORDER.indexOf(c.name.toLowerCase()); return i === -1 ? FOOTER_BELANJA_ORDER.length : i; };
-    const footerCats = [...topCats].sort((a, b) => footerRank(a) - footerRank(b));
-    belanjaEl.innerHTML = footerCats.length
-      ? footerCats.map(c => { const g = c.name.toLowerCase(); return `<a href="#" onclick="event.preventDefault();setFilterGender('${g}','all');showControls();document.getElementById('controls').scrollIntoView({behavior:'smooth'})">${capitalize(c.name)}</a>`; }).join('')
-      : `<a href="#" onclick="return false">Semua Produk</a>`;
-  }
+  renderFooterBelanja();
 }
+
+// Footer "Belanja": 1 baris gender (Pria · Anak · Wanita), di bawahnya kategori dari Seller Center
+// yang MEMANG ada produk aktifnya. Kategori kosong otomatis tidak tampil; nambah produk baru -> muncul sendiri.
+let footerBelanjaGender = null;
+function renderFooterBelanja() {
+  const el = document.getElementById('footer-belanja-links');
+  if (!el) return;
+  const topCats = allCategories.filter(c => !c.parent_id);
+  if (!topCats.length) { el.innerHTML = `<a href="#" onclick="return false">Semua Produk</a>`; return; }
+  const ORDER = ['pria','anak','wanita'];
+  const rank = c => { const i = ORDER.indexOf(c.name.toLowerCase()); return i === -1 ? ORDER.length : i; };
+  const genders = [...topCats].sort((a, b) => rank(a) - rank(b) || a.name.localeCompare(b.name));
+  const keyOf = c => c.name.toLowerCase();
+  const catsFor = gKey => categoryLeavesForGender(gKey).filter(c =>
+    products.some(p => (p.gender || '').toLowerCase() === gKey && (p.category || '').toLowerCase() === c.name.toLowerCase()));
+  if (!footerBelanjaGender || !genders.some(g => keyOf(g) === footerBelanjaGender)) {
+    const firstWithStock = genders.find(g => catsFor(keyOf(g)).length);
+    footerBelanjaGender = keyOf(firstWithStock || genders[0]);
+  }
+  const cats = catsFor(footerBelanjaGender);
+  const gName = capitalize(footerBelanjaGender);
+  el.innerHTML =
+    `<div class="fb-genders">` + genders.map(g => {
+      const k = keyOf(g);
+      return `<button type="button" class="fb-gender${k === footerBelanjaGender ? ' active' : ''}" data-fb-gender="${chatEsc(k)}"><span>${chatEsc(capitalize(g.name))}</span></button>`;
+    }).join('') + `</div>` +
+    `<div class="fb-cats">` + (cats.length
+      ? `<a href="#" data-fb-gender="${chatEsc(footerBelanjaGender)}" data-fb-cat="all">Semua ${chatEsc(gName)}</a>` +
+        cats.map(c => `<a href="#" data-fb-gender="${chatEsc(footerBelanjaGender)}" data-fb-cat="${chatEsc(c.name)}">${chatEsc(c.name)}</a>`).join('')
+      : `<span class="fb-empty">Belum ada produk</span>`) + `</div>`;
+}
+document.addEventListener('click', e => {
+  const g = e.target.closest('button.fb-gender');
+  if (g) { footerBelanjaGender = g.dataset.fbGender; renderFooterBelanja(); return; }
+  const a = e.target.closest('#footer-belanja-links a[data-fb-cat]');
+  if (!a) return;
+  e.preventDefault();
+  const gender = a.dataset.fbGender, cat = a.dataset.fbCat;
+  if (cat === 'all') setFilterGender(gender, 'all');
+  else setFilterGender(gender, cat, null, null, cat.toLowerCase().replace(/\s+/g, '-'));
+  showControls();
+  document.getElementById('controls').scrollIntoView({behavior:'smooth'});
+});
 
 // ===================== SIDE PANEL (Wishlist / Akun) =====================
 function openSidePanel(title, bodyHtml) {
