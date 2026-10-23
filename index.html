@@ -120,7 +120,7 @@
     .search-input:focus{border-color:var(--sep)}
     .site-footer{background:var(--surface);color:var(--sec);margin-top:60px;border-top:3px solid var(--ink)}
     .footer-inner{max-width:1100px;margin:0 auto;padding:44px 24px 0}
-    .footer-grid{display:grid;grid-template-columns:1.5fr 1fr 1fr 1.4fr;gap:40px;padding-bottom:36px}
+    .footer-grid{display:grid;grid-template-columns:1.5fr 1fr 1fr 1fr 1.4fr;gap:40px;padding-bottom:36px}
     .footer-brand-name{font-family:'Space Grotesk',sans-serif;font-weight:700;letter-spacing:.08em;color:var(--ink);font-size:26px;margin-bottom:10px}
     .footer-tagline-text{font-size:13px;line-height:1.6;max-width:320px}
     .footer-pay{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
@@ -735,7 +735,11 @@
         <h4>Informasi</h4>
         <a href="tentang-kami.html">Tentang Kami</a>
         <a href="privacy.html">Kebijakan &amp; Privasi</a>
-        <a id="footer-reseller" href="https://wa.me/628136664023" target="_blank" rel="noopener">Program Reseller &amp; Dropshipper</a>
+      </div>
+      <div class="footer-col">
+        <h4>Program</h4>
+        <a id="footer-reseller" href="https://wa.me/628136664023" target="_blank" rel="noopener">Reseller (P.O)</a>
+        <a id="footer-dropship" href="https://wa.me/628136664023" target="_blank" rel="noopener">Dropship</a>
       </div>
       <div class="footer-col">
         <h4>Hubungi Kami</h4>
@@ -3335,8 +3339,9 @@ function renderFooterExtras() {
       .map(k => `<a href="${chatEsc(FOOTER_SOCIAL[k])}" target="_blank" rel="noopener" aria-label="${labels[k]}">${icons[k]}</a>`)
       .join('');
   }
-  const rs = document.getElementById('footer-reseller');
-  if (rs) rs.href = `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent('Halo Zenoot, saya tertarik dengan Program Reseller & Dropshipper. Mohon info syarat dan cara daftarnya.')}`;
+  const waProgram = (id, msg) => { const el = document.getElementById(id); if (el) el.href = `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(msg)}`; };
+  waProgram('footer-reseller', 'Halo Zenoot, saya tertarik menjadi Reseller (P.O). Mohon info syarat dan cara daftarnya.');
+  waProgram('footer-dropship', 'Halo Zenoot, saya tertarik menjadi Dropshipper. Mohon info syarat dan cara daftarnya.');
   const pay = document.getElementById('footer-pay');
   if (pay) pay.innerHTML = FOOTER_PAYMENTS.map(n => `<span class="footer-pay-chip">${chatEsc(n)}</span>`).join('');
 }
