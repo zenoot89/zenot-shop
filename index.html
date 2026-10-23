@@ -1073,6 +1073,7 @@ async function loadProducts() {
   if (error) { console.error(error); return; }
   products = data || [];
   renderProducts();
+  renderDrawerSubs();
   renderFooterBelanja();
   const sharedId = new URLSearchParams(location.search).get('p');
   if (sharedId && products.some(p=>p.id===sharedId)) openProduct(sharedId);
@@ -1215,6 +1216,23 @@ function sortByGenderOrder(cats) {
   });
 }
 
+// Hanya kategori yang MEMANG punya produk aktif yang ditampilkan (menu burger & footer), supaya tidak menjanjikan barang yang kosong.
+function leavesWithProducts(gKey) {
+  return categoryLeavesForGender(gKey).filter(c =>
+    products.some(p => (p.gender || '').toLowerCase() === gKey && (p.category || '').toLowerCase() === c.name.toLowerCase()));
+}
+function renderDrawerSubs() {
+  allCategories.filter(c => !c.parent_id).forEach(top => {
+    const gKey = top.name.toLowerCase();
+    const el = document.getElementById(`drawer-sub-${gKey}`);
+    if (!el) return;
+    const leaves = leavesWithProducts(gKey);
+    const on = (cat) => (activeGender === gKey && (cat === 'all' ? activeFilter === 'all' : activeFilter.toLowerCase() === cat.toLowerCase())) ? ' active' : '';
+    el.innerHTML = `<button class="drawer-sub-item${on('all')}" data-gender="${gKey}" data-cat="all" onclick="setFilterGender('${gKey}','all',this);toggleDrawer(false)">Semua ${capitalize(top.name)}</button>` +
+      leaves.map(c => { const slug = c.name.toLowerCase().replace(/\s+/g,'-'); return `<button class="drawer-sub-item${on(c.name)}" data-gender="${gKey}" data-cat="${slug}" onclick="setFilterGender('${gKey}','${c.name}',this,null,'${slug}');toggleDrawer(false)">${c.name}</button>`; }).join('');
+  });
+}
+
 function renderDrawerCategories() {
   const topCats = sortByGenderOrder(allCategories.filter(c => !c.parent_id));
 
@@ -1229,14 +1247,7 @@ function renderDrawerCategories() {
       <div class="drawer-sub" id="drawer-sub-${gKey}"></div>`;
     }).join('');
   }
-  topCats.forEach(top => {
-    const gKey = top.name.toLowerCase();
-    const el = document.getElementById(`drawer-sub-${gKey}`);
-    if (!el) return;
-    const leaves = categoryLeavesForGender(gKey);
-    el.innerHTML = `<button class="drawer-sub-item" data-gender="${gKey}" data-cat="all" onclick="setFilterGender('${gKey}','all',this);toggleDrawer(false)">Semua ${capitalize(top.name)}</button>` +
-      leaves.map(c => { const slug = c.name.toLowerCase().replace(/\s+/g,'-'); return `<button class="drawer-sub-item" data-gender="${gKey}" data-cat="${slug}" onclick="setFilterGender('${gKey}','${c.name}',this,null,'${slug}');toggleDrawer(false)">${c.name}</button>`; }).join('');
-  });
+  renderDrawerSubs();
 
   // Bottom nav: satu tab per kategori level-1 (dinamis)
   const bnWrap = document.getElementById('bottom-nav-genders');
@@ -1264,8 +1275,7 @@ function renderFooterBelanja() {
   const ORDER = ['pria','anak','wanita'];
   const rank = c => { const i = ORDER.indexOf(c.name.toLowerCase()); return i === -1 ? ORDER.length : i; };
   const genders = [...topCats].sort((a, b) => rank(a) - rank(b) || a.name.localeCompare(b.name));
-  const catsFor = gKey => categoryLeavesForGender(gKey).filter(c =>
-    products.some(p => (p.gender || '').toLowerCase() === gKey && (p.category || '').toLowerCase() === c.name.toLowerCase()));
+  const catsFor = leavesWithProducts;
   el.innerHTML = `<div class="fb-grid">` + genders.map(g => {
     const k = g.name.toLowerCase();
     const cats = catsFor(k);
@@ -3700,6 +3710,8 @@ function chatWaLink(text) {
 function chatOpenWhatsApp() {
   const f = chatReadForm();
   if (f.name.length < 2) { chatFormError('Isi nama kamu dulu ya (minimal 2 huruf).'); chatEl('chat-name').focus(); return; }
+  const waDigits = f.wa.replace(/\D/g, '');
+  if (waDigits.length < 9 || waDigits.length > 15) { chatFormError('Nomor WhatsApp belum benar. Contoh: 0812xxxxxxx'); chatEl('chat-wa').focus(); return; }
   chatFormError('');
   window.open(chatWaLink('Halo ZENOOT, saya ' + f.name + '. Saya mau tanya (' + (CHAT_DIV_LABEL[f.div] || 'Chat Admin') + ').'), '_blank');
 }
