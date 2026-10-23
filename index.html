@@ -4,9 +4,9 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
   <meta name="color-scheme" content="light"/>
-  <title>Zenoot — Sweater Rajut & Knitwear Bandung | Grosir & Eceran</title>
-  <meta name="description" content="Produsen sweater rajut & knitwear di Bandung. Tersedia turtleneck, cardigan, half zip, polo rajut pria & wanita. Harga grosir & eceran. Buka reseller & dropship."/>
-  <meta name="keywords" content="sweater rajut bandung, knitwear bandung, turtleneck rajut, cardigan rajut, sweater rajut pria, sweater rajut wanita, grosir sweater bandung, zenoot"/>
+  <title>Zenoot — Sweater Rajut & Knitwear Bandung</title>
+  <meta name="description" content="Zenoot — sweater rajut dan knitwear dari Bandung. Turtleneck, cardigan, half zip, dan polo rajut untuk pria dan wanita."/>
+  <meta name="keywords" content="sweater rajut bandung, knitwear bandung, turtleneck rajut, cardigan rajut, sweater rajut pria, sweater rajut wanita, zenoot"/>
   <!-- PWA -->
   <link rel="manifest" href="manifest.json"/>
   <meta name="theme-color" content="#e8e8e8"/>
@@ -17,7 +17,7 @@
   <link rel="apple-touch-icon" href="apple-touch-icon.png"/>
   <!-- Open Graph -->
   <meta property="og:title" content="Zenoot — Sweater Rajut & Knitwear Bandung"/>
-  <meta property="og:description" content="Produsen sweater rajut & knitwear di Bandung. Turtleneck, cardigan, half zip, polo rajut. Grosir & eceran, buka reseller & dropship."/>
+  <meta property="og:description" content="Zenoot — sweater rajut dan knitwear dari Bandung. Turtleneck, cardigan, half zip, dan polo rajut untuk pria dan wanita."/>
   <meta property="og:type" content="website"/>
   <meta property="og:url" content="https://zenoot.web.id/"/>
   <meta property="og:site_name" content="Zenoot"/>
@@ -42,7 +42,7 @@
         "url": "https://zenoot.web.id/",
         "logo": "https://zenoot.web.id/icon-192.png",
         "image": "https://zenoot.web.id/icon-192.png",
-        "description": "Produsen sweater rajut & knitwear di Bandung. Turtleneck, cardigan, half zip, polo rajut pria & wanita. Grosir & eceran.",
+        "description": "Zenoot — sweater rajut dan knitwear dari Bandung. Turtleneck, cardigan, half zip, dan polo rajut untuk pria dan wanita.",
         "telephone": "+628136664023",
         "address": {
           "@type": "PostalAddress",
@@ -735,6 +735,7 @@
         <h4>Informasi</h4>
         <a href="tentang-kami.html">Tentang Kami</a>
         <a href="privacy.html">Kebijakan &amp; Privasi</a>
+        <a id="footer-reseller" href="https://wa.me/628136664023" target="_blank" rel="noopener">Program Reseller &amp; Dropshipper</a>
       </div>
       <div class="footer-col">
         <h4>Hubungi Kami</h4>
@@ -1009,9 +1010,9 @@ const WA_NUMBER = '628136664023';
 // Pembayaran online (Midtrans): tombol "Bayar Sekarang" TERSEMBUNYI untuk pembeli sampai ini diubah jadi true
 // (ubah setelah Midtrans Production disetujui). Untuk tes: jalankan localStorage.setItem('zenot_pay_test','1') di Console.
 const PAYMENT_ONLINE_ENABLED = true;
-// Selama Midtrans masih Sandbox (masa review): Bayar Online tetap jadi pilihan bawaan supaya alur ke halaman Midtrans
-// terlihat, dengan keterangan masa uji coba di keranjang. Ubah jadi false saat Midtrans Production aktif.
-const PAYMENT_ONLINE_TEST_MODE = true;
+// Midtrans Production sudah aktif (tes bayar nyata GoPay lulus 22 Okt 2026), jadi keterangan "masa uji coba" dimatikan.
+// Ubah jadi true hanya kalau mau menampilkan lagi keterangan uji coba di keranjang.
+const PAYMENT_ONLINE_TEST_MODE = false;
 
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
@@ -2257,7 +2258,6 @@ function seoSetProduct(p, reviews) {
     if (minPrice) parts.push('Harga mulai ' + fRp(minPrice) + '.');
     if (colors.length) parts.push(colors.length + ' pilihan warna.');
     if (specs.length) parts.push(specs.join(', ') + '.');
-    parts.push('Grosir & eceran.');
     const metaDesc = seoCut(parts.join(' '), 158);
     const longDesc = seoCutSentence(seoText(mdToPlain(p.description).replace(/\u2022\s*/g, '')).replace(/^Deskripsi\s*/i, ''), 300) || metaDesc;
 
@@ -3335,6 +3335,8 @@ function renderFooterExtras() {
       .map(k => `<a href="${chatEsc(FOOTER_SOCIAL[k])}" target="_blank" rel="noopener" aria-label="${labels[k]}">${icons[k]}</a>`)
       .join('');
   }
+  const rs = document.getElementById('footer-reseller');
+  if (rs) rs.href = `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent('Halo Zenoot, saya tertarik dengan Program Reseller & Dropshipper. Mohon info syarat dan cara daftarnya.')}`;
   const pay = document.getElementById('footer-pay');
   if (pay) pay.innerHTML = FOOTER_PAYMENTS.map(n => `<span class="footer-pay-chip">${chatEsc(n)}</span>`).join('');
 }
