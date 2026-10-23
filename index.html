@@ -123,9 +123,9 @@
     .footer-grid{display:grid;grid-template-columns:1.5fr 1fr 1fr 1fr 1.4fr;gap:40px;padding-bottom:36px}
     .footer-brand-name{font-family:'Space Grotesk',sans-serif;font-weight:700;letter-spacing:.08em;color:var(--ink);font-size:26px;margin-bottom:10px}
     .footer-tagline-text{font-size:13px;line-height:1.6;max-width:320px}
-    .footer-pay{display:flex;flex-wrap:wrap;align-items:center;gap:12px 16px;margin-top:16px}
+    .footer-pay{display:flex;flex-wrap:wrap;align-items:center;gap:12px 18px;margin-top:16px}
     .footer-pay:empty{display:none}
-    .footer-pay img{height:22px;width:auto;display:block}
+    .footer-pay img{height:18px;width:auto;display:block}
     .footer-pay-chip{padding:5px 10px;border:1px solid var(--border);border-radius:6px;font-size:11.5px;font-weight:600;color:var(--text);background:var(--bg)}
     .footer-col h4{color:var(--ink);font-size:12px;letter-spacing:.1em;text-transform:uppercase;margin-bottom:16px;font-weight:700}
     .footer-col a{display:block;color:var(--sec);font-size:13px;text-decoration:none;margin-bottom:12px}
@@ -145,7 +145,7 @@
     .footer-bottom a:hover{color:var(--ink)}
     @media(max-width:900px){.footer-grid{grid-template-columns:1fr 1fr}}
     @media(max-width:768px){.footer-bottom{padding-bottom:84px}}
-    @media(max-width:560px){.footer-grid{grid-template-columns:1fr;gap:28px}.footer-bottom a{margin:0 16px 0 0}.footer-pay img{height:26px}}
+    @media(max-width:560px){.footer-grid{grid-template-columns:1fr;gap:28px}.footer-bottom a{margin:0 16px 0 0}}
     .icon-btn{background:none;border:none;cursor:pointer;padding:6px;display:flex;align-items:center;justify-content:center;color:var(--ink)}
     .header-cart-count{position:absolute;top:0;right:0;background:var(--accent);color:#fff;border-radius:50%;min-width:16px;height:16px;font-size:9px;display:flex;align-items:center;justify-content:center;padding:0 2px}
     .header-cart-count.hidden{display:none}
@@ -3321,18 +3321,22 @@ async function loadFooterSocial() {
   FOOTER_SOCIAL.tiktok = footerSafeSocial(data.tiktok_url, 'tiktok.com');
   renderFooterExtras();
 }
-// Logo metode pembayaran di footer. Isi hanya metode yang SUDAH aktif di Midtrans (Production); kosong = baris disembunyikan.
-// File logo (logo resmi dari repo veritrans/logo milik Midtrans) sekarang ada di akar repo. Kalau nanti dipindah ke folder pay/,
-// cukup ubah FOOTER_PAY_DIR jadi 'pay/'. Tambah QRIS / BSI setelah aktif.
-const FOOTER_PAY_DIR = '';
+// Logo metode pembayaran di footer (urutan tampil mengikuti urutan di daftar ini).
+// on:true = tampil. HANYA set true untuk metode yang SUDAH aktif di Midtrans (Production), supaya pembeli tidak mengira bisa
+// bayar pakai metode yang belum tersedia di halaman bayar. Setelah QRIS / BCA aktif, ubah on:false jadi on:true.
+// Logo resmi dari repo veritrans/logo milik Midtrans. SeaBank, OVO, DANA, BSI belum ada logonya: tambah barisnya setelah file logo siap.
 // w/h = ukuran asli file (untuk mencegah layout bergeser saat gambar dimuat).
+// File logo ada di akar repo. Kalau nanti dipindah ke folder pay/, cukup ubah FOOTER_PAY_DIR jadi 'pay/'.
+const FOOTER_PAY_DIR = '';
 const FOOTER_PAYMENTS = [
-  { n: 'GoPay',        f: 'gopay.png',        w: 258, h: 56 },
-  { n: 'BNI',          f: 'bni.png',          w: 193, h: 56 },
-  { n: 'BRI',          f: 'bri.png',          w: 148, h: 56 },
-  { n: 'Mandiri',      f: 'mandiri.png',      w: 192, h: 56 },
-  { n: 'CIMB Niaga',   f: 'cimb-niaga.png',   w: 384, h: 56 },
-  { n: 'PermataBank',  f: 'permata-bank.png', w: 226, h: 56 }
+  { n: 'QRIS',         f: 'qris.png',         w: 328, h: 56, on: false },
+  { n: 'BCA',          f: 'bca.png',          w: 180, h: 56, on: false },
+  { n: 'BRI',          f: 'bri.png',          w: 148, h: 56, on: true },
+  { n: 'BNI',          f: 'bni.png',          w: 193, h: 56, on: true },
+  { n: 'Mandiri',      f: 'mandiri.png',      w: 192, h: 56, on: true },
+  { n: 'CIMB Niaga',   f: 'cimb-niaga.png',   w: 384, h: 56, on: true },
+  { n: 'PermataBank',  f: 'permata-bank.png', w: 226, h: 56, on: true },
+  { n: 'GoPay',        f: 'gopay.png',        w: 258, h: 56, on: true }
 ];
 
 function chatEsc(s) {
@@ -3355,7 +3359,7 @@ function renderFooterExtras() {
   waProgram('footer-reseller', 'Halo Zenoot, saya tertarik menjadi Reseller (P.O). Mohon info syarat dan cara daftarnya.');
   waProgram('footer-dropship', 'Halo Zenoot, saya tertarik menjadi Dropshipper. Mohon info syarat dan cara daftarnya.');
   const pay = document.getElementById('footer-pay');
-  if (pay) pay.innerHTML = FOOTER_PAYMENTS.map(m => `<img src="${FOOTER_PAY_DIR}${m.f}" alt="${chatEsc(m.n)}" title="${chatEsc(m.n)}" width="${m.w}" height="${m.h}" loading="lazy" decoding="async" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'footer-pay-chip',textContent:this.alt}))">`).join('');
+  if (pay) pay.innerHTML = FOOTER_PAYMENTS.filter(m => m.on).map(m => `<img src="${FOOTER_PAY_DIR}${m.f}" alt="${chatEsc(m.n)}" title="${chatEsc(m.n)}" width="${m.w}" height="${m.h}" loading="lazy" decoding="async" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'footer-pay-chip',textContent:this.alt}))">`).join('');
 }
 
 // ===================== CHAT (pembeli + tamu) =====================
