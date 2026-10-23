@@ -3322,7 +3322,9 @@ async function loadFooterSocial() {
   renderFooterExtras();
 }
 // Logo metode pembayaran di footer. Isi hanya metode yang SUDAH aktif di Midtrans (Production); kosong = baris disembunyikan.
-// File logo ada di folder pay/ (logo resmi dari repo veritrans/logo milik Midtrans). Tambah QRIS / BSI setelah aktif.
+// File logo (logo resmi dari repo veritrans/logo milik Midtrans) sekarang ada di akar repo. Kalau nanti dipindah ke folder pay/,
+// cukup ubah FOOTER_PAY_DIR jadi 'pay/'. Tambah QRIS / BSI setelah aktif.
+const FOOTER_PAY_DIR = '';
 // w/h = ukuran asli file (untuk mencegah layout bergeser saat gambar dimuat).
 const FOOTER_PAYMENTS = [
   { n: 'GoPay',        f: 'gopay.png',        w: 258, h: 56 },
@@ -3353,7 +3355,7 @@ function renderFooterExtras() {
   waProgram('footer-reseller', 'Halo Zenoot, saya tertarik menjadi Reseller (P.O). Mohon info syarat dan cara daftarnya.');
   waProgram('footer-dropship', 'Halo Zenoot, saya tertarik menjadi Dropshipper. Mohon info syarat dan cara daftarnya.');
   const pay = document.getElementById('footer-pay');
-  if (pay) pay.innerHTML = FOOTER_PAYMENTS.map(m => `<img src="pay/${m.f}" alt="${chatEsc(m.n)}" title="${chatEsc(m.n)}" width="${m.w}" height="${m.h}" loading="lazy" decoding="async" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'footer-pay-chip',textContent:this.alt}))">`).join('');
+  if (pay) pay.innerHTML = FOOTER_PAYMENTS.map(m => `<img src="${FOOTER_PAY_DIR}${m.f}" alt="${chatEsc(m.n)}" title="${chatEsc(m.n)}" width="${m.w}" height="${m.h}" loading="lazy" decoding="async" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'footer-pay-chip',textContent:this.alt}))">`).join('');
 }
 
 // ===================== CHAT (pembeli + tamu) =====================
