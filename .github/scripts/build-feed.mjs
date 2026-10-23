@@ -9,6 +9,7 @@ const BRAND = 'Zenoot';
 const CURRENCY = 'IDR';
 const GOOGLE_CATEGORY = '212'; // Apparel & Accessories > Clothing > Shirts & Tops
 const OUT = process.argv[2] || 'feed.tsv';
+const OUT_XML = process.argv[3] || ''; // contoh: feed-meta.xml (workflow sudah mengirim argumen ini)
 const MAX_ID = 50; // batas panjang atribut id di Google Merchant Center (Meta lebih longgar)
 // ========================
 
@@ -51,9 +52,141 @@ const slug = (s) =>
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '');
 
+
+const RAPIKAN_TSV = false; // false = deskripsi di feed SAMA dengan di web (diatur hanya di admin web)
+// ====== PERAPIAN DESKRIPSI (opsional, tidak dipakai kalau RAPIKAN_TSV = false) ======
+// Sumber teks deskripsi di admin berisi judul HURUF BESAR, bullet, dan blok promo reseller. Meta/IG/WA/Google membuang
+// baris baru, jadi semuanya menyatu jadi satu paragraf. Fungsi ini menyusunnya jadi kalimat berlabel ("Spesifikasi: ...")
+// yang tetap enak dibaca walaupun jadi satu paragraf.
+const HAPUS_PROMO_RESELLER = false; // blok "OPEN RESELLER & DROPSHIP" tidak ditampilkan di katalog
+const BUKAN_JUDUL = new Set(['XXL', 'XL', 'ALL SIZE', 'SLIM FIT', 'HAPPY SHOPING', 'HAPPY SHOPPING', 'SIZE']);
+const BULLET = /^[•✔✅✓▪●·*-]\s*/u;
+
+function judulKapital(t) {
+  return t
+    .toLowerCase()
+    .replace(/(^|[\s(])(\p{L})/gu, (m, a, b) => a + b.toUpperCase())
+    .replace(/\bDan\b/g, 'dan')
+    .replace(/\bXxl\b/g, 'XXL')
+    .replace(/\bXl\b/g, 'XL');
+}
+
+export function rapikanDeskripsi(raw) {
+  let t = String(raw ?? '')
+    .replace(/<\s*br\s*\/?>|<\/p>|<\/li>/gi, '\n')
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/\r\n?/g, '\n')
+    .replace(/[\t\u00a0]+/g, ' ')
+    .replace(/[-=_*~]{4,}/g, ' ')
+    .replace(/\bKahaki\b/gi, 'Khaki');
+  if (HAPUS_PROMO_RESELLER) {
+    t = t.replace(/OPEN RESELLER[\s\S]*?Trusted seller\s*(?:HAPPY SHOP+ING)?/i, ' ');
+  }
+  // Judul HURUF BESAR di tengah kalimat -> baris sendiri; bullet di tengah baris -> baris sendiri.
+  t = t.replace(
+    /(?<![\p{L}])([A-Z]{3,}(?:\s+(?:DAN|[A-Z]{3,}))*(?:\s*\([^)]*\))?\??)(?![\p{L}])(?=\s*[•✔✅\p{Lu}])/gu,
+    (m, h) => (BUKAN_JUDUL.has(h.replace(/\s*\(.*$/, '').trim()) ? m : `\n${h}\n`),
+  );
+  t = t.replace(/\s+([•✔✅])\s*/gu, '\n$1 ');
+
+  const lines = t.split('\n').map((l) => l.replace(/\s+/g, ' ').trim()).filter(Boolean);
+  const out = [];
+  let items = [];
+  let label = '';
+  const flush = () => {
+    if (!items.length) return;
+    const isi = items.map((i) => i.replace(/[.;,\s]+$/, '')).join('; ');
+    const body = /[!?]$/.test(isi) ? isi : isi + '.';
+    out.push(label ? (label.endsWith('?') ? `${label} ${body}` : `${label}: ${body}`) : body);
+    items = [];
+    label = '';
+  };
+  const titik = (s) => (/[.!?:]$/.test(s) ? s : s + '.');
+
+  for (const line of lines) {
+    const tanpaKurung = line.replace(/\s*\([^)]*\)/g, '');
+    const noLower = !/\p{Ll}/u.test(tanpaKurung);
+    const inti = line.replace(/\s*\(.*$/, '').replace(/[?:]$/, '').trim();
+    if (noLower && /\p{Lu}{3,}/u.test(tanpaKurung) && !BUKAN_JUDUL.has(inti)) {
+      flush();
+      label = judulKapital(line.replace(/:$/, ''));
+      continue;
+    }
+    if (BULLET.test(line)) {
+      items.push(line.replace(BULLET, ''));
+      continue;
+    }
+    flush();
+    if (label) {
+      out.push(label.endsWith('?') ? `${label} ${titik(line)}` : `${label}: ${titik(line)}`);
+      label = '';
+    } else {
+      out.push(titik(line));
+    }
+  }
+  flush();
+  if (label) out.push(label.endsWith('?') ? label : `${label}.`);
+  return out.join(' ').replace(/\s{2,}/g, ' ').trim();
+}
+// ================================
+
+
+// Deskripsi persis seperti di web: baris baru & bullet dipertahankan (hanya HTML dibuang). Dipakai untuk feed XML.
+export function deskripsiAsli(raw, max = 5000) {
+  let s = String(raw ?? '')
+    .replace(/<\s*br\s*\/?>|<\/p>|<\/li>/gi, '\n')
+    .replace(/<[^>]*>/g, '')
+    .replace(/\r\n?/g, '\n')
+    .replace(/[\t\u00a0]+/g, ' ')
+    .split('\n')
+    .map((l) => l.replace(/ {2,}/g, ' ').trimEnd())
+    .join('\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+  if (s.length > max) s = s.slice(0, max - 1).trimEnd() + '…';
+  return s;
+}
+
+const xmlEsc = (v) =>
+  String(v ?? '')
+    .replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/g, '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+
+// Feed XML (RSS 2.0 + namespace g:) untuk Meta dan Google. Berbeda dengan TSV, XML boleh berisi baris baru.
+export function buildXml(items) {
+  const tag = (n, v) => (v === '' || v == null ? '' : `      <g:${n}>${xmlEsc(v)}</g:${n}>\n`);
+  const body = items
+    .map((r) => {
+      const extra = String(r.additional_image_link || '').split(',').filter(Boolean);
+      return (
+        '    <item>\n' +
+        tag('id', r.id) + tag('item_group_id', r.item_group_id) + tag('title', r.title) +
+        tag('description', r.description) + tag('availability', r.availability) +
+        tag('condition', r.condition) + tag('price', r.price) + tag('sale_price', r.sale_price) +
+        tag('link', r.link) + tag('image_link', r.image_link) +
+        extra.map((u) => tag('additional_image_link', u)).join('') +
+        tag('brand', r.brand) + tag('identifier_exists', r.identifier_exists) +
+        tag('google_product_category', r.google_product_category) + tag('gender', r.gender) +
+        tag('age_group', r.age_group) + tag('color', r.color) + tag('size', r.size) +
+        tag('material', r.material) + tag('pattern', r.pattern) + tag('product_type', r.product_type) +
+        '    </item>\n'
+      );
+    })
+    .join('');
+  return (
+    '<?xml version="1.0" encoding="UTF-8"?>\n' +
+    '<rss xmlns:g="http://base.google.com/ns/1.0" version="2.0">\n  <channel>\n' +
+    `    <title>${xmlEsc(BRAND)}</title>\n    <link>${xmlEsc(SITE)}</link>\n` +
+    `    <description>Feed produk ${xmlEsc(BRAND)}</description>\n` + body + '  </channel>\n</rss>\n'
+  );
+}
+
 export function buildFeed(products) {
   const lines = [COLUMNS.join('\t')];
   const skipped = { noImage: 0, noPrice: 0 };
+  const xmlItems = [];
   const usedIds = new Set(); // berlaku untuk seluruh feed, supaya dua produk tidak pernah berbagi ID
 
   for (const p of products) {
@@ -93,7 +226,7 @@ export function buildFeed(products) {
       const size = clean(v.size);
       const { gender, ageGroup } = mapGender(p.gender);
       const desc =
-        clean(p.description, 5000) ||
+        clean(RAPIKAN_TSV ? rapikanDeskripsi(p.description) : p.description, 5000) ||
         clean([p.name, p.bahan ? `Bahan ${p.bahan}` : ''].filter(Boolean).join('. '), 5000);
 
       const row = {
@@ -120,9 +253,10 @@ export function buildFeed(products) {
         product_type: clean(p.category),
       };
       lines.push(COLUMNS.map((c) => clean(row[c])).join('\t'));
+      xmlItems.push({ ...row, description: deskripsiAsli(p.description) || row.description });
     }
   }
-  return { text: lines.join('\n') + '\n', rows: lines.length - 1, skipped };
+  return { text: lines.join('\n') + '\n', rows: lines.length - 1, skipped, xml: buildXml(xmlItems) };
 }
 
 async function fetchProducts() {
@@ -150,12 +284,13 @@ async function fetchProducts() {
 if (import.meta.url === `file://${process.argv[1]}`) {
   try {
     const products = await fetchProducts();
-    const { text, rows, skipped } = buildFeed(products);
+    const { text, rows, skipped, xml } = buildFeed(products);
     if (rows === 0) {
       console.error('Tidak ada baris produk yang valid, feed lama TIDAK diubah (pengaman).');
       process.exit(1);
     }
     writeFileSync(OUT, text);
+    if (OUT_XML) writeFileSync(OUT_XML, xml);
     console.log(`Produk: ${products.length} | baris feed (varian): ${rows} | dilewati tanpa gambar: ${skipped.noImage}, tanpa harga: ${skipped.noPrice}`);
   } catch (err) {
     console.error('Gagal menyusun feed, feed lama TIDAK diubah:', err.message);
