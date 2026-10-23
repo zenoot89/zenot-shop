@@ -3324,7 +3324,8 @@ async function loadFooterSocial() {
 // Logo metode pembayaran di footer (urutan tampil mengikuti urutan di daftar ini).
 // on:true = tampil. HANYA set true untuk metode yang SUDAH aktif di Midtrans (Production), supaya pembeli tidak mengira bisa
 // bayar pakai metode yang belum tersedia di halaman bayar. Setelah QRIS / BCA aktif, ubah on:false jadi on:true.
-// Logo resmi dari repo veritrans/logo milik Midtrans. SeaBank, OVO, DANA, BSI belum ada logonya: tambah barisnya setelah file logo siap.
+// Logo bank/dompet besar dari repo resmi veritrans/logo milik Midtrans; BSI, SeaBank, OVO, DANA, ShopeePay dari file yang dikirim pemilik toko.
+// d = tinggi tampil (px), bawaan 18. Logo yang bentuknya menumpuk (SeaBank) dibuat lebih tinggi supaya teksnya terbaca.
 // w/h = ukuran asli file (untuk mencegah layout bergeser saat gambar dimuat).
 // File logo ada di akar repo. Kalau nanti dipindah ke folder pay/, cukup ubah FOOTER_PAY_DIR jadi 'pay/'.
 const FOOTER_PAY_DIR = '';
@@ -3336,7 +3337,12 @@ const FOOTER_PAYMENTS = [
   { n: 'Mandiri',      f: 'mandiri.png',      w: 192, h: 56, on: true },
   { n: 'CIMB Niaga',   f: 'cimb-niaga.png',   w: 384, h: 56, on: true },
   { n: 'PermataBank',  f: 'permata-bank.png', w: 226, h: 56, on: true },
-  { n: 'GoPay',        f: 'gopay.png',        w: 258, h: 56, on: true }
+  { n: 'BSI',          f: 'bsi.png',          w: 151, h: 47, on: false, d: 22 },
+  { n: 'SeaBank',      f: 'seabank.png',      w: 104, h: 144, on: false, d: 34 },
+  { n: 'GoPay',        f: 'gopay.png',        w: 258, h: 56, on: true },
+  { n: 'OVO',          f: 'ovo.png',          w: 136, h: 53, on: false },
+  { n: 'DANA',         f: 'dana.png',         w: 175, h: 54, on: false },
+  { n: 'ShopeePay',    f: 'shopeepay.png',    w: 153, h: 64, on: false, d: 20 }
 ];
 
 function chatEsc(s) {
@@ -3359,7 +3365,7 @@ function renderFooterExtras() {
   waProgram('footer-reseller', 'Halo Zenoot, saya tertarik menjadi Reseller (P.O). Mohon info syarat dan cara daftarnya.');
   waProgram('footer-dropship', 'Halo Zenoot, saya tertarik menjadi Dropshipper. Mohon info syarat dan cara daftarnya.');
   const pay = document.getElementById('footer-pay');
-  if (pay) pay.innerHTML = FOOTER_PAYMENTS.filter(m => m.on).map(m => `<img src="${FOOTER_PAY_DIR}${m.f}" alt="${chatEsc(m.n)}" title="${chatEsc(m.n)}" width="${m.w}" height="${m.h}" loading="lazy" decoding="async" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'footer-pay-chip',textContent:this.alt}))">`).join('');
+  if (pay) pay.innerHTML = FOOTER_PAYMENTS.filter(m => m.on).map(m => `<img src="${FOOTER_PAY_DIR}${m.f}" alt="${chatEsc(m.n)}" title="${chatEsc(m.n)}" width="${m.w}" height="${m.h}" style="height:${m.d || 18}px" loading="lazy" decoding="async" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'footer-pay-chip',textContent:this.alt}))">`).join('');
 }
 
 // ===================== CHAT (pembeli + tamu) =====================
