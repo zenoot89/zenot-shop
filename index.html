@@ -725,6 +725,7 @@
     @keyframes pdp-out{to{opacity:0;transform:translateY(12px)}}
     .pdp-gallery .modal-carousel-wrap{aspect-ratio:4/5;background:#fff;border-radius:0;margin-bottom:0}
     .modal-carousel-slide img{object-position:center top}
+    .modal-carousel-slide:first-child img{transition:opacity .2s ease}
     .modal-thumbs{display:flex;gap:8px;overflow-x:auto;padding:10px 16px 0;scrollbar-width:none}
     .modal-thumbs::-webkit-scrollbar{display:none}
     .modal-thumb{flex:0 0 64px;height:80px;padding:0;border:1px solid transparent;background:#fff;cursor:pointer;opacity:.7}
@@ -2785,9 +2786,8 @@ let modalCarouselImages = [];
 function renderModalGallery() {
   const mainUrls = (activeProduct.image_urls && activeProduct.image_urls.length) ? activeProduct.image_urls : (activeProduct.image_url ? [activeProduct.image_url] : []);
   const variantUrls = [...new Map(activeVariants.filter(v=>v.image_url).map(v=>[v.color_name, v.image_url])).values()];
-  const seen = new Set(mainUrls);
-  const extra = variantUrls.filter(u => !seen.has(u));
-  modalCarouselImages = [...mainUrls, ...extra];
+  // Galeri hanya berisi foto utama produk. Foto varian tidak ditambahkan ke galeri: ia hanya menggantikan foto paling atas saat warnanya dipilih.
+  modalCarouselImages = mainUrls.length ? [...mainUrls] : [...variantUrls];
   if (!modalCarouselImages.length) modalCarouselImages = [null]; // placeholder kosong
 
   const track = document.getElementById('modal-carousel');
@@ -2812,6 +2812,22 @@ function renderModalGallery() {
     document.querySelectorAll('.modal-thumb').forEach((d,i)=>d.classList.toggle('active', i===idx));
   };
   track.scrollLeft = 0;
+}
+// Foto paling atas: cover saat belum ada warna dipilih; foto varian saat warna dipilih (kalau warna itu punya foto)
+function setHeroImage(url) {
+  const track = document.getElementById('modal-carousel');
+  if (!track) return;
+  const target = url || modalCarouselImages[0];
+  const img = track.querySelector('.modal-carousel-slide img');
+  const thumbImg = document.querySelector('.modal-thumb img');
+  if (track.scrollLeft > 0) track.scrollTo({ left: 0, behavior: 'smooth' });
+  if (!img || !target || img.getAttribute('src') === target) return;
+  const pre = new Image();
+  const apply = () => { img.setAttribute('src', target); img.style.opacity = 1; if (thumbImg) thumbImg.setAttribute('src', target); };
+  img.style.opacity = 0;
+  pre.onload = apply;
+  pre.onerror = () => { img.style.opacity = 1; };
+  pre.src = target;
 }
 function scrollCarouselToIndex(idx) {
   const track = document.getElementById('modal-carousel');
@@ -2841,7 +2857,7 @@ function selectColor(el, colorName) {
   document.getElementById('stok-label').textContent = 'Stok: pilih ukuran dulu';
   renderSizes(colorName);
   const variantWithPhoto = activeVariants.find(v => v.color_name === colorName && v.image_url);
-  if (variantWithPhoto) scrollCarouselToImage(variantWithPhoto.image_url);
+  setHeroImage(variantWithPhoto ? variantWithPhoto.image_url : null);
   const firstVar = activeVariants.find(v=>v.color_name===colorName);
   updateModalPrice(firstVar);
   autoPickSingleSize(colorName);
