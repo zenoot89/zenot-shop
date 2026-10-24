@@ -692,6 +692,8 @@
     .home-rail{display:flex;gap:12px;overflow-x:auto;scroll-snap-type:x proximity;scrollbar-width:none;padding-bottom:4px}
     .home-rail::-webkit-scrollbar{display:none}
     .rail-item{flex:0 0 44vw;max-width:230px;scroll-snap-align:start}
+    .home-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px 8px}
+    @media(min-width:900px){.home-grid{grid-template-columns:repeat(4,1fr);gap:20px}}
     .home-story{margin-top:48px;padding:36px 8px 8px;text-align:center;border-top:1px solid var(--border)}
     .home-story img{width:170px;height:auto;margin:0 auto 18px;display:block}
     .home-story p{font-size:14px;line-height:1.7;max-width:420px;margin:0 auto 6px}
@@ -918,6 +920,10 @@
   <section class="home-sec" id="home-sec-disc" hidden>
     <div class="home-sec-head"><h2>Diskon Spesial</h2><button type="button" onclick="goAllProducts()">Lihat Semua</button></div>
     <div class="home-rail" id="home-rail-disc"></div>
+  </section>
+  <section class="home-sec" id="home-sec-all" hidden>
+    <div class="home-sec-head"><h2>Semua Produk</h2></div>
+    <div class="home-grid" id="home-grid-all"></div>
   </section>
   <div class="home-more"><button type="button" class="home-btn" onclick="goAllProducts()">LIHAT SEMUA PRODUK</button></div>
 </section>
@@ -1300,6 +1306,44 @@ function discOf(p) {
   const maxOrig = vars.length ? Math.max(...vars.map(v => v.original_price || 0)) : 0;
   return { minPrice, maxOrig, disc: maxOrig && minPrice ? discPct(maxOrig, minPrice) : 0 };
 }
+// Minat pengunjung: disimpan HANYA di HP/browser pengunjung (localStorage), tidak dikirim ke server
+const INTEREST_KEY = 'zenot_interest';
+function interestLoad() {
+  try {
+    const o = JSON.parse(localStorage.getItem(INTEREST_KEY) || 'null');
+    if (o && typeof o === 'object') return { g: o.g || {}, c: o.c || {}, v: Array.isArray(o.v) ? o.v : [] };
+  } catch (e) { /* data rusak atau storage dinonaktifkan: anggap kosong */ }
+  return { g: {}, c: {}, v: [] };
+}
+function interestRecord(p) {
+  try {
+    if (!p) return;
+    const o = interestLoad();
+    const g = (p.gender || '').toLowerCase(), c = (p.category || '').toLowerCase();
+    if (g) o.g[g] = (o.g[g] || 0) + 1;
+    if (c) o.c[c] = (o.c[c] || 0) + 1;
+    o.v = [p.id].concat(o.v.filter(x => x !== p.id)).slice(0, 30);
+    localStorage.setItem(INTEREST_KEY, JSON.stringify(o));
+  } catch (e) { /* abaikan: fitur ini tidak boleh mengganggu toko */ }
+}
+// 4 produk untuk section "Semua Produk": cocok dengan minat pengunjung, belum pernah dibuka, lalu diisi acak
+function pickHomeAll() {
+  const N = 4;
+  const list = products.filter(p => p.image_url && (p.variants || []).length);
+  if (!list.length) return [];
+  const inNew = new Set(products.slice(0, 10).map(p => p.id));
+  const it = interestLoad();
+  const seen = new Set(it.v);
+  const shuffle = a => { const b = a.slice(); for (let i = b.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [b[i], b[j]] = [b[j], b[i]]; } return b; };
+  const picked = [];
+  const add = arr => { for (const p of arr) { if (picked.length >= N) break; if (!picked.includes(p)) picked.push(p); } };
+  const score = p => (it.g[(p.gender || '').toLowerCase()] || 0) + (it.c[(p.category || '').toLowerCase()] || 0) * 2;
+  add(list.filter(p => !seen.has(p.id) && score(p) > 0).sort((a, b) => score(b) - score(a)));
+  add(shuffle(list.filter(p => !inNew.has(p.id) && !seen.has(p.id))));
+  add(shuffle(list.filter(p => !inNew.has(p.id))));
+  add(shuffle(list));
+  return picked;
+}
 function renderHome() {
   const heroEl = document.getElementById('home-hero');
   if (!heroEl) return;
@@ -1365,6 +1409,14 @@ function renderHome() {
   fill('home-sec-new', 'home-rail-new', products.slice(0, 10));
   fill('home-sec-disc', 'home-rail-disc',
     products.map(p => ({ p, d: discOf(p) })).filter(x => x.d.disc > 0).sort((a, b) => b.d.disc - a.d.disc).slice(0, 10).map(x => x.p));
+
+  // Semua Produk: 4 kartu, lalu tombol "Lihat Semua Produk"
+  const allSec = document.getElementById('home-sec-all'), allGrid = document.getElementById('home-grid-all');
+  if (allSec && allGrid) {
+    const arr = pickHomeAll();
+    allSec.hidden = !arr.length;
+    allGrid.innerHTML = arr.map(p => cardHtml(p)).join('');
+  }
 }
 
 function getAvgRating(reviews) {
@@ -2718,6 +2770,7 @@ async function openProduct(id, opts) {
   activeProduct = next;
   pdpTab('desc');
   trackEvent('view_product', id);
+  interestRecord(activeProduct);
   activeVariants = activeProduct.variants || [];
   selectedVariant = null;
   selectedColorName = null;
