@@ -679,6 +679,10 @@
     .hero-dots span{width:22px;height:3px;background:rgba(255,255,255,.45);transition:background .25s}
     .hero-dots span.on{background:#fff}
     .home-genders{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:20px 0 8px}
+    .home-cat-head{justify-content:center;margin:36px 0 0}
+    .home-cat-head[hidden]{display:none}
+    .home-cat-head + .home-genders{margin-top:20px}
+    @media(min-width:900px){.home-cat-head{margin-top:52px}.home-cat-head + .home-genders{margin-top:24px}}
     .home-gender{position:relative;aspect-ratio:3/4;border:none;padding:0;background:#fff;cursor:pointer;overflow:hidden}
     .home-gender img{width:100%;height:100%;object-fit:cover;object-position:center top;display:block}
     .home-gender::after{content:"";position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.6),rgba(0,0,0,0) 50%)}
@@ -909,6 +913,7 @@
 <!-- BERANDA -->
 <section class="home-view" id="home-view">
   <div class="home-hero" id="home-hero"><div class="loading-state">Memuat...</div></div>
+  <div class="home-sec-head home-cat-head" id="home-cat-head" hidden><h2>Kategori</h2></div>
   <div class="home-genders" id="home-genders"></div>
   <section class="promo-section">
     <div class="promo-section-list" id="promo-section-list"></div>
@@ -1393,6 +1398,8 @@ function renderHome() {
   const gs = [...new Set(list.map(p => (p.gender || '').toLowerCase()).filter(Boolean))]
     .sort((a, b) => { const ia = ORDER.indexOf(a), ib = ORDER.indexOf(b); return (ia < 0 ? 9 : ia) - (ib < 0 ? 9 : ib) || a.localeCompare(b); });
   const gEl = document.getElementById('home-genders');
+  const gHead = document.getElementById('home-cat-head');
+  if (gHead) gHead.hidden = !gs.length;
   if (gEl) gEl.innerHTML = gs.map(g => {
     const rep = list.find(p => (p.gender || '').toLowerCase() === g);
     return `<button type="button" class="home-gender" onclick="catalogAll=false;setFilterGender('${chatEsc(g)}','all');showControls();window.scrollTo({top:0})">
