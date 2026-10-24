@@ -958,8 +958,8 @@
       </div>
       <div class="footer-col">
         <h4>Program</h4>
-        <a id="footer-reseller" href="https://wa.me/628136664023" target="_blank" rel="noopener">Reseller (P.O)</a>
-        <a id="footer-dropship" href="https://wa.me/628136664023" target="_blank" rel="noopener">Dropship</a>
+        <a id="footer-reseller" href="program-reseller.html">Reseller (P.O)</a>
+        <a id="footer-dropship" href="program-dropship.html">Dropship</a>
       </div>
       <div class="footer-col">
         <h4>Hubungi Kami</h4>
@@ -3798,9 +3798,6 @@ function renderFooterExtras() {
       .map(k => `<a href="${chatEsc(FOOTER_SOCIAL[k])}" target="_blank" rel="noopener" aria-label="${labels[k]}">${icons[k]}</a>`)
       .join('');
   }
-  const waProgram = (id, msg) => { const el = document.getElementById(id); if (el) el.href = `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(msg)}`; };
-  waProgram('footer-reseller', 'Halo Zenoot, saya tertarik menjadi Reseller (P.O). Mohon info syarat dan cara daftarnya.');
-  waProgram('footer-dropship', 'Halo Zenoot, saya tertarik menjadi Dropshipper. Mohon info syarat dan cara daftarnya.');
   const pay = document.getElementById('footer-pay');
   if (pay) pay.innerHTML = FOOTER_PAYMENTS.filter(m => m.on).map(m => `<img src="${FOOTER_PAY_DIR}${m.f}" alt="${chatEsc(m.n)}" title="${chatEsc(m.n)}" width="${m.w}" height="${m.h}" style="height:${m.d || 14}px" loading="lazy" decoding="async" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'footer-pay-chip',textContent:this.alt}))">`).join('');
 }
