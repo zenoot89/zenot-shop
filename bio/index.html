@@ -29,6 +29,7 @@
   .page{width:100%;max-width:420px;}
   header{text-align:center;margin-bottom:24px;background:var(--muda);border-radius:16px;padding:24px 18px;}
   .logo{font-family:'Space Grotesk',sans-serif;font-size:26px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;margin:0 0 12px;color:var(--tua);}
+  .logo-img{display:block;width:190px;max-width:70%;height:auto;margin:0 auto 12px;}
   .tagline{font-size:14px;color:var(--sec);margin:0;line-height:1.55;}
 
   nav{display:flex;flex-direction:column;gap:12px;}
@@ -79,7 +80,7 @@
 <body>
   <div class="page">
     <header>
-      <p class="logo">zenoot</p>
+      <img class="logo-img" src="../zenoot-shop-logo-black.png" alt="Zenoot Knitwear" width="1000" height="235" decoding="async" onerror="this.replaceWith(Object.assign(document.createElement('p'),{className:'logo',textContent:'zenoot'}))">
       <p class="tagline">Cardigan wanita, cardigan komputer &amp; sweater pria.<br>Dirajut di Bandung.</p>
     </header>
 
@@ -125,8 +126,8 @@ function waLink(number){
   return digits ? `https://wa.me/${digits}` : null;
 }
 
-function cardHTML({icon, label, sub, href, primary, id, iconClass}){
-  return `<a class="card${primary?' primary':''}" href="${href}" target="_blank" rel="noopener" ${id?`id="${id}"`:''}>
+function cardHTML({icon, label, sub, href, primary, id, iconClass, sameTab}){
+  return `<a class="card${primary?' primary':''}" href="${href}" ${sameTab?'':'target="_blank" rel="noopener"'} ${id?`id="${id}"`:''}>
     <span class="icon${iconClass?' '+iconClass:''}">${icon}</span>
     <span class="txt"><p class="label">${label}</p><p class="sub">${sub}</p></span>
     <span class="chev">›</span>
@@ -177,10 +178,8 @@ async function render(){
   const wa = waLink(data.wa_number);
   if (wa){
     html += cardHTML({icon:ICONS.chat, label:'Chat & Pesan via WhatsApp', sub:'Tanya stok, ukuran, atau custom', href:wa, iconClass:'wa'});
-    const resellerMsg = 'Halo Zenoot, saya tertarik menjadi Reseller (P.O). Mohon info syarat dan cara daftarnya.';
-    const dropshipMsg = 'Halo Zenoot, saya tertarik menjadi Dropshipper. Mohon info syarat dan cara daftarnya.';
-    html += cardHTML({icon:ICONS.users, label:'Reseller (P.O)', sub:'Jual lagi koleksi Zenoot &middot; info via WhatsApp', href:`${wa}?text=${encodeURIComponent(resellerMsg)}`});
-    html += cardHTML({icon:ICONS.box, label:'Dropship', sub:'Jual tanpa stok &middot; info via WhatsApp', href:`${wa}?text=${encodeURIComponent(dropshipMsg)}`});
+    html += cardHTML({icon:ICONS.users, label:'Reseller (P.O)', sub:'Jual lagi koleksi Zenoot &middot; lihat ketentuan', href:'../program-reseller.html', sameTab:true});
+    html += cardHTML({icon:ICONS.box, label:'Dropship', sub:'Jual tanpa stok &middot; lihat ketentuan', href:'../program-dropship.html', sameTab:true});
   }
 
   nav.innerHTML = html || `<p style="text-align:center;color:var(--putih);font-size:13px">Link belum tersedia.</p>`;
