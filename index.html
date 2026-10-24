@@ -709,6 +709,112 @@
     }
     .menu-drawer:not(.open),.side-panel:not(.open){box-shadow:none}
     @media(max-width:480px){.home-view{padding-left:8px;padding-right:8px}.home-hero{margin:0 -8px}.hero-copy{left:16px;right:16px}}
+
+    /* ===== HALAMAN PRODUK ala Ryusei ===== */
+    .modal-overlay{background:var(--bg)}
+    .modal{background:var(--bg);max-width:560px}
+    .modal-top-bar{position:relative;background:var(--bg);border-bottom:1px solid var(--border);padding:10px 14px;pointer-events:auto;flex-shrink:0}
+    .modal-top-bar .modal-icon-btn,.modal.is-scrolled .modal-top-bar .modal-icon-btn{background:none;border-radius:0;width:36px;height:36px;color:var(--ink)}
+    .modal-top-bar-brand,.modal.is-scrolled .modal-top-bar-brand{font-family:'Montserrat',sans-serif;font-weight:800;font-size:15px;letter-spacing:.14em;color:var(--ink);text-shadow:none}
+    .modal.is-scrolled .modal-top-bar{background:var(--bg);padding:10px 14px}
+    .modal-scroll{padding:0 0 96px;position:relative;transition:opacity .15s ease,transform .15s ease}
+    .modal-scroll.swap-out{opacity:0;transform:translateY(8px)}
+    .modal-overlay.open .modal{animation:pdp-in .3s cubic-bezier(.2,.8,.2,1)}
+    .modal-overlay.closing .modal{animation:pdp-out .18s ease forwards}
+    @keyframes pdp-in{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:none}}
+    @keyframes pdp-out{to{opacity:0;transform:translateY(12px)}}
+    .pdp-gallery .modal-carousel-wrap{aspect-ratio:4/5;background:#fff;border-radius:0;margin-bottom:0}
+    .modal-carousel-slide img{object-position:center top}
+    .modal-thumbs{display:flex;gap:8px;overflow-x:auto;padding:10px 16px 0;scrollbar-width:none}
+    .modal-thumbs::-webkit-scrollbar{display:none}
+    .modal-thumb{flex:0 0 64px;height:80px;padding:0;border:1px solid transparent;background:#fff;cursor:pointer;opacity:.7}
+    .modal-thumb.active{border-color:#000;opacity:1}
+    .modal-thumb img{width:100%;height:100%;object-fit:cover;object-position:center top;display:block}
+    .pdp-info{padding:20px 16px 8px}
+    .pdp-brand{font-family:'Montserrat',sans-serif;font-weight:700;font-size:11px;letter-spacing:.2em;color:var(--sec);margin-bottom:8px}
+    .modal-title{font-family:'Montserrat',sans-serif;font-weight:800;font-size:19px;line-height:1.4;text-transform:uppercase;letter-spacing:.02em}
+    .modal-title-row{margin-bottom:12px}
+    .modal-price-row{margin-bottom:8px}
+    .modal-price-left{align-items:center;gap:12px}
+    .modal-price-final{font-family:'Montserrat',sans-serif;font-weight:700;font-size:22px;color:var(--cta)}
+    .pdp-price-orig{font-family:'Montserrat',sans-serif;font-weight:600;font-size:15px;color:var(--ink)}
+    .pdp-price-orig:empty{display:none}
+    .modal-disc-label{background:#000;border-radius:0;font-family:'Montserrat',sans-serif;font-weight:700;font-size:11px;letter-spacing:.06em;padding:4px 10px;margin-bottom:6px}
+    .pdp-pick{margin-top:14px;padding-top:6px;border-top:1px solid var(--border)}
+    .pdp-pick .modal-sec-label{font-family:'Karla',sans-serif;font-size:14px;font-weight:700;letter-spacing:0;text-transform:none;color:var(--ink);margin:18px 0 10px}
+    .modal-colors{margin-bottom:0;gap:10px}
+    .modal-color-btn{border-radius:0;border:1px solid #cfcac2;padding:12px 18px;font-size:14px;color:var(--sec);background:transparent}
+    .modal-color-btn .dot{width:10px;height:10px}
+    .modal-color-btn.active{border:1.5px solid #000;color:#000;font-weight:700}
+    .modal-sizes{gap:10px}
+    .modal-size-btn{border-radius:0;min-width:56px;padding:12px 18px;font-family:'Karla',sans-serif;font-size:14px;border:1px solid #cfcac2;background:transparent}
+    .modal-size-btn.active{background:transparent;border:1.5px solid #000;color:#000;font-weight:700}
+    .modal-size-btn.out{opacity:.5;text-decoration:none;background:linear-gradient(to top right,transparent calc(50% - .6px),#8a857d 50%,transparent calc(50% + .6px))}
+    .pdp-qty-row{display:flex;align-items:center;gap:16px;margin-top:20px}
+    .modal-qty{display:inline-flex;align-items:center;gap:0;border:1px solid #cfcac2}
+    .qty-btn{width:46px;height:46px;border:none;border-radius:0;font-size:20px}
+    .qty-btn:hover{background:#e9e6e0}
+    .qty-val{font-family:'Karla',sans-serif;font-size:15px;min-width:44px}
+    .pdp-qty-row .variant-sheet-stock{font-size:13px;color:var(--sec)}
+    .pdp-total{display:flex;justify-content:space-between;align-items:baseline;margin-top:18px;font-size:13px;color:var(--sec)}
+    .pdp-total b{font-family:'Montserrat',sans-serif;font-weight:700;font-size:15px;color:var(--ink)}
+    .pdp-buy{display:flex;flex-direction:column;gap:10px;margin-top:14px}
+    .pdp-buy .btn-add-cart,.pdp-buy .btn-buy-now{width:100%;height:52px;margin:0;padding:0 12px;background:var(--cta);border:none;border-radius:0;color:#fff;font-family:'Montserrat',sans-serif;font-weight:700;font-size:12px;letter-spacing:.14em;white-space:nowrap;text-transform:uppercase;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:opacity .15s}
+    .pdp-buy .btn-add-cart:hover,.pdp-buy .btn-buy-now:hover{background:var(--cta);opacity:.9}
+    .pdp-buy .is-dim{opacity:.65}
+    .pdp-pick.nudge .modal-colors,.pdp-pick.nudge .modal-sizes{animation:nudge .45s ease}
+    @keyframes nudge{0%,100%{transform:none}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+    .pdp-pay{margin-top:22px;text-align:center}
+    .pdp-pay>span{display:block;font-size:12px;color:var(--sec);margin-bottom:10px}
+    .pdp-pay #pdp-pay{display:flex;flex-wrap:wrap;justify-content:center;gap:10px 16px}
+    .pdp-pay img{height:16px;width:auto;display:block}
+    .trust-badges{margin:20px 0 4px}
+    .pdp-tabs{display:flex;margin-top:26px;border-bottom:1px solid var(--border)}
+    .pdp-tab{font-family:'Karla',sans-serif;font-weight:700;font-size:14px;padding:12px 24px;background:#e7e4de;border:none;color:var(--sec);cursor:pointer;margin-right:2px}
+    .pdp-tab.active{background:#fff;color:#000}
+    .pdp-panel{background:#fff;padding:20px 18px;min-height:120px}
+    .pdp-panel[hidden]{display:none}
+    .pdp-panel .modal-reviews{margin:0;border:none;padding:0}
+    #modal-reviews:empty::before{content:"Belum ada ulasan untuk produk ini.";font-size:14px;color:var(--sec)}
+    .modal-reviews .review-item{border-bottom:1px solid var(--border);padding:12px 0}
+    #modal-related{padding:30px 16px 24px;margin-top:0}
+    .modal-related{border-top:none}
+    .modal-related-header h4{font-family:'Montserrat',sans-serif;font-weight:800;font-size:15px;letter-spacing:.06em;text-transform:uppercase}
+    .modal-related-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+    #modal-related .product-card{height:auto}
+    /* Bar sticky: mobile di bawah, laptop di atas */
+    .modal-sticky-bar{position:absolute;left:0;right:0;bottom:0;z-index:6;background:var(--surface);border-top:1px solid var(--border);padding:10px 16px calc(10px + env(safe-area-inset-bottom));transform:translateY(105%);transition:transform .25s ease}
+    .modal-sticky-bar.show{transform:none}
+    .msb-thumb,.msb-name{display:none}
+    .msb-thumb:not([src]){display:none !important}
+    .btn-bar-cart{background:#000 !important;border:none !important;color:#fff !important;border-radius:0 !important;font-family:'Montserrat',sans-serif;font-weight:700;font-size:11px !important;letter-spacing:.12em;text-transform:uppercase}
+    .btn-bar-buy{background:var(--cta) !important;border:none !important;color:#fff !important;border-radius:0 !important;font-family:'Montserrat',sans-serif;font-weight:700;font-size:11px !important;letter-spacing:.12em;text-transform:uppercase}
+    .modal-bar-total-val{font-family:'Montserrat',sans-serif;font-weight:700}
+    @media(min-width:900px){
+      .modal{max-width:1320px}
+      .modal-top-bar{padding:12px 32px}
+      .modal-scroll{padding-bottom:40px}
+      .pdp-grid{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:56px;padding:28px 32px 0;align-items:start}
+      .pdp-gallery .modal-carousel-wrap{aspect-ratio:auto;overflow:visible;background:none}
+      .modal-carousel{display:grid;grid-template-columns:1fr 1fr;gap:12px;overflow:visible;height:auto;scroll-snap-type:none}
+      .modal-carousel-slide{flex:none;height:auto;aspect-ratio:4/5;background:#fff}
+      .modal-carousel-slide:first-child{grid-column:1/-1}
+      .modal-carousel-dots,.modal-thumbs{display:none}
+      .pdp-info{padding:0}
+      .modal-title{font-size:22px}
+      .pdp-buy{flex-direction:row}
+      .pdp-buy .btn-add-cart,.pdp-buy .btn-buy-now{flex:1}
+      #modal-related{padding:48px 32px 24px}
+      .modal-related-grid{grid-template-columns:repeat(4,1fr);gap:20px}
+      .modal-sticky-bar{bottom:auto;top:61px;transform:translateY(-10px);opacity:0;visibility:hidden;pointer-events:none;display:flex;align-items:center;gap:16px;padding:10px 32px;z-index:4;transition:transform .2s ease,opacity .2s ease,visibility .2s}
+      .modal-sticky-bar.show{transform:none;opacity:1;visibility:visible;pointer-events:auto}
+      .msb-thumb{display:block;width:44px;height:56px;object-fit:cover;object-position:center top}
+      .msb-info{flex:1;min-width:0}
+      .msb-name{display:block;font-family:'Montserrat',sans-serif;font-weight:700;font-size:12px;letter-spacing:.06em;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+      .modal-bar-total{margin:2px 0 0;justify-content:flex-start;gap:8px}
+      .modal-buy-bar{flex:0 0 auto}
+      .modal-buy-bar button{padding:0 22px !important;height:42px !important}
+    }
   </style>
 </head>
 <body class="view-home">
@@ -858,7 +964,7 @@
   </div>
 </footer>
 
-<!-- PRODUCT MODAL -->
+<!-- PRODUCT MODAL (tampilan ala Ryusei: galeri + info, varian langsung di halaman, bar sticky) -->
 <div class="modal-overlay" id="product-modal" onclick="closeModalBg(event)">
   <div class="modal">
     <div class="modal-top-bar">
@@ -870,103 +976,99 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 8h12l-1 12H7L6 8z"/><path d="M9 8V6a3 3 0 016 0v2"/></svg>
       </button>
     </div>
-    <div class="modal-scroll">
-      <div class="modal-carousel-wrap" id="modal-carousel-wrap">
-        <div class="modal-carousel" id="modal-carousel"></div>
-        <div class="modal-carousel-dots" id="modal-carousel-dots"></div>
-      </div>
-      <div class="modal-title-row">
-        <h2 class="modal-title" id="modal-name"></h2>
-      </div>
-      <div class="modal-price-row">
-        <div class="modal-price-left">
-          <span class="modal-price-final" id="modal-price-final"></span>
-          <button type="button" class="price-voucher-icon hidden" id="modal-price-voucher-icon" onclick="openPriceDetail(activeProduct.id)" aria-label="Rincian harga">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v1.5a1.5 1.5 0 0 0 0 3V15a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-1.5a1.5 1.5 0 0 0 0-3V9Z"/><path d="M10 7v10" stroke-dasharray="1.5 2.5"/></svg>
-          </button>
-          <span class="modal-voucher-badge hidden" id="modal-voucher-badge"></span>
+    <div class="modal-scroll" id="modal-scroll">
+      <div class="pdp-grid">
+        <div class="pdp-gallery">
+          <div class="modal-carousel-wrap" id="modal-carousel-wrap">
+            <div class="modal-carousel" id="modal-carousel"></div>
+            <div class="modal-carousel-dots" id="modal-carousel-dots"></div>
+          </div>
+          <div class="modal-thumbs" id="modal-thumbs"></div>
         </div>
-        <div class="modal-price-actions">
-          <button class="modal-icon-btn" onclick="shareProduct()" aria-label="Bagikan">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 10.5l6.8-3.9M8.6 13.5l6.8 3.9"/></svg>
-          </button>
-          <button class="modal-icon-btn" id="modal-wish-btn" onclick="toggleWishlist(activeProduct.id, this)" aria-label="Wishlist">
-            <svg viewBox="0 0 24 24"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg>
-          </button>
+        <div class="pdp-info">
+          <p class="pdp-brand">ZENOOT</p>
+          <div class="modal-title-row">
+            <h2 class="modal-title" id="modal-name"></h2>
+          </div>
+          <div class="modal-price-row">
+            <div class="modal-price-left">
+              <span class="modal-price-final" id="modal-price-final"></span>
+              <s class="pdp-price-orig" id="modal-price-orig"></s>
+              <button type="button" class="price-voucher-icon hidden" id="modal-price-voucher-icon" onclick="openPriceDetail(activeProduct.id)" aria-label="Rincian harga">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v1.5a1.5 1.5 0 0 0 0 3V15a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-1.5a1.5 1.5 0 0 0 0-3V9Z"/><path d="M10 7v10" stroke-dasharray="1.5 2.5"/></svg>
+              </button>
+              <span class="modal-voucher-badge hidden" id="modal-voucher-badge"></span>
+            </div>
+            <div class="modal-price-actions">
+              <button class="modal-icon-btn" onclick="shareProduct()" aria-label="Bagikan">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 10.5l6.8-3.9M8.6 13.5l6.8 3.9"/></svg>
+              </button>
+              <button class="modal-icon-btn" id="modal-wish-btn" onclick="toggleWishlist(activeProduct.id, this)" aria-label="Wishlist">
+                <svg viewBox="0 0 24 24"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg>
+              </button>
+            </div>
+          </div>
+          <div id="modal-disc-label"></div>
+
+          <div class="pdp-pick" id="pdp-pick">
+            <p class="modal-sec-label">Warna</p>
+            <div class="modal-colors" id="modal-colors"></div>
+            <p class="modal-sec-label">Ukuran</p>
+            <div class="modal-sizes" id="modal-sizes"></div>
+            <div class="pdp-qty-row">
+              <div class="modal-qty">
+                <button class="qty-btn" onclick="changeQty(-1)" aria-label="Kurangi">−</button>
+                <span class="qty-val" id="qty-val">1</span>
+                <button class="qty-btn" onclick="changeQty(1)" aria-label="Tambah">+</button>
+              </div>
+              <span class="variant-sheet-stock" id="stok-label">Stok: -</span>
+            </div>
+            <div class="pdp-total"><span>Total</span><b id="modal-sticky-total">Rp 0</b></div>
+            <div class="pdp-buy" id="pdp-buy">
+              <button class="btn-add-cart is-dim" id="btn-add-cart" onclick="modalBuy(false)">Masukkan ke Keranjang</button>
+              <button class="btn-buy-now is-dim" id="btn-buy-now" onclick="modalBuy(true)">Langsung Beli</button>
+            </div>
+          </div>
+
+          <div class="pdp-pay"><span>Pembayaran</span><div id="pdp-pay"></div></div>
+          <div class="trust-badges">
+            <div class="trust-badge">✓ Rajutan kualitas premium, dicek sebelum dikirim</div>
+            <div class="trust-badge">✓ Pengiriman ke seluruh Indonesia</div>
+          </div>
+
+          <div class="pdp-tabs" role="tablist">
+            <button type="button" class="pdp-tab active" id="pdp-tab-desc" onclick="pdpTab('desc')">Deskripsi</button>
+            <button type="button" class="pdp-tab" id="pdp-tab-rev" onclick="pdpTab('rev')">Ulasan</button>
+          </div>
+          <div class="pdp-panel" id="pdp-panel-desc">
+            <div id="modal-specs"></div>
+            <div id="modal-description"></div>
+          </div>
+          <div class="pdp-panel" id="pdp-panel-rev" hidden>
+            <div class="modal-reviews" id="modal-reviews"></div>
+          </div>
         </div>
       </div>
-      <div id="modal-disc-label"></div>
-      <button type="button" class="ongkir-row variant-row" id="variant-row" onclick="openVariantSheet('both')">
-        <span class="ongkir-row-label">Pilih Warna &amp; Ukuran</span>
-        <span class="variant-row-value" id="variant-row-value"></span>
-        <svg class="ongkir-row-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg>
-      </button>
-      <!-- Trust badges -->
-      <div class="trust-badges">
-        <div class="trust-badge">✓ Rajutan kualitas premium, dicek sebelum dikirim</div>
-        <div class="trust-badge">✓ Pengiriman ke seluruh Indonesia</div>
-      </div>
-      <!-- Spesifikasi terstruktur -->
-      <div id="modal-specs"></div>
-      <!-- Deskripsi Produk -->
-      <div id="modal-description" style="margin-top:20px;padding-top:20px;border-top:1px solid var(--border)"></div>
-      <!-- Reviews -->
-      <div class="modal-reviews" id="modal-reviews"></div>
-      <!-- Related products -->
       <div id="modal-related"></div>
     </div>
-    <div class="modal-sticky-bar">
-      <div class="modal-bar-total" id="modal-bar-total-row">
-        <span id="modal-bar-total-label">Harga</span>
-        <span class="modal-bar-total-val" id="modal-bar-total">Rp 0</span>
+    <div class="modal-sticky-bar" id="modal-sticky-bar">
+      <img class="msb-thumb" id="msb-thumb" alt="">
+      <div class="msb-info">
+        <p class="msb-name" id="msb-name"></p>
+        <div class="modal-bar-total" id="modal-bar-total-row">
+          <span id="modal-bar-total-label">Harga</span>
+          <span class="modal-bar-total-val" id="modal-bar-total">Rp 0</span>
+        </div>
       </div>
       <div class="modal-buy-bar">
-        <button type="button" class="btn-bar-cart" onclick="openVariantSheet('cart')">Tambah ke Keranjang</button>
-        <button type="button" class="btn-bar-buy" onclick="openVariantSheet('buy')">Beli Sekarang</button>
+        <button type="button" class="btn-bar-cart" onclick="modalBuy(false)">Masukkan ke Keranjang</button>
+        <button type="button" class="btn-bar-buy" onclick="modalBuy(true)">Langsung Beli</button>
       </div>
     </div>
   </div>
 </div>
 
-<!-- PANEL PILIH VARIAN (gaya marketplace): Warna, Ukuran, Jumlah -->
-<div class="variant-sheet-overlay" id="variant-sheet-overlay" onclick="if(event.target===this)closeVariantSheet()">
-  <div class="variant-sheet" id="variant-sheet" data-mode="both">
-    <div class="variant-sheet-head">
-      <img class="variant-sheet-thumb" id="vs-thumb" alt="">
-      <div class="variant-sheet-info">
-        <div class="variant-sheet-price" id="vs-price"></div>
-        <div class="variant-sheet-stock" id="stok-label">Stok: -</div>
-      </div>
-      <button class="ongkir-sheet-close" onclick="closeVariantSheet()" aria-label="Tutup">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M18 6L6 18M6 6l12 12"/></svg>
-      </button>
-    </div>
-    <div class="variant-sheet-body" id="variant-sheet-body">
-      <p class="modal-sec-label">Warna</p>
-      <div class="modal-colors" id="modal-colors"></div>
-      <p class="modal-sec-label">Ukuran</p>
-      <div class="modal-sizes" id="modal-sizes"></div>
-      <div class="variant-sheet-qty">
-        <p class="modal-sec-label" style="margin:0">Jumlah</p>
-        <div class="modal-qty">
-          <button class="qty-btn" onclick="changeQty(-1)">−</button>
-          <span class="qty-val" id="qty-val">1</span>
-          <button class="qty-btn" onclick="changeQty(1)">+</button>
-        </div>
-      </div>
-    </div>
-    <div class="variant-sheet-foot">
-      <div class="modal-sticky-total">
-        <span class="modal-sticky-total-label">Total</span>
-        <span class="modal-sticky-total-val" id="modal-sticky-total">Rp 0</span>
-      </div>
-      <div class="variant-sheet-btns">
-        <button class="btn-add-cart" id="btn-add-cart" onclick="addToCart()" disabled>Tambah ke Keranjang</button>
-        <button class="btn-buy-now" id="btn-buy-now" onclick="addToCart(true)" disabled>Beli Sekarang</button>
-      </div>
-    </div>
-  </div>
-</div>
+<div class="variant-sheet-overlay" id="variant-sheet-overlay" hidden><div class="variant-sheet" id="variant-sheet"><img id="vs-thumb" alt=""><span id="vs-price"></span><div id="variant-sheet-body"></div></div></div>
 
 <!-- SHEET RINCIAN HARGA (gaya marketplace) -->
 <div class="ongkir-sheet-overlay" id="price-detail-overlay" onclick="if(event.target===this)closePriceDetail()">
@@ -1169,7 +1271,7 @@ async function loadProducts() {
   renderDrawerSubs();
   renderFooterBelanja();
   const sharedId = new URLSearchParams(location.search).get('p');
-  if (sharedId && products.some(p=>p.id===sharedId)) openProduct(sharedId);
+  if (sharedId && products.some(p=>p.id===sharedId)) openProduct(sharedId, { noPush: true });
   else if (sharedId) { seoCanonical(SEO_SITE); seoMeta('meta[property="og:url"]', SEO_SITE); }
 }
 
@@ -2594,9 +2696,18 @@ seoResetHome();
 })();
 
 // ===================== PRODUCT MODAL =====================
-async function openProduct(id) {
-  activeProduct = products.find(p=>p.id===id);
-  if (!activeProduct) return;
+let modalPushed = false, skipNextPop = false, closeTimer = null;
+async function openProduct(id, opts) {
+  const modalEl = document.getElementById('product-modal');
+  const next = products.find(p=>p.id===id);
+  if (!next) return;
+  if (modalEl.classList.contains('closing')) { clearTimeout(closeTimer); modalEl.classList.remove('closing', 'open'); }
+  const wasOpen = modalEl.classList.contains('open');
+  const scrollEl0 = document.getElementById('modal-scroll');
+  // pindah produk saat overlay sudah terbuka: isi memudar dulu, lalu diganti, lalu muncul lagi
+  if (wasOpen && scrollEl0) { scrollEl0.classList.add('swap-out'); await new Promise(r => setTimeout(r, 150)); }
+  activeProduct = next;
+  pdpTab('desc');
   trackEvent('view_product', id);
   activeVariants = activeProduct.variants || [];
   selectedVariant = null;
@@ -2606,7 +2717,8 @@ async function openProduct(id) {
 
   document.getElementById('modal-name').textContent = activeProduct.name;
   document.getElementById('modal-wish-btn').classList.toggle('active', wishlistIds.has(activeProduct.id));
-  history.replaceState(null, '', '?p=' + activeProduct.id);
+  if (!wasOpen && !(opts && opts.noPush)) { history.pushState({ zmodal: 1 }, '', '?p=' + activeProduct.id); modalPushed = true; }
+  else history.replaceState(history.state, '', '?p=' + activeProduct.id);
   seoSetProduct(activeProduct);
   warmShortLink(activeProduct.id);
   document.getElementById('qty-val').textContent = 1;
@@ -2620,8 +2732,7 @@ async function openProduct(id) {
   const descEl = document.getElementById('modal-description');
   if (activeProduct.description) {
     descEl.innerHTML = `
-      <p style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:10px">Deskripsi</p>
-      <p style="font-size:13px;color:var(--sec);line-height:1.7;white-space:pre-line">${descToHtml(activeProduct.description)}</p>`;
+      <p style="font-size:14px;color:var(--ink);line-height:1.75;white-space:pre-line">${descToHtml(activeProduct.description)}</p>`;
   } else {
     descEl.innerHTML = '';
   }
@@ -2663,6 +2774,10 @@ async function openProduct(id) {
   const scrollEl = document.querySelector('.modal-scroll');
   if (scrollEl) scrollEl.scrollTop = 0;
   initModalHeaderScroll(scrollEl);
+  const msbName = document.getElementById('msb-name'); if (msbName) msbName.textContent = activeProduct.name;
+  const msbThumb = document.getElementById('msb-thumb'); if (msbThumb) msbThumb.src = activeProduct.image_url || '';
+  renderPdpPay();
+  if (scrollEl) requestAnimationFrame(() => scrollEl.classList.remove('swap-out'));
 }
 
 let modalCarouselImages = [];
@@ -2686,19 +2801,35 @@ function renderModalGallery() {
     ? modalCarouselImages.map((_,i) => `<span class="modal-carousel-dot ${i===0?'active':''}"></span>`).join('')
     : '';
 
+  const thumbsEl = document.getElementById('modal-thumbs');
+  if (thumbsEl) thumbsEl.innerHTML = modalCarouselImages.length > 1 && modalCarouselImages[0]
+    ? modalCarouselImages.map((u,i) => `<button type="button" class="modal-thumb ${i===0?'active':''}" onclick="scrollCarouselToIndex(${i})" aria-label="Foto ${i+1}"><img src="${u}" alt="" loading="lazy"></button>`).join('')
+    : '';
+
   track.onscroll = () => {
     const idx = Math.round(track.scrollLeft / track.clientWidth);
     document.querySelectorAll('.modal-carousel-dot').forEach((d,i)=>d.classList.toggle('active', i===idx));
+    document.querySelectorAll('.modal-thumb').forEach((d,i)=>d.classList.toggle('active', i===idx));
   };
   track.scrollLeft = 0;
+}
+function scrollCarouselToIndex(idx) {
+  const track = document.getElementById('modal-carousel');
+  if (!track) return;
+  if (window.matchMedia('(min-width:900px)').matches) {
+    const slide = track.children[idx];
+    if (slide) slide.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  } else {
+    track.scrollTo({ left: idx * track.clientWidth, behavior: 'smooth' });
+  }
+  document.querySelectorAll('.modal-thumb').forEach((d,i)=>d.classList.toggle('active', i===idx));
 }
 
 function scrollCarouselToImage(url) {
   if (!url) return;
   const idx = modalCarouselImages.indexOf(url);
   if (idx === -1) return;
-  const track = document.getElementById('modal-carousel');
-  track.scrollTo({ left: idx * track.clientWidth, behavior: 'smooth' });
+  scrollCarouselToIndex(idx);
 }
 
 function selectColor(el, colorName) {
@@ -2751,6 +2882,8 @@ function selectSize(el, variantId) {
 function updateModalPrice(v) {
   if (!v) return;
   document.getElementById('modal-price-final').textContent = fRp(v.price);
+  const ogEl = document.getElementById('modal-price-orig');
+  if (ogEl) ogEl.textContent = (v.original_price && Number(v.original_price) > Number(v.price)) ? fRp(v.original_price) : '';
   const vsPrice = document.getElementById('vs-price');
   if (vsPrice) vsPrice.textContent = fRp(v.price);
   const iconEl = document.getElementById('modal-price-voucher-icon');
@@ -2839,27 +2972,14 @@ function renderModalRelated(p) {
   if (!related.length) { el.innerHTML = ''; return; }
   el.innerHTML = `
     <div class="modal-related-header">
-      <h4>Mungkin kamu suka</h4>
-      <button class="modal-related-all-link" onclick="goToAllProducts()">Semua Koleksi</button>
+      <h4>Rekomendasi Kami</h4>
+      <button class="modal-related-all-link" onclick="goToAllProducts()">Semua Produk</button>
     </div>
-    <div class="modal-related-grid">
-      ${related.map(r => {
-        const vars = r.variants || [];
-        const minPrice = vars.length ? Math.min(...vars.map(v=>v.price)) : 0;
-        const relColors = [...new Map(vars.map(v=>[v.color_name,v.color_hex])).entries()];
-        return `
-        <div class="modal-related-card" onclick="openProduct('${r.id}')">
-          ${r.image_url ? `<img src="${r.image_url}" alt="${r.name}"/>` : `<div style="width:100%;aspect-ratio:1/1;background:#f0ede8;border-radius:var(--radius-sm);margin-bottom:6px"></div>`}
-          <div class="modal-related-colors">${relColors.map(([n,h])=>`<span class="color-dot" style="background:${h}" title="${n}"></span>`).join('')}</div>
-          <p>${r.name}</p>
-          <p class="rel-price">${fRp(minPrice)}</p>
-        </div>`;
-      }).join('')}
-    </div>`;
+    <div class="modal-related-grid">${related.map(cardHtml).join('')}</div>`;
 }
 
 function goToAllProducts() {
-  closeProductModal();
+  closeProductModal('silent');
   catalogAll = true;
   setFilterGender('all','all');
   showControls();
@@ -2883,14 +3003,26 @@ function initModalHeaderScroll(scrollEl) {
   scrollEl.addEventListener('scroll', () => {
     modalEl.classList.toggle('is-scrolled', scrollEl.scrollTop > 40);
   }, { passive: true });
+  // Bar sticky muncul setelah tombol beli di halaman tergulir keluar layar
+  const target = document.getElementById('pdp-buy'), bar = document.getElementById('modal-sticky-bar');
+  if (target && bar && 'IntersectionObserver' in window) {
+    new IntersectionObserver(([e]) => bar.classList.toggle('show', !e.isIntersecting), { root: scrollEl, threshold: 0 }).observe(target);
+  }
 }
 
 function closeModalBg(e) { if(e.target===document.getElementById('product-modal')) closeProductModal(); }
-function closeProductModal() {
+// mode: undefined = tutup biasa (tombol kembali / klik latar), 'pop' = dipicu tombol Back browser, 'silent' = dipanggil sebelum pindah halaman
+function closeProductModal(mode) {
+  const el = document.getElementById('product-modal');
+  if (!el.classList.contains('open')) return;
   closeVariantSheet();
-  document.getElementById('product-modal').classList.remove('open');
   document.body.style.overflow = '';
-  history.replaceState(null, '', location.pathname);
+  el.classList.add('closing');
+  clearTimeout(closeTimer);
+  closeTimer = setTimeout(() => { el.classList.remove('open', 'closing'); }, 180);
+  if (mode === 'pop') { modalPushed = false; }
+  else if (modalPushed && mode !== 'silent') { modalPushed = false; skipNextPop = true; history.back(); }
+  else { modalPushed = false; history.replaceState(null, '', location.pathname); }
   seoResetHome();
 }
 
@@ -2977,10 +3109,38 @@ async function submitReview(productId) {
 // ===================== CART =====================
 // ===================== PANEL PILIH VARIAN (ala marketplace) =====================
 function setVariantButtons(enabled) {
-  const a = document.getElementById('btn-add-cart');
-  const b = document.getElementById('btn-buy-now');
-  if (a) a.disabled = !enabled;
-  if (b) b.disabled = !enabled;
+  ['btn-add-cart', 'btn-buy-now'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.classList.toggle('is-dim', !enabled);
+  });
+}
+// Tombol keranjang/beli: kalau varian belum lengkap, beri tahu apa yang kurang dan arahkan ke pilihannya
+function modalBuy(goCart) {
+  if (!selectedVariant) {
+    const needColor = !selectedColorName && [...new Set(activeVariants.map(v => v.color_name))].length > 1;
+    showToast(needColor ? 'Pilih warna dulu ya' : 'Pilih ukuran dulu ya');
+    const pick = document.getElementById('pdp-pick');
+    if (pick) {
+      pick.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      pick.classList.remove('nudge'); void pick.offsetWidth; pick.classList.add('nudge');
+    }
+    return;
+  }
+  addToCart(goCart === true);
+}
+function pdpTab(which) {
+  const desc = which !== 'rev';
+  document.getElementById('pdp-tab-desc')?.classList.toggle('active', desc);
+  document.getElementById('pdp-tab-rev')?.classList.toggle('active', !desc);
+  const pd = document.getElementById('pdp-panel-desc'), pr = document.getElementById('pdp-panel-rev');
+  if (pd) pd.hidden = !desc;
+  if (pr) pr.hidden = desc;
+}
+function renderPdpPay() {
+  const el = document.getElementById('pdp-pay');
+  if (!el || el.dataset.done) return;
+  el.dataset.done = '1';
+  el.innerHTML = FOOTER_PAYMENTS.filter(m => m.on).map(m => `<img src="${FOOTER_PAY_DIR}${m.f}" alt="${chatEsc(m.n)}" title="${chatEsc(m.n)}" width="${m.w}" height="${m.h}" loading="lazy" decoding="async">`).join('');
 }
 
 function openVariantSheet(mode) {
@@ -3541,7 +3701,17 @@ function applyHashRoute() {
   }
   setFilterGender(gender, catName, drawerEl, true);
 }
-window.addEventListener('popstate', applyHashRoute);
+window.addEventListener('popstate', () => {
+  if (skipNextPop) { skipNextPop = false; return; }
+  const m = document.getElementById('product-modal');
+  if (m.classList.contains('open') && !m.classList.contains('closing') && modalPushed) { closeProductModal('pop'); return; }
+  const st = history.state;
+  if (st && st.zmodal) {
+    const pid = new URLSearchParams(location.search).get('p');
+    if (pid && products.some(x => x.id === pid)) { modalPushed = true; openProduct(pid, { noPush: true }); return; }
+  }
+  applyHashRoute();
+});
 
 // ===================== FOOTER EXTRAS (sosmed & metode pembayaran) =====================
 // Link Instagram & TikTok diambil otomatis dari Seller Center > Link Toko (tabel bio_links, baris id=1).
