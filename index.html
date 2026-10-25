@@ -467,8 +467,10 @@
     .paym-opt.sel .paym-radio{border-color:var(--ink)}
     .paym-opt.sel .paym-radio::after{content:'';position:absolute;inset:3px;border-radius:50%;background:var(--ink)}
     .btn-checkout svg{width:18px;height:18px}
-    .cart-empty{text-align:center;padding:60px 20px}
-    .cart-empty p{font-family:'Source Serif 4',serif;font-size:16px;font-style:italic;color:var(--muted)}
+    .cart-empty{text-align:center;padding:72px 28px 24px}
+    .cart-empty svg{width:46px;height:46px;stroke:#c9c1b5;fill:none;stroke-width:1.5;margin-bottom:22px}
+    .cart-empty p{font-size:15px;line-height:1.7;color:var(--sec);max-width:270px;margin:0 auto 26px}
+    .cart-empty-btn{background:var(--ink);color:#fff;border:none;padding:14px 30px;font-size:12px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;cursor:pointer}
 
     /* ===== ADMIN (Seller-Center style, sidebar layout) ===== */
     .admin-page{display:none;position:fixed;inset:0;background:var(--bg);z-index:400}
@@ -1164,7 +1166,7 @@
       <button class="cart-close" onclick="closeCart()">✕</button>
     </div>
     <div class="cart-items" id="cart-items-list"></div>
-    <div class="cart-footer">
+    <div class="cart-footer" id="cart-footer">
       <div class="summary-row" id="subtotal-row">
         <span>Subtotal Pesanan</span><span id="subtotal-val">Rp 0</span>
       </div>
@@ -3405,7 +3407,13 @@ function updateCartUI() {
   } else { discRow.classList.add('hidden'); }
 
   const list = document.getElementById('cart-items-list');
-  if (!cart.length) { list.innerHTML='<div class="cart-empty"><p>Keranjangmu kosong.</p></div>'; return; }
+  // Ringkasan dan tombol bayar disembunyikan kalau keranjang kosong
+  const cartFooter = document.getElementById('cart-footer');
+  if (cartFooter) cartFooter.style.display = cart.length ? '' : 'none';
+  if (!cart.length) {
+    list.innerHTML='<div class="cart-empty"><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8h12l1 12H5L6 8z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg><p>Keranjang kamu masih kosong. Tambahkan produk favoritmu untuk mulai belanja.</p><button class="cart-empty-btn" onclick="closeCart();goAllProducts()">Jelajahi Produk</button></div>';
+    return;
+  }
   list.innerHTML = cart.map(item=>`
     <div class="cart-item">
       <div class="cart-item-img">
