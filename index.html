@@ -231,6 +231,20 @@
     .promo-claim-btn:disabled:not(.claimed){background:#e8e5e0;border-color:#e8e5e0;color:var(--muted);cursor:default}
     .promo-section .promo-card{width:290px}
 
+    /* ===== POPUP VOUCHER MEMBER BARU ===== */
+    .welcome-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:260;align-items:center;justify-content:center;padding:20px}
+    .welcome-overlay.open{display:flex}
+    .welcome-box{background:var(--surface);width:100%;max-width:380px;position:relative;border-radius:6px;overflow:hidden}
+    .welcome-close{position:absolute;top:12px;right:12px;width:34px;height:34px;border-radius:50%;border:none;background:rgba(17,17,20,.08);color:var(--muted);font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+    .welcome-top{background:var(--bg);padding:48px 24px 30px;text-align:center;border-bottom:1px solid var(--border)}
+    .welcome-kicker{font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:16px}
+    .welcome-head{font-family:'Source Serif 4',serif;font-size:38px;line-height:1.12;font-weight:600;color:var(--ink);margin-bottom:10px}
+    .welcome-for{font-size:14px;color:var(--muted)}
+    .welcome-body{padding:26px 24px 22px;text-align:center}
+    .welcome-text{font-size:14px;line-height:1.6;color:var(--sec);margin-bottom:22px}
+    .welcome-cta{width:100%;padding:15px;background:var(--ink);color:#fff;border:none;font-size:14px;font-weight:600;font-family:inherit;cursor:pointer}
+    .welcome-later{display:block;margin:14px auto 0;background:none;border:none;color:var(--muted);font-size:13px;font-family:inherit;cursor:pointer}
+
     /* ===== GRID ===== */
     .catalog{max-width:1100px;margin:0 auto;padding:0 20px 60px}
     .product-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:20px}
@@ -1118,6 +1132,23 @@
   </div>
 </div>
 
+<!-- POPUP VOUCHER MEMBER BARU -->
+<div class="welcome-overlay" id="welcome-overlay" onclick="if(event.target===this)closeWelcomePopup()">
+  <div class="welcome-box">
+    <button class="welcome-close" onclick="closeWelcomePopup()" aria-label="Tutup">&#10005;</button>
+    <div class="welcome-top">
+      <p class="welcome-kicker">Voucher Member Baru</p>
+      <p class="welcome-head" id="welcome-head"></p>
+      <p class="welcome-for">untuk pembelian pertamamu</p>
+    </div>
+    <div class="welcome-body">
+      <p class="welcome-text" id="welcome-text"></p>
+      <button class="welcome-cta" onclick="welcomeRegister()">Daftar &amp; Klaim Voucher</button>
+      <button class="welcome-later" onclick="closeWelcomePopup()">Nanti saja</button>
+    </div>
+  </div>
+</div>
+
 <!-- SHEET METODE PEMBAYARAN -->
 <div class="ongkir-sheet-overlay" id="pay-method-overlay" onclick="if(event.target===this)closePayMethodSheet()">
   <div class="ongkir-sheet">
@@ -1146,6 +1177,9 @@
       </div>
       <div class="summary-row" id="shipping-row">
         <span>🚚 Ongkos Kirim</span><span style="color:var(--muted);font-size:12px;text-align:right">Dihitung sesuai alamat saat pembayaran</span>
+      </div>
+      <div class="summary-row hidden" id="ship-voucher-row">
+        <span>🎟️ Voucher Ongkir</span><span id="ship-voucher-val" style="text-align:right"></span>
       </div>
       <div class="summary-row" id="pay-method-row" onclick="openPayMethodSheet()" style="cursor:pointer;align-items:center">
         <span>💳 Metode Pembayaran</span><span id="pay-method-summary" style="color:var(--ink);display:flex;align-items:center;gap:4px">Midtrans <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg></span>
@@ -1275,6 +1309,12 @@ let cart = [];
 let voucher = null;
 let claimedCodes = JSON.parse(localStorage.getItem('zenot_claimed_vouchers') || '[]');
 let allVouchers = [];
+let shipVoucher = null;                 // voucher ongkir yang terpasang di keranjang
+let serverClaimedIds = new Set();       // voucher member baru yang sudah diklaim di akun yang sedang login
+let rejectedVoucherIds = new Set();     // voucher yang ditolak server pada sesi ini: tidak dipasang otomatis lagi
+let vouchersReady = Promise.resolve();  // selesai saat daftar voucher aktif sudah dimuat
+const CLAIM_FLAG = 'zenot_claim_new_member'; // diset saat pembeli menekan "Daftar & Klaim", dipakai setelah akun jadi
+const SHIP_REF_COST = 30000;            // ongkir acuan untuk memilih voucher ongkir terbaik; ongkir sebenarnya dihitung server
 let reviewRating = 0;
 let allCategories = [];
 
@@ -1932,6 +1972,7 @@ async function doBuyerLogin() {
   renderProducts();
   renderAccountProfile();
   showToast('Berhasil masuk ✓');
+  onBuyerSignedIn();
 }
 
 async function doBuyerRegister() {
@@ -1953,6 +1994,7 @@ async function doBuyerRegister() {
     renderProducts();
     renderAccountProfile();
     showToast('Akun berhasil dibuat ✓');
+    onBuyerSignedIn();
   } else {
     openSidePanel('Akun', `<div class="side-panel-empty">Akun berhasil didaftarkan. Cek email kamu untuk konfirmasi sebelum bisa masuk.</div>`);
   }
@@ -2577,8 +2619,11 @@ async function deleteAddress(id) {
 async function doBuyerLogout() {
   await sb.auth.signOut();
   buyerUser = null; buyerProfile = null; wishlistIds = new Set();
+  serverClaimedIds = new Set();
   closeSidePanel();
   renderProducts();
+  renderVoucherPopupList();
+  updateCartUI();
   showToast('Berhasil keluar');
 }
 
@@ -3013,9 +3058,10 @@ function updateBarTotal() {
 function updateVoucherBadge() {
   const badge = document.getElementById('modal-voucher-badge');
   if (!badge) return;
-  if (!selectedVariant || !allVouchers.length) { badge.classList.add('hidden'); badge.innerHTML = ''; return; }
+  const pool = estimateVouchers();
+  if (!selectedVariant || !pool.length) { badge.classList.add('hidden'); badge.innerHTML = ''; return; }
   const amount = selectedVariant.price * qty;
-  const eligible = allVouchers.filter(v => amount >= v.min_order)
+  const eligible = pool.filter(v => amount >= v.min_order)
     .sort((a,b) => (a.discount_type==='percent'?a.discount_value:0) < (b.discount_type==='percent'?b.discount_value:0) ? 1 : -1);
   if (!eligible.length) { badge.classList.add('hidden'); badge.innerHTML = ''; return; }
   const v = eligible[0];
@@ -3346,6 +3392,12 @@ function updateCartUI() {
   document.getElementById('subtotal-val').textContent = fRp(subtotal);
   updatePayMethodUI();
   
+  const svRow = document.getElementById('ship-voucher-row');
+  if (shipVoucher) {
+    svRow.classList.remove('hidden');
+    document.getElementById('ship-voucher-val').textContent = voucherTitle(shipVoucher, shortRp) + ' (' + shipVoucher.code + ')';
+  } else { svRow.classList.add('hidden'); }
+
   const discRow = document.getElementById('discount-row');
   if (disc > 0) {
     discRow.classList.remove('hidden');
@@ -3408,6 +3460,26 @@ function discAmountFor(v, subtotal) {
   return Math.min(d, subtotal);
 }
 
+// Voucher diskon yang boleh dipakai untuk perkiraan harga: voucher member baru hanya kalau sudah diklaim
+function estimateVouchers() {
+  return allVouchers.filter(v => !isShipVoucher(v) && (!isNewMemberVoucher(v) || isVoucherClaimed(v)));
+}
+function isShipVoucher(v) { return v.voucher_type === 'ongkir'; }
+function isNewMemberVoucher(v) { return v.audience === 'member_baru'; }
+function isVoucherClaimed(v) {
+  if (rejectedVoucherIds.has(v.id)) return false;
+  return isNewMemberVoucher(v) ? serverClaimedIds.has(v.id) : claimedCodes.includes(v.code);
+}
+// Judul voucher; money = fungsi format rupiah (shortRp untuk kartu, fRp untuk popup)
+function voucherTitle(v, money) {
+  const isPct = v.discount_type === 'percent';
+  if (isShipVoucher(v)) {
+    if (isPct && Number(v.discount_value) >= 100) return 'Gratis Ongkir';
+    return 'Potongan Ongkir ' + (isPct ? v.discount_value + '%' : money(v.discount_value));
+  }
+  return 'Diskon ' + (isPct ? v.discount_value + '%' : money(v.discount_value));
+}
+
 function shortRp(n) {
   n = Number(n) || 0;
   if (n >= 1000000) return fRp(n);
@@ -3431,16 +3503,16 @@ function voucherExpiryInfo(v, upcoming) {
   return { text: 'Hingga: ' + voucherDMY(new Date(v.expires_at)), soon: false };
 }
 function voucherCardHTML(v, upcoming) {
-  const claimed = !upcoming && claimedCodes.includes(v.code);
+  const claimed = !upcoming && isVoucherClaimed(v);
   const isPct = v.discount_type === 'percent';
-  const title = isPct ? 'Diskon ' + v.discount_value + '%' : 'Diskon ' + shortRp(v.discount_value);
+  const title = voucherTitle(v, shortRp);
   const capText = (isPct && v.max_discount) ? ' · Maks. ' + shortRp(v.max_discount) : '';
   const exp = voucherExpiryInfo(v, upcoming);
   return `
     <div class="promo-card">
       <div class="promo-card-main">
         <p class="promo-card-name">${title}</p>
-        <p class="promo-card-desc">Min. Blj ${shortRp(v.min_order)}${capText}</p>
+        <p class="promo-card-desc">Min. Blj ${shortRp(v.min_order)}${capText}${isNewMemberVoucher(v) ? ' · Member baru' : ''}</p>
         <p class="promo-card-exp${exp.soon ? ' soon' : ''}">${exp.text}</p>
       </div>
       <div class="promo-card-action">
@@ -3464,7 +3536,27 @@ function renderVoucherPopupList() {
   if (sectionEl) sectionEl.innerHTML = html;
 }
 
-function claimVoucher(code) {
+async function claimVoucher(code) {
+  const nv = allVouchers.find(x => x.code === code);
+  if (nv && isNewMemberVoucher(nv)) {
+    if (!buyerUser) {
+      // Voucher member baru hanya bisa diklaim setelah punya akun: arahkan ke Daftar, klaim otomatis setelah akun jadi
+      closeVoucherPopup();
+      try { localStorage.setItem(CLAIM_FLAG, '1'); } catch (_) {}
+      showToast('Daftar dulu untuk klaim voucher member baru');
+      showAccountTab('daftar');
+      return;
+    }
+    const { error } = await sb.rpc('klaim_voucher', { p_code: code });
+    if (error) { showToast(error.message); return; }
+    serverClaimedIds.add(nv.id);
+    rejectedVoucherIds.delete(nv.id);
+    showToast(`Voucher ${code} diklaim ✓`);
+    renderVoucherPopupList();
+    updateCartUI();
+    return;
+  }
+  if (nv) rejectedVoucherIds.delete(nv.id);
   if (!claimedCodes.includes(code)) {
     claimedCodes.push(code);
     localStorage.setItem('zenot_claimed_vouchers', JSON.stringify(claimedCodes));
@@ -3490,7 +3582,7 @@ function openPriceDetail(id) {
   const maxOrig = vars.length ? Math.max(...vars.map(v=>v.original_price||0)) : 0;
   const dProduk = maxOrig ? Math.max(0, maxOrig - minPrice) : 0;
   let bestVoucher = null, bestVoucherDisc = 0;
-  allVouchers.filter(v => minPrice >= v.min_order).forEach(v => {
+  estimateVouchers().filter(v => minPrice >= v.min_order).forEach(v => {
     const d = discAmountFor(v, minPrice);
     if (d > bestVoucherDisc) { bestVoucherDisc = d; bestVoucher = v; }
   });
@@ -3508,15 +3600,71 @@ function closePriceDetail() {
   document.getElementById('price-detail-overlay').classList.remove('open');
 }
 
-function autoApplyBestVoucher(subtotal) {
-  const eligible = allVouchers.filter(v => claimedCodes.includes(v.code) && subtotal >= v.min_order);
-  if (!eligible.length) { voucher = null; return; }
-  let best = null, bestDisc = -1;
-  eligible.forEach(v => {
-    const d = discAmountFor(v, subtotal);
-    if (d > bestDisc) { bestDisc = d; best = v; }
+function bestVoucherOf(list, amountOf) {
+  let best = null, bestAmt = -1;
+  list.forEach(v => {
+    const d = amountOf(v);
+    if (d > bestAmt) { bestAmt = d; best = v; }
   });
-  voucher = best;
+  return best;
+}
+function autoApplyBestVoucher(subtotal) {
+  const eligible = allVouchers.filter(v => isVoucherClaimed(v) && subtotal >= v.min_order);
+  voucher = bestVoucherOf(eligible.filter(v => !isShipVoucher(v)), v => discAmountFor(v, subtotal));
+  shipVoucher = bestVoucherOf(eligible.filter(isShipVoucher), v => discAmountFor(v, SHIP_REF_COST));
+}
+
+// ---- Voucher member baru: popup, klaim ke akun setelah daftar/masuk ----
+function showWelcomePopup() {
+  if (buyerUser) return false;
+  const list = allVouchers.filter(isNewMemberVoucher);
+  if (!list.length) return false;
+  document.getElementById('welcome-head').textContent = voucherTitle(list[0], fRp);
+  const names = list.map(v => { const t = voucherTitle(v, fRp); return t.charAt(0).toLowerCase() + t.slice(1); });
+  const mins = list.map(v => Number(v.min_order) || 0).filter(m => m > 0);
+  document.getElementById('welcome-text').textContent =
+    'Daftar jadi member Zenoot sekarang dan nikmati ' + names.join(' + ') + ' untuk pembelian pertamamu.' +
+    (mins.length ? ' Min. belanja ' + fRp(Math.min(...mins)) + '.' : '');
+  document.getElementById('welcome-overlay').classList.add('open');
+  return true;
+}
+function closeWelcomePopup() {
+  document.getElementById('welcome-overlay').classList.remove('open');
+}
+function welcomeRegister() {
+  closeWelcomePopup();
+  try { localStorage.setItem(CLAIM_FLAG, '1'); } catch (_) {}
+  showAccountTab('daftar');
+}
+
+async function refreshVoucherClaims() {
+  serverClaimedIds = new Set();
+  if (buyerUser) {
+    const { data } = await sb.from('voucher_claims').select('voucher_id');
+    serverClaimedIds = new Set((data || []).map(r => r.voucher_id));
+  }
+  renderVoucherPopupList();
+  updateCartUI();
+}
+
+// Dipanggil setiap kali pembeli berhasil masuk/daftar: muat klaim akun, lalu klaim voucher member baru kalau tadi menekan "Daftar & Klaim"
+async function onBuyerSignedIn() {
+  await vouchersReady;
+  await refreshVoucherClaims();
+  let pending = false;
+  try { pending = localStorage.getItem(CLAIM_FLAG) === '1'; } catch (_) {}
+  if (!pending) return;
+  try { localStorage.removeItem(CLAIM_FLAG); } catch (_) {}
+  const list = allVouchers.filter(v => isNewMemberVoucher(v) && !serverClaimedIds.has(v.id));
+  let ok = 0, lastErr = '';
+  for (const v of list) {
+    const { error } = await sb.rpc('klaim_voucher', { p_code: v.code });
+    if (error) lastErr = error.message; else { serverClaimedIds.add(v.id); ok++; }
+  }
+  renderVoucherPopupList();
+  updateCartUI();
+  if (ok) showToast('Voucher member baru berhasil diklaim 🎉', 2600);
+  else if (lastErr) showToast(lastErr, 3000);
 }
 
 
@@ -3552,18 +3700,21 @@ async function checkoutWA(payOnline) {
     p_items: cart.map(i => ({ variantId: i.variantId, qty: i.qty })),
     p_voucher_code: voucher ? voucher.code : null,
     p_address_id: shippingAddress.id,
-    p_shipping_cost: ongkirBiaya
+    p_shipping_cost: ongkirBiaya,
+    p_ship_voucher_code: shipVoucher ? shipVoucher.code : null
   });
   if (checkoutBtn) checkoutBtn.disabled = false;
   if (orderErr) {
     const m = orderErr.message || 'Gagal membuat pesanan';
-    if (m.startsWith('VOUCHER: ') && voucher) {
+    const rejected = m.startsWith('VOUCHER: ') ? voucher : (m.startsWith('ONGKIR: ') ? shipVoucher : null);
+    if (rejected) {
       // Voucher ditolak server: lepas klaimnya supaya tidak terpasang otomatis lagi
-      claimedCodes = claimedCodes.filter(c => c !== voucher.code);
+      claimedCodes = claimedCodes.filter(c => c !== rejected.code);
       localStorage.setItem('zenot_claimed_vouchers', JSON.stringify(claimedCodes));
-      voucher = null;
+      rejectedVoucherIds.add(rejected.id);
+      if (rejected === voucher) voucher = null; else shipVoucher = null;
       updateCartUI();
-      showToast(m.slice(9) + ' - voucher dilepas, coba checkout lagi');
+      showToast(m.replace(/^(VOUCHER|ONGKIR): /, '') + ' - voucher dilepas, coba checkout lagi');
     } else {
       showToast(m);
     }
@@ -3574,7 +3725,7 @@ async function checkoutWA(payOnline) {
   if (payOnline) {
     // Pesanan sudah dibuat: kosongkan keranjang supaya tidak membuat pesanan ganda.
     // Kalau pembayaran gagal dibuka, pesanan tetap bisa dibayar dari Akun Saya > Riwayat Pesanan.
-    cart = []; voucher = null; updateCartUI();
+    cart = []; voucher = null; shipVoucher = null; updateCartUI();
     let orderId = order.id || order.order_id;
     if (!orderId) {
       const { data: last } = await sb.from('orders').select('id').eq('user_id', buyerUser.id).eq('status', 'menunggu_pembayaran').order('created_at', { ascending: false }).limit(1);
@@ -3596,6 +3747,7 @@ async function checkoutWA(payOnline) {
   const lines = order.items.map(i=>`• ${i.name} (${i.color}, ${i.size}) x${i.qty} — ${fRp(i.price*i.qty)}`);
   let msg = `Halo Zenoot, saya mau order:\n\n${lines.join('\n')}\n\nSubtotal Pesanan: ${fRp(order.subtotal)}`;
   if (order.discount>0) msg += `\nDiskon Voucher: -${fRp(order.discount)}`;
+  if (order.ship_voucher_code) msg += `\nVoucher Gratis Ongkir: ${order.ship_voucher_code} (potongan dihitung saat ongkir dikonfirmasi)`;
   msg += `\nOngkos Kirim: Dikonfirmasi kemudian\n\nTotal (belum termasuk ongkir): ${fRp(order.total)}\n\n`;
   msg += `Alamat Pengiriman:\n${shippingAddress.recipient_name} (${shippingAddress.phone})\n${shippingAddress.address_detail}`;
   if (shippingAddress.address_note) msg += `, ${shippingAddress.address_note}`;
@@ -4215,10 +4367,12 @@ trackEvent('view_store');
 document.getElementById('footer-year').textContent = new Date().getFullYear();
 renderFooterExtras();
 loadFooterSocial();
-loadVouchersForPromo().then(() => {
+vouchersReady = loadVouchersForPromo();
+vouchersReady.then(() => {
   if (!sessionStorage.getItem('zenot_promo_seen')) {
     sessionStorage.setItem('zenot_promo_seen', '1');
-    setTimeout(showVoucherPopup, 800);
+    // Tamu melihat popup voucher member baru kalau ada; selain itu popup daftar voucher seperti biasa
+    setTimeout(() => { if (!showWelcomePopup()) showVoucherPopup(); }, 800);
   }
 });
 sb.auth.getSession().then(async ({data}) => {
@@ -4228,6 +4382,7 @@ sb.auth.getSession().then(async ({data}) => {
     await loadBuyerProfile();
     await loadWishlistIds();
     renderProducts();
+    onBuyerSignedIn();
   }
   // Kembali dari login Google: buka lagi halaman/filter yang tadi dibuka (hash sudah bersih setelah sesi terbaca)
   try {
@@ -4249,7 +4404,7 @@ sb.auth.getSession().then(async ({data}) => {
   let startY = 0, pulling = false, currentPull = 0;
 
   function overlayLagiTerbuka() {
-    return !!document.querySelector('#product-modal.open, .cart-drawer.open, .ongkir-sheet-overlay.open, .variant-sheet-overlay.open, .promo-overlay.open, .login-overlay.open, .side-panel.open, .drawer-scrim.open, .chat-panel.open');
+    return !!document.querySelector('#product-modal.open, .cart-drawer.open, .ongkir-sheet-overlay.open, .variant-sheet-overlay.open, .promo-overlay.open, .welcome-overlay.open, .login-overlay.open, .side-panel.open, .drawer-scrim.open, .chat-panel.open');
   }
 
   document.addEventListener('touchstart', (e) => {
