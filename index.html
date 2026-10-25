@@ -203,9 +203,6 @@
     #controls.show{display:block}
     .catalog-heading{font-family:'Source Serif 4',serif;font-size:26px;font-weight:600;margin-bottom:10px}
     .catalog-meta-row{padding:14px 0 20px;border-bottom:1px solid var(--border);margin-bottom:20px;font-size:13px;color:var(--sec)}
-    .promo-section{max-width:1100px;margin:0 auto;padding:0 20px 24px}
-    .promo-section-list{display:flex;gap:12px;overflow-x:auto;padding-bottom:4px}
-    .promo-section .promo-card{flex-shrink:0;width:260px;margin-bottom:0}
 
     /* ===== VOUCHER PROMO POPUP ===== */
     .promo-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:250;align-items:center;justify-content:center;padding:20px}
@@ -229,7 +226,6 @@
     .promo-claim-btn{background:var(--vc);color:#fff;border:1px solid var(--vc);border-radius:3px;padding:7px 14px;font-size:12px;font-weight:600;font-family:inherit;cursor:pointer;white-space:nowrap}
     .promo-claim-btn.claimed{background:transparent;color:var(--vc);cursor:default}
     .promo-claim-btn:disabled:not(.claimed){background:#e8e5e0;border-color:#e8e5e0;color:var(--muted);cursor:default}
-    .promo-section .promo-card{width:290px}
 
     /* ===== POPUP VOUCHER MEMBER BARU ===== */
     .welcome-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:260;align-items:center;justify-content:center;padding:20px}
@@ -622,7 +618,7 @@
     @media(max-width:480px){
       .product-grid{grid-template-columns:repeat(2,1fr);gap:8px}
       .hero{padding:28px 16px 20px}
-      .controls,.promo-section,.catalog{padding-left:8px;padding-right:8px}
+      .controls,.catalog{padding-left:8px;padding-right:8px}
     }
     /* ===== SEO helper ===== */
     .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
@@ -701,7 +697,6 @@
     .home-gender img{width:100%;height:100%;object-fit:cover;object-position:center top;display:block}
     .home-gender::after{content:"";position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.6),rgba(0,0,0,0) 50%)}
     .home-gender span{position:absolute;left:0;right:0;bottom:12px;z-index:1;text-align:center;color:#fff;font-family:'Montserrat',sans-serif;font-weight:700;font-size:13px;letter-spacing:.2em}
-    .home-view .promo-section{padding:12px 0 0}
     .home-sec{margin-top:36px}
     .home-sec[hidden]{display:none}
     .home-sec-head{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:16px}
@@ -903,6 +898,7 @@
     <button class="drawer-item" onclick="goAllProducts();toggleDrawer(false)">Semua Produk</button>
     <div id="drawer-gender-sections"></div>
     <button class="drawer-item" onclick="openWishlist()">Wishlist</button>
+    <button class="drawer-item" onclick="openVoucherSaya()">Voucher Saya</button>
     <button class="drawer-item" onclick="openCart();toggleDrawer(false)" style="display:flex;justify-content:space-between;align-items:center">
       Keranjang <span class="cart-count hidden" id="cart-count" style="position:static">0</span>
     </button>
@@ -929,9 +925,6 @@
   <div class="home-hero" id="home-hero"><div class="loading-state">Memuat...</div></div>
   <div class="home-sec-head home-cat-head" id="home-cat-head" hidden><h2>Kategori</h2></div>
   <div class="home-genders" id="home-genders"></div>
-  <section class="promo-section">
-    <div class="promo-section-list" id="promo-section-list"></div>
-  </section>
   <section class="home-sec" id="home-sec-new" hidden>
     <div class="home-sec-head"><h2>Produk Terbaru</h2><button type="button" onclick="goAllProducts()">Lihat Semua</button></div>
     <div class="home-rail" id="home-rail-new"></div>
@@ -1134,7 +1127,7 @@
 
 <!-- POPUP VOUCHER MEMBER BARU -->
 <div class="welcome-overlay" id="welcome-overlay" onclick="if(event.target===this)closeWelcomePopup()">
-  <div class="welcome-box">
+  <div class="welcome-box" role="dialog" aria-modal="true" aria-label="Voucher member baru">
     <button class="welcome-close" onclick="closeWelcomePopup()" aria-label="Tutup">&#10005;</button>
     <div class="welcome-top">
       <p class="welcome-kicker">Voucher Member Baru</p>
@@ -1180,6 +1173,9 @@
       </div>
       <div class="summary-row hidden" id="ship-voucher-row">
         <span>🎟️ Voucher Ongkir</span><span id="ship-voucher-val" style="text-align:right"></span>
+      </div>
+      <div class="summary-row hidden" id="cart-voucher-row" onclick="showVoucherPopup()" style="cursor:pointer;align-items:center">
+        <span>🎟️ Voucher</span><span id="cart-voucher-summary" style="color:var(--ink);display:flex;align-items:center;gap:4px"></span>
       </div>
       <div class="summary-row" id="pay-method-row" onclick="openPayMethodSheet()" style="cursor:pointer;align-items:center">
         <span>💳 Metode Pembayaran</span><span id="pay-method-summary" style="color:var(--ink);display:flex;align-items:center;gap:4px">Midtrans <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg></span>
@@ -1311,6 +1307,7 @@ let claimedCodes = JSON.parse(localStorage.getItem('zenot_claimed_vouchers') || 
 let allVouchers = [];
 let shipVoucher = null;                 // voucher ongkir yang terpasang di keranjang
 let serverClaimedIds = new Set();       // voucher member baru yang sudah diklaim di akun yang sedang login
+let buyerHasOrder = false;              // akun yang login sudah pernah punya pesanan (bukan batal): voucher member baru tidak berlaku lagi
 let rejectedVoucherIds = new Set();     // voucher yang ditolak server pada sesi ini: tidak dipasang otomatis lagi
 let vouchersReady = Promise.resolve();  // selesai saat daftar voucher aktif sudah dimuat
 const CLAIM_FLAG = 'zenot_claim_new_member'; // diset saat pembeli menekan "Daftar & Klaim", dipakai setelah akun jadi
@@ -2596,6 +2593,7 @@ async function saveAddress() {
     await sb.from('addresses').insert(payload);
   }
   showToast('Alamat tersimpan ✓');
+  autoClaimNewMember(true);
   renderAddressList();
 }
 
@@ -2620,6 +2618,7 @@ async function doBuyerLogout() {
   await sb.auth.signOut();
   buyerUser = null; buyerProfile = null; wishlistIds = new Set();
   serverClaimedIds = new Set();
+  buyerHasOrder = false;
   closeSidePanel();
   renderProducts();
   renderVoucherPopupList();
@@ -3397,6 +3396,7 @@ function updateCartUI() {
     svRow.classList.remove('hidden');
     document.getElementById('ship-voucher-val').textContent = voucherTitle(shipVoucher, shortRp) + ' (' + shipVoucher.code + ')';
   } else { svRow.classList.add('hidden'); }
+  updateCartVoucherRow();
 
   const discRow = document.getElementById('discount-row');
   if (disc > 0) {
@@ -3438,7 +3438,6 @@ function openCart() {
   updateCartUI();
   document.getElementById('cart-drawer').classList.add('open');
   document.body.style.overflow='hidden';
-  showVoucherPopup();
 }
 
 function closeCart() { document.getElementById('cart-drawer').classList.remove('open'); document.body.style.overflow=''; }
@@ -3502,12 +3501,17 @@ function voucherExpiryInfo(v, upcoming) {
   }
   return { text: 'Hingga: ' + voucherDMY(new Date(v.expires_at)), soon: false };
 }
+function voucherTidakBerlaku(v) {
+  // Voucher member baru sudah tidak bisa dipakai akun yang pernah punya pesanan
+  return isNewMemberVoucher(v) && !!buyerUser && buyerHasOrder;
+}
 function voucherCardHTML(v, upcoming) {
-  const claimed = !upcoming && isVoucherClaimed(v);
+  const used = !upcoming && voucherTidakBerlaku(v);
+  const claimed = !upcoming && !used && isVoucherClaimed(v);
   const isPct = v.discount_type === 'percent';
   const title = voucherTitle(v, shortRp);
   const capText = (isPct && v.max_discount) ? ' · Maks. ' + shortRp(v.max_discount) : '';
-  const exp = voucherExpiryInfo(v, upcoming);
+  const exp = used ? { text: 'Khusus pembelian pertama', soon: false } : voucherExpiryInfo(v, upcoming);
   return `
     <div class="promo-card">
       <div class="promo-card-main">
@@ -3518,6 +3522,8 @@ function voucherCardHTML(v, upcoming) {
       <div class="promo-card-action">
         ${upcoming
           ? `<button class="promo-claim-btn" disabled>Segera</button>`
+          : used
+          ? `<button class="promo-claim-btn" disabled>Tidak berlaku</button>`
           : `<button class="promo-claim-btn ${claimed?'claimed':''}" ${claimed?'disabled':''} onclick="claimVoucher('${v.code}')">${claimed?'Diklaim':'Klaim'}</button>`}
       </div>
     </div>`;
@@ -3525,15 +3531,37 @@ function voucherCardHTML(v, upcoming) {
 
 function renderVoucherPopupList() {
   const el = document.getElementById('promo-list');
-  const sectionEl = document.getElementById('promo-section-list');
+  const vsEl = document.getElementById('vs-list');
+  let html;
   if (!allVouchers.length && !upcomingVouchers.length) {
-    if (el) el.innerHTML = '<p style="font-size:13px;color:var(--muted)">Belum ada voucher aktif saat ini.</p>';
-    if (sectionEl) sectionEl.innerHTML = '';
-    return;
+    html = '<p style="font-size:13px;color:var(--muted)">Belum ada voucher aktif saat ini.</p>';
+  } else {
+    html = allVouchers.map(v => voucherCardHTML(v)).join('') + upcomingVouchers.map(v => voucherCardHTML(v, true)).join('');
   }
-  const html = allVouchers.map(v => voucherCardHTML(v)).join('') + upcomingVouchers.map(v => voucherCardHTML(v, true)).join('');
   if (el) el.innerHTML = html;
-  if (sectionEl) sectionEl.innerHTML = html;
+  if (vsEl) vsEl.innerHTML = html;
+  updateCartVoucherRow();
+}
+
+// Baris "Voucher" di keranjang: menunjukkan voucher yang terpasang atau yang tersedia, dan membuka daftar voucher
+function updateCartVoucherRow() {
+  const row = document.getElementById('cart-voucher-row');
+  const sum = document.getElementById('cart-voucher-summary');
+  if (!row || !sum) return;
+  const applied = (voucher ? 1 : 0) + (shipVoucher ? 1 : 0);
+  const avail = allVouchers.filter(v => !voucherTidakBerlaku(v)).length;
+  if (!applied && !avail) { row.classList.add('hidden'); return; }
+  row.classList.remove('hidden');
+  sum.innerHTML = (applied ? applied + ' terpasang' : avail + ' tersedia') +
+    ' <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg>';
+}
+
+// Menu "Voucher Saya": semua voucher aktif yang dibuat di Seller Center
+async function openVoucherSaya() {
+  openSidePanel('Voucher Saya', `<p style="font-size:13px;color:var(--sec);line-height:1.5;margin-bottom:14px">Voucher yang sudah kamu klaim terpasang otomatis saat checkout.</p><div id="vs-list"></div>`);
+  await vouchersReady;
+  renderVoucherPopupList();
+  if (buyerUser) refreshVoucherClaims(); // segarkan status klaim dan status pembelian pertama
 }
 
 async function claimVoucher(code) {
@@ -3548,7 +3576,11 @@ async function claimVoucher(code) {
       return;
     }
     const { error } = await sb.rpc('klaim_voucher', { p_code: code });
-    if (error) { showToast(error.message); return; }
+    if (error) {
+      if (/pembelian pertama|member baru/i.test(error.message)) { buyerHasOrder = true; renderVoucherPopupList(); }
+      showToast(error.message);
+      return;
+    }
     serverClaimedIds.add(nv.id);
     rejectedVoucherIds.delete(nv.id);
     showToast(`Voucher ${code} diklaim ✓`);
@@ -3631,6 +3663,40 @@ function showWelcomePopup() {
 function closeWelcomePopup() {
   document.getElementById('welcome-overlay').classList.remove('open');
 }
+document.addEventListener('keydown', (e) => {
+  if (e.key !== 'Escape') return;
+  const w = document.getElementById('welcome-overlay');
+  if (w && w.classList.contains('open')) closeWelcomePopup();
+});
+
+// Jadwal popup member baru. Dibuat hati-hati supaya tidak mengganggu SEO dan Google Merchant Center:
+// muncul setelah beberapa detik, tidak di halaman produk (/?p=..., tujuan feed Google), tidak untuk pengunjung yang baru
+// datang dari hasil pencarian, tidak menimpa panel lain yang sedang terbuka, dan tidak berulang selama 7 hari.
+const WELCOME_DELAY_MS = 5000;
+const WELCOME_SEEN_KEY = 'zenot_welcome_seen_at';
+const WELCOME_QUIET_MS = 7 * 24 * 60 * 60 * 1000;
+function referrerIsSearchEngine() {
+  try {
+    const h = new URL(document.referrer).hostname.toLowerCase();
+    return /^(www\.)?(google|bing|yahoo|duckduckgo|yandex|baidu|ecosia)\.[a-z.]+$/.test(h);
+  } catch (_) { return false; }
+}
+function anyOverlayOpen() {
+  return !!document.querySelector('#product-modal.open, .cart-drawer.open, .ongkir-sheet-overlay.open, .variant-sheet-overlay.open, .promo-overlay.open, .welcome-overlay.open, .login-overlay.open, .side-panel.open, .drawer-scrim.open, .chat-panel.open');
+}
+function maybeShowWelcome() {
+  if (buyerUser) return;
+  if (new URLSearchParams(location.search).has('p')) return;
+  if (referrerIsSearchEngine()) return;
+  if (anyOverlayOpen()) return;
+  try {
+    const t = Number(localStorage.getItem(WELCOME_SEEN_KEY) || 0);
+    if (t && Date.now() - t < WELCOME_QUIET_MS) return;
+  } catch (_) {}
+  if (showWelcomePopup()) {
+    try { localStorage.setItem(WELCOME_SEEN_KEY, String(Date.now())); } catch (_) {}
+  }
+}
 function welcomeRegister() {
   closeWelcomePopup();
   try { localStorage.setItem(CLAIM_FLAG, '1'); } catch (_) {}
@@ -3639,9 +3705,14 @@ function welcomeRegister() {
 
 async function refreshVoucherClaims() {
   serverClaimedIds = new Set();
+  buyerHasOrder = false;
   if (buyerUser) {
     const { data } = await sb.from('voucher_claims').select('voucher_id');
     serverClaimedIds = new Set((data || []).map(r => r.voucher_id));
+    try {
+      const { data: od } = await sb.from('orders').select('id').eq('user_id', buyerUser.id).neq('status', 'dibatalkan').limit(1);
+      buyerHasOrder = !!(od && od.length);
+    } catch (_) { /* biarkan false: server tetap menolak kalau memang sudah tidak berlaku */ }
   }
   renderVoucherPopupList();
   updateCartUI();
@@ -3667,6 +3738,36 @@ async function onBuyerSignedIn() {
   else if (lastErr) showToast(lastErr, 3000);
 }
 
+
+// Klaim otomatis voucher member baru begitu data diri lengkap (akun dengan email + alamat berisi nama dan telepon).
+// Server tetap yang menentukan: akun yang sudah pernah belanja ditolak, klaim ganda diabaikan.
+let autoClaimPromise = null;
+function autoClaimNewMember(showMsg) {
+  // Kalau klaim sedang berjalan (mis. baru menyimpan alamat lalu langsung checkout), tunggu yang itu supaya tidak ganda dan tidak terlewat
+  if (autoClaimPromise) return autoClaimPromise;
+  autoClaimPromise = autoClaimNewMemberRun(showMsg).finally(() => { autoClaimPromise = null; });
+  return autoClaimPromise;
+}
+async function autoClaimNewMemberRun(showMsg) {
+  if (!buyerUser || !buyerUser.email) return false;
+  try {
+    await vouchersReady;
+    const list = allVouchers.filter(v => isNewMemberVoucher(v) && !serverClaimedIds.has(v.id) && !rejectedVoucherIds.has(v.id));
+    if (!list.length) return false;
+    let ok = 0;
+    for (const v of list) {
+      const { error } = await sb.rpc('klaim_voucher', { p_code: v.code });
+      if (!error) { serverClaimedIds.add(v.id); ok++; }
+      else if (/pembelian pertama|member baru/i.test(error.message)) { buyerHasOrder = true; }
+    }
+    renderVoucherPopupList();
+    updateCartUI();
+    if (ok && showMsg) showToast('Voucher member baru berhasil diklaim 🎉', 2600);
+    return ok > 0;
+  } catch (_) {
+    return false;
+  }
+}
 
 // ===================== CHECKOUT WA =====================
 async function checkoutWA(payOnline) {
@@ -3696,6 +3797,8 @@ async function checkoutWA(payOnline) {
   // Harga, voucher, dan nomor pesanan dihitung di server (fungsi buat_pesanan), bukan di browser
   const checkoutBtn = document.querySelector('.btn-checkout');
   if (checkoutBtn) checkoutBtn.disabled = true;
+  // Data diri sudah lengkap (email akun + alamat dengan nama dan telepon): klaim voucher member baru otomatis, lalu pasang sebelum pesanan dibuat
+  if (shippingAddress.phone) await autoClaimNewMember(false);
   const { data: order, error: orderErr } = await sb.rpc('buat_pesanan', {
     p_items: cart.map(i => ({ variantId: i.variantId, qty: i.qty })),
     p_voucher_code: voucher ? voucher.code : null,
@@ -3720,6 +3823,8 @@ async function checkoutWA(payOnline) {
     }
     return;
   }
+  buyerHasOrder = true; // pesanan sudah dibuat: voucher member baru tidak berlaku lagi untuk akun ini (dihitung ulang kalau pesanan dibatalkan)
+  renderVoucherPopupList();
 
   // Bayar online: pesanan sudah dibuat server, langsung lanjut ke halaman pembayaran Midtrans (tanpa WhatsApp)
   if (payOnline) {
@@ -4368,13 +4473,7 @@ document.getElementById('footer-year').textContent = new Date().getFullYear();
 renderFooterExtras();
 loadFooterSocial();
 vouchersReady = loadVouchersForPromo();
-vouchersReady.then(() => {
-  if (!sessionStorage.getItem('zenot_promo_seen')) {
-    sessionStorage.setItem('zenot_promo_seen', '1');
-    // Tamu melihat popup voucher member baru kalau ada; selain itu popup daftar voucher seperti biasa
-    setTimeout(() => { if (!showWelcomePopup()) showVoucherPopup(); }, 800);
-  }
-});
+vouchersReady.then(() => { setTimeout(maybeShowWelcome, WELCOME_DELAY_MS); });
 sb.auth.getSession().then(async ({data}) => {
   if (data.session) {
     buyerUser = data.session.user;
