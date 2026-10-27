@@ -270,6 +270,18 @@
     .order-item-status{font-family:'IBM Plex Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:#2a7a2a;background:#eaf6ea;padding:3px 8px;border-radius:4px}
     .order-item-lines{font-size:12px;color:var(--sec);line-height:1.6;margin-bottom:4px;white-space:pre-line}
     .order-item-total{font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:500}
+    .order-tabs{display:flex;gap:6px;overflow-x:auto;padding-bottom:12px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+    .order-tabs::-webkit-scrollbar{display:none}
+    .order-tab{flex-shrink:0;padding:7px 12px;font-size:12px;background:#fff;border:1px solid var(--border);border-radius:999px;cursor:pointer;font-family:inherit;color:var(--ink);white-space:nowrap}
+    .order-tab.active{background:var(--ink);color:#fff;border-color:var(--ink)}
+    .order-track{margin-top:10px;padding:10px 12px;border:1px solid var(--border);border-radius:10px;background:#faf9f6}
+    .order-track-head{font-size:12px;color:var(--muted);margin-bottom:2px}
+    .order-track-resi{font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:600;word-break:break-all}
+    .order-track-actions{display:flex;gap:8px;margin-top:8px}
+    .order-track-btn{flex:1;padding:9px;font-size:12.5px;font-weight:600;border-radius:8px;cursor:pointer;font-family:inherit;border:1px solid var(--border);background:#fff;color:var(--ink)}
+    .order-track-btn.primary{background:var(--ink);color:#fff;border-color:var(--ink)}
+    .order-track-note{font-size:11px;color:var(--muted);margin-top:6px;line-height:1.5}
+    .order-wait{margin-top:8px;font-size:12px;color:var(--muted);line-height:1.5}
     .card-body{padding:8px 8px 10px;display:flex;flex-direction:column;flex:1}
     .card-cat{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.12em;color:var(--muted);text-transform:uppercase;margin-bottom:4px}
     .card-name{font-family:'Source Serif 4',serif;font-size:13px;font-weight:500;margin-bottom:8px;line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
@@ -901,6 +913,7 @@
     <div id="drawer-gender-sections"></div>
     <button class="drawer-item" onclick="openWishlist()">Wishlist</button>
     <button class="drawer-item" onclick="openVoucherSaya()">Voucher Saya</button>
+    <button class="drawer-item" onclick="openMyOrders()">Pesanan Saya</button>
     <button class="drawer-item" onclick="openCart();toggleDrawer(false)" style="display:flex;justify-content:space-between;align-items:center">
       Keranjang <span class="cart-count hidden" id="cart-count" style="position:static">0</span>
     </button>
@@ -1827,35 +1840,7 @@ function renderAccountAuth() {
   openSidePanel('Akun', accountTab === 'masuk' ? loginHtml : regHtml);
 }
 
-async function renderAccountProfile() {
-  const p = buyerProfile || {};
-  const initial = (p.name || buyerUser.email || '?')[0].toUpperCase();
-  openSidePanel('Akun Saya', `
-    <div class="acc-profile">
-      <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px">
-        <div style="width:44px;height:44px;border-radius:50%;background:var(--ink);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:600;flex-shrink:0">${initial}</div>
-        <div><p style="font-weight:600">${p.name || '(belum diisi)'}</p><p style="font-size:12px;color:var(--muted)">${buyerUser.email}</p></div>
-      </div>
-      <div style="border:1px solid var(--border);border-radius:8px;padding:14px;margin-bottom:14px;cursor:pointer" onclick="renderAddressList()">
-        <p style="font-size:11px;color:var(--muted);text-transform:uppercase;margin-bottom:8px">Alamat</p>
-        <div id="acc-default-addr-preview" style="font-size:13px;color:var(--muted)">Memuat...</div>
-        <span style="display:inline-block;margin-top:10px;font-size:13px;font-weight:600;color:var(--ink)">Kelola Alamat →</span>
-      </div>
-      <button style="width:100%;padding:12px;background:none;border:1px solid var(--border);border-radius:8px;cursor:pointer;color:var(--muted)" onclick="doBuyerLogout()">Keluar</button>
-      <div style="margin-top:24px;padding-top:18px;border-top:1px solid var(--border)">
-        <p style="font-size:12px;color:var(--muted);text-transform:uppercase;margin-bottom:8px">Riwayat Pesanan</p>
-        <div id="order-history-render"><div class="loading-state" style="padding:20px 0">Memuat...</div></div>
-      </div>
-    </div>`);
-  loadBuyerAddresses().then(() => {
-    const el = document.getElementById('acc-default-addr-preview');
-    if (!el) return;
-    const def = buyerAddresses.find(a=>a.is_default) || buyerAddresses[0];
-    el.innerHTML = def
-      ? `<strong>${def.recipient_name}</strong> (${def.label})<br/>${def.address_detail}, ${def.district}, ${def.city}, ${def.province}`
-      : 'Belum ada alamat tersimpan.';
-  });
-  const orders = await loadOrderHistory();
+// ===================== PESANAN & PELACAKAN RESI =====================
 const ORDER_STATUS_LABEL = {
   menunggu_pembayaran: { label: 'Menunggu Pembayaran', color: '#b8860b', bg: '#fdf3dc' },
   diproses:            { label: 'Diproses',            color: '#1e6fa8', bg: '#e2f0fa' },
@@ -1871,16 +1856,83 @@ function courierTrackingUrl(resi) {
   return `https://cekresi.com/?noresi=${encodeURIComponent(resi)}`;
 }
 
-  const el = document.getElementById('order-history-render');
-  if (!el) return;
-  if (!orders.length) {
-    el.innerHTML = `<div class="side-panel-empty" style="padding:20px 0">Belum ada pesanan.</div>`;
-    return;
+
+function orderEsc(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
+// Situs resmi pelacakan tiap kurir. Nama kurir diketik penjual di Seller Center, jadi dicocokkan longgar.
+// Kurir yang tidak dikenali dibuka lewat cekresi.com (semua kurir).
+const COURIER_TRACK_SITES = [
+  { re: /\bjne\b/,                              name: 'JNE',           url: 'https://www.jne.co.id/' },
+  { re: /\btiki\b/,                             name: 'TIKI',          url: 'https://www.tiki.id/' },
+  { re: /\bpos\b|pos\s*indonesia|posindonesia/, name: 'Pos Indonesia', url: 'https://www.posindonesia.co.id/en/tracking' },
+  { re: /j\s*&\s*t|\bjnt\b|j\s*and\s*t|\bjet\b/, name: 'J&T Express', url: 'https://jet.co.id/track' },
+  { re: /si\s*cepat/,                            name: 'SiCepat',       url: 'https://www.sicepat.com/' },
+  { re: /anter\s*aja/,                           name: 'AnterAja',      url: 'https://anteraja.id/tracking' },
+  { re: /ninja/,                                 name: 'Ninja Xpress',  url: 'https://www.ninjaxpress.co/id-id/tracking' }
+];
+function courierTrackSite(courier) {
+  const c = String(courier || '').toLowerCase();
+  return COURIER_TRACK_SITES.find(x => x.re.test(c)) || null;
+}
+
+function trackingBlockHTML(o) {
+  const site = courierTrackSite(o.courier);
+  const hint = site
+    ? `Resi akan disalin, lalu tempel di kolom pelacakan situs ${site.name}.`
+    : 'Kurir ini tidak dikenali, jadi pelacakan dibuka lewat cekresi.com (semua kurir).';
+  return `<div class="order-track">
+    <div class="order-track-head">${orderEsc(o.courier || 'Kurir')} &middot; No. Resi</div>
+    <div class="order-track-resi">${orderEsc(o.resi)}</div>
+    <div class="order-track-actions">
+      <button type="button" class="order-track-btn" data-resi="${orderEsc(o.resi)}" onclick="copyResi(this)">Salin Resi</button>
+      <button type="button" class="order-track-btn primary" data-resi="${orderEsc(o.resi)}" data-courier="${orderEsc(o.courier || '')}" onclick="trackParcel(this)">Lacak Paket</button>
+    </div>
+    <div class="order-track-note">${hint}</div>
+  </div>`;
+}
+
+function copyTextFallback(text) {
+  try {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.setAttribute('readonly', '');
+    ta.style.cssText = 'position:fixed;top:-1000px;opacity:0';
+    document.body.appendChild(ta);
+    ta.select();
+    ta.setSelectionRange(0, text.length);
+    const ok = document.execCommand('copy');
+    document.body.removeChild(ta);
+    return ok;
+  } catch (_) { return false; }
+}
+function copyText(text) {
+  if (navigator.clipboard && window.isSecureContext) {
+    return navigator.clipboard.writeText(text).then(() => true).catch(() => copyTextFallback(text));
   }
-  el.innerHTML = orders.map(o => {
+  return Promise.resolve(copyTextFallback(text));
+}
+function copyResi(btn) {
+  copyText((btn.dataset.resi || '').trim()).then(ok => showToast(ok ? 'Resi disalin ✓' : 'Gagal menyalin, salin manual ya'));
+}
+function trackParcel(btn) {
+  const resi = (btn.dataset.resi || '').trim();
+  if (!resi) return;
+  const site = courierTrackSite(btn.dataset.courier);
+  const url = site ? site.url : courierTrackingUrl(resi);
+  // Salin dan buka langsung dari klik supaya tidak diblokir browser
+  const copying = site ? copyText(resi) : null;
+  window.open(url, '_blank', 'noopener,noreferrer');
+  if (copying) copying.then(ok => showToast(ok ? 'Resi disalin. Tempel di kolom pelacakan' : 'Salin resi manual lalu tempel di kolom pelacakan'));
+}
+
+function orderCardHTML(o) {
     const date = new Date(o.created_at).toLocaleDateString('id-ID', {day:'numeric',month:'short',year:'numeric'});
     const lines = (o.items||[]).map(i=>`${i.name} (${i.color}, ${i.size}) x${i.qty}`).join('\n');
-    const resiBlock = o.resi ? `<div style="margin-top:6px;font-size:12.5px;color:var(--muted)">Resi (${o.courier||'Kurir'}): <a href="${courierTrackingUrl(o.resi)}" target="_blank" style="color:var(--ink);font-weight:600">${o.resi}</a></div>` : '';
+    const resiBlock = (o.resi && o.status !== 'dibatalkan') ? trackingBlockHTML(o)
+      : (o.status === 'dikirim' ? `<div class="order-wait">Resi belum diinput penjual. Hubungi admin kalau belum ada kabar.</div>`
+      : (o.status === 'diproses' ? `<div class="order-wait">Pesanan sedang disiapkan penjual. Resi muncul di sini setelah dikirim.</div>` : ''));
 
     // Panel ubah pesanan — hanya untuk menunggu_pembayaran
     const ubahPanel = o.status === 'menunggu_pembayaran' ? `
@@ -1923,7 +1975,7 @@ function courierTrackingUrl(resi) {
     return `
     <div class="order-item">
       <div class="order-item-top">
-        <span class="order-item-date">${date}</span>
+        <span class="order-item-date">${date}${o.order_number ? ' · ' + orderEsc(o.order_number) : ''}</span>
         ${orderStatusBadge(o.status)}
       </div>
       <div class="order-item-lines">${lines}</div>
@@ -1932,7 +1984,79 @@ function courierTrackingUrl(resi) {
       ${bayarBtn}
       ${ubahPanel}
     </div>`;
-  }).join('');
+
+}
+
+// Halaman "Pesanan Saya": semua pesanan dengan tab status dan pelacakan resi
+let myOrdersCache = [];
+let myOrdersFilter = 'semua';
+const MY_ORDER_TABS = [
+  ['semua', 'Semua'], ['menunggu_pembayaran', 'Belum Bayar'], ['diproses', 'Diproses'],
+  ['dikirim', 'Dikirim'], ['selesai', 'Selesai'], ['dibatalkan', 'Dibatalkan']
+];
+async function openMyOrders() {
+  if (!buyerUser) {
+    openSidePanel('Pesanan Saya', `<div class="side-panel-empty">Masuk untuk melihat pesanan dan melacak paketmu.</div><button class="wish-empty-cta" onclick="openAccount()">Masuk / Daftar</button>`);
+    return;
+  }
+  openSidePanel('Pesanan Saya', `<div id="my-orders-list"><div class="loading-state" style="padding:40px 0">Memuat...</div></div>`);
+  await renderMyOrders(true);
+}
+async function renderMyOrders(reload) {
+  if (!document.getElementById('my-orders-list')) return;
+  if (reload) myOrdersCache = await loadOrderHistory();
+  const el = document.getElementById('my-orders-list'); // panel bisa saja sudah diganti saat menunggu data
+  if (!el) return;
+  const counts = { semua: myOrdersCache.length };
+  MY_ORDER_TABS.slice(1).forEach(([k]) => { counts[k] = myOrdersCache.filter(o => o.status === k).length; });
+  const tabs = `<div class="order-tabs">${MY_ORDER_TABS.map(([k, l]) =>
+    `<button type="button" class="order-tab${myOrdersFilter === k ? ' active' : ''}" onclick="setMyOrdersFilter('${k}')">${l}${counts[k] ? ' (' + counts[k] + ')' : ''}</button>`).join('')}</div>`;
+  const list = myOrdersFilter === 'semua' ? myOrdersCache : myOrdersCache.filter(o => o.status === myOrdersFilter);
+  el.innerHTML = tabs + (list.length ? list.map(orderCardHTML).join('') : `<div class="side-panel-empty" style="padding:30px 0">Belum ada pesanan di sini.</div>`);
+}
+function setMyOrdersFilter(k) { myOrdersFilter = k; renderMyOrders(false); }
+// Setelah ubah / batalkan pesanan: segarkan tampilan yang sedang terbuka (Pesanan Saya atau Akun Saya)
+function refreshOrdersView() {
+  if (document.getElementById('my-orders-list')) return renderMyOrders(true);
+  return renderAccountProfile();
+}
+
+async function renderAccountProfile() {
+  const p = buyerProfile || {};
+  const initial = (p.name || buyerUser.email || '?')[0].toUpperCase();
+  openSidePanel('Akun Saya', `
+    <div class="acc-profile">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px">
+        <div style="width:44px;height:44px;border-radius:50%;background:var(--ink);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:600;flex-shrink:0">${initial}</div>
+        <div><p style="font-weight:600">${p.name || '(belum diisi)'}</p><p style="font-size:12px;color:var(--muted)">${buyerUser.email}</p></div>
+      </div>
+      <div style="border:1px solid var(--border);border-radius:8px;padding:14px;margin-bottom:14px;cursor:pointer" onclick="renderAddressList()">
+        <p style="font-size:11px;color:var(--muted);text-transform:uppercase;margin-bottom:8px">Alamat</p>
+        <div id="acc-default-addr-preview" style="font-size:13px;color:var(--muted)">Memuat...</div>
+        <span style="display:inline-block;margin-top:10px;font-size:13px;font-weight:600;color:var(--ink)">Kelola Alamat →</span>
+      </div>
+      <button style="width:100%;padding:12px;background:none;border:1px solid var(--border);border-radius:8px;cursor:pointer;color:var(--muted)" onclick="doBuyerLogout()">Keluar</button>
+      <div style="margin-top:24px;padding-top:18px;border-top:1px solid var(--border)">
+        <p style="font-size:12px;color:var(--muted);text-transform:uppercase;margin-bottom:8px">Riwayat Pesanan</p>
+        <div id="order-history-render"><div class="loading-state" style="padding:20px 0">Memuat...</div></div>
+      </div>
+    </div>`);
+  loadBuyerAddresses().then(() => {
+    const el = document.getElementById('acc-default-addr-preview');
+    if (!el) return;
+    const def = buyerAddresses.find(a=>a.is_default) || buyerAddresses[0];
+    el.innerHTML = def
+      ? `<strong>${def.recipient_name}</strong> (${def.label})<br/>${def.address_detail}, ${def.district}, ${def.city}, ${def.province}`
+      : 'Belum ada alamat tersimpan.';
+  });
+  const orders = await loadOrderHistory();
+  const el = document.getElementById('order-history-render');
+  if (!el) return;
+  if (!orders.length) {
+    el.innerHTML = `<div class="side-panel-empty" style="padding:20px 0">Belum ada pesanan.</div>`;
+    return;
+  }
+  el.innerHTML = orders.map(orderCardHTML).join('');
 }
 
 async function doGoogleAuth() {
@@ -3918,7 +4042,7 @@ async function buyerCancelOrder(orderId) {
   const { error } = await sb.from('orders').update({ status: 'dibatalkan' }).eq('id', orderId).eq('user_id', buyerUser.id).eq('status', 'menunggu_pembayaran');
   if (error) { showToast('Gagal membatalkan pesanan'); return; }
   showToast('Pesanan dibatalkan');
-  renderAccountProfile();
+  refreshOrdersView();
 }
 
 function toggleUbahPanel(orderId) {
@@ -3943,7 +4067,7 @@ async function buyerSaveAlamat(orderId) {
   const { error } = await sb.from('orders').update({ shipping_address: newAddr }).eq('id', orderId).eq('user_id', buyerUser.id);
   if (error) { showToast('Gagal simpan alamat'); return; }
   showToast('Alamat berhasil diubah ✓');
-  renderAccountProfile();
+  refreshOrdersView();
 }
 
 async function buyerSaveVariasi(orderId, itemCount) {
@@ -3957,7 +4081,7 @@ async function buyerSaveVariasi(orderId, itemCount) {
   const { error } = await sb.from('orders').update({ items: newItems }).eq('id', orderId).eq('user_id', buyerUser.id);
   if (error) { showToast('Gagal simpan variasi'); return; }
   showToast('Variasi berhasil diubah ✓');
-  renderAccountProfile();
+  refreshOrdersView();
 }
 
 // ===================== BAYAR ONLINE (Midtrans) =====================
@@ -4002,7 +4126,7 @@ window.addEventListener('pageshow', e => {
   try {
     if (e.persisted && sessionStorage.getItem('zenot_pay_started') === '1') {
       sessionStorage.removeItem('zenot_pay_started');
-      if (buyerUser && document.getElementById('order-history-render')) renderAccountProfile();
+      if (buyerUser && (document.getElementById('order-history-render') || document.getElementById('my-orders-list'))) refreshOrdersView();
     }
   } catch (_) {}
 });
@@ -4099,7 +4223,7 @@ const FOOTER_PAYMENTS = [
   { n: 'Mandiri',      f: 'mandiri.png',      w: 192, h: 56, on: true },
   { n: 'CIMB Niaga',   f: 'cimb-niaga.png',   w: 384, h: 56, on: true },
   { n: 'PermataBank',  f: 'permata-bank.png', w: 226, h: 56, on: true },
-  { n: 'BSI',          f: 'bsi.png',          w: 151, h: 47, on: false, d: 22 },
+  { n: 'BSI',          f: 'bsi.png',          w: 151, h: 47, on: true, d: 22 },
   { n: 'SeaBank',      f: 'seabank.png',      w: 104, h: 144, on: false, d: 34 },
   { n: 'GoPay',        f: 'gopay.png',        w: 258, h: 56, on: true },
   { n: 'OVO',          f: 'ovo.png',          w: 136, h: 53, on: false },
