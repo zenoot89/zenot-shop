@@ -205,7 +205,7 @@
     .catalog-meta-row{padding:14px 0 20px;border-bottom:1px solid var(--border);margin-bottom:20px;font-size:13px;color:var(--sec)}
 
     /* ===== VOUCHER PROMO POPUP ===== */
-    .promo-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:250;align-items:center;justify-content:center;padding:20px}
+    .promo-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:710;align-items:center;justify-content:center;padding:20px}
     .promo-overlay.open{display:flex}
     .promo-box{background:var(--surface);border-radius:var(--radius);padding:28px 24px;width:100%;max-width:380px;max-height:85vh;overflow-y:auto;position:relative}
     .promo-close{position:absolute;top:14px;right:14px;background:none;border:none;font-size:20px;cursor:pointer;color:var(--muted)}
@@ -479,6 +479,53 @@
     .paym-opt.sel .paym-radio{border-color:var(--ink)}
     .paym-opt.sel .paym-radio::after{content:'';position:absolute;inset:3px;border-radius:50%;background:var(--ink)}
     .btn-checkout svg{width:18px;height:18px}
+
+    /* ===== CHECKOUT (layar di dalam drawer keranjang) ===== */
+    .cart-back{background:none;border:none;font-size:22px;cursor:pointer;color:var(--ink);margin-right:10px;padding:0 4px;line-height:1}
+    .cart-panel-header .cart-panel-title{flex:1}
+    .cart-panel.co-mode .cart-items,.cart-panel.co-mode .cart-footer{display:none!important}
+    .co-view{display:none;flex:1;min-height:0;flex-direction:column}
+    .cart-panel.co-mode .co-view{display:flex}
+    .co-body{flex:1;overflow-y:auto;padding:2px 20px 18px}
+    .co-sec{font-size:11.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:20px 0 4px}
+    .co-wait{text-align:center;color:var(--sec);font-size:14px;padding:80px 20px}
+    .co-row{display:flex;align-items:center;gap:12px;width:100%;background:none;border:none;border-bottom:1px solid var(--border);padding:14px 0;text-align:left;font-family:inherit;color:var(--ink);cursor:pointer}
+    .co-row.static{cursor:default}
+    .co-ico{width:30px;height:30px;flex-shrink:0;display:flex;align-items:center;justify-content:center;color:var(--ink)}
+    .co-ico svg{width:21px;height:21px}
+    .co-paylogo{max-width:30px;max-height:20px;width:auto;height:auto;object-fit:contain}
+    .co-main{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
+    .co-main b{font-size:13.5px;font-weight:600;line-height:1.3}
+    .co-sub{font-size:12px;color:var(--muted);line-height:1.4;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+    .co-row.need .co-sub{color:#d9534f}
+    .co-save{color:#1f6fd1;font-weight:600}
+    .co-val{flex-shrink:0;font-size:13px;text-align:right;font-family:'IBM Plex Mono',monospace}
+    .co-val s{color:var(--muted);font-size:11.5px}
+    .co-chev{flex-shrink:0;color:var(--muted)}
+    .co-item{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)}
+    .co-item-img{width:46px;height:46px;border-radius:var(--radius-sm);background:var(--bg);overflow:hidden;flex-shrink:0}
+    .co-item-img img{width:100%;height:100%;object-fit:cover}
+    .co-item-info{flex:1;min-width:0}
+    .co-item-info p{font-size:13px;font-weight:600;margin-bottom:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .co-item-info span{font-size:11.5px;color:var(--muted)}
+    .co-item b{font-size:12.5px;font-family:'IBM Plex Mono',monospace;font-weight:500;flex-shrink:0}
+    .co-sum{padding:4px 0 8px}
+    .co-sum-row{display:flex;justify-content:space-between;gap:12px;margin:9px 0;font-size:13px;color:var(--sec);font-family:'IBM Plex Mono',monospace}
+    .co-sum-row.green{color:#2a7a2a}
+    .co-sum-row.total{margin-top:14px;padding-top:12px;border-top:1px dashed var(--sep);font-size:14px;font-weight:600;color:var(--ink)}
+    .co-bar{flex-shrink:0;display:flex;align-items:center;gap:12px;padding:12px 20px calc(12px + env(safe-area-inset-bottom));border-top:1px solid var(--border);background:var(--surface)}
+    .co-bar-total{display:flex;flex-direction:column;min-width:0}
+    .co-bar-total span{font-size:11.5px;color:var(--muted)}
+    .co-bar-total strong{font-size:16px;font-family:'IBM Plex Mono',monospace;font-weight:600;white-space:nowrap}
+    .co-pay{flex:1;min-width:0;padding:14px 10px;background:var(--ink);color:#fff;border:1.5px solid var(--ink);border-radius:var(--radius-sm);font-size:14px;font-weight:600;font-family:inherit;cursor:pointer}
+    .co-pay.warn{background:#fff;color:var(--ink)}
+    .co-pay:disabled{opacity:.5;cursor:default}
+    .co-link{display:block;width:100%;background:none;border:none;padding:14px 0;text-align:left;font-family:inherit;font-size:13.5px;font-weight:600;color:#1f6fd1;cursor:pointer}
+    .co-phone{font-weight:400;color:var(--muted);font-size:12px}
+    .paym-logo{width:56px;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+    .paym-logo img{max-width:100%;max-height:22px;width:auto;height:auto;object-fit:contain}
+    .paym-emoji{font-size:20px}
+    .paym-grp{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding:16px 0 2px}
     .cart-empty{text-align:center;padding:72px 28px 24px}
     .cart-empty svg{width:46px;height:46px;stroke:#c9c1b5;fill:none;stroke-width:1.5;margin-bottom:22px}
     .cart-empty p{font-size:15px;line-height:1.7;color:var(--sec);max-width:270px;margin:0 auto 26px}
@@ -1170,12 +1217,26 @@
   </div>
 </div>
 
-<!-- CART DRAWER -->
+<!-- SHEET PILIH ALAMAT (Checkout) -->
+<div class="ongkir-sheet-overlay" id="co-addr-overlay" onclick="if(event.target===this)coCloseAddrSheet()">
+  <div class="ongkir-sheet">
+    <div class="ongkir-sheet-header">
+      <span>Pilih Alamat</span>
+      <button class="ongkir-sheet-close" onclick="coCloseAddrSheet()" aria-label="Tutup">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="ongkir-sheet-body" id="co-addr-body"></div>
+  </div>
+</div>
+
+<!-- CART DRAWER (Keranjang + layar Checkout) -->
 <div class="cart-drawer" id="cart-drawer">
   <div class="cart-overlay" onclick="closeCart()"></div>
-  <div class="cart-panel">
+  <div class="cart-panel" id="cart-panel">
     <div class="cart-panel-header">
-      <span class="cart-panel-title">Keranjang</span>
+      <button class="cart-back hidden" id="co-back" onclick="coBack()" aria-label="Kembali ke keranjang">&#8592;</button>
+      <span class="cart-panel-title" id="cart-title">Keranjang</span>
       <button class="cart-close" onclick="closeCart()">✕</button>
     </div>
     <div class="cart-items" id="cart-items-list"></div>
@@ -1184,7 +1245,7 @@
         <span>Subtotal Pesanan</span><span id="subtotal-val">Rp 0</span>
       </div>
       <div class="summary-row" id="shipping-row">
-        <span>🚚 Ongkos Kirim</span><span style="color:var(--muted);font-size:12px;text-align:right">Dihitung sesuai alamat saat pembayaran</span>
+        <span>🚚 Ongkos Kirim</span><span style="color:var(--muted);font-size:12px;text-align:right">Dihitung di langkah Checkout</span>
       </div>
       <div class="summary-row hidden" id="ship-voucher-row">
         <span>🎟️ Voucher Ongkir</span><span id="ship-voucher-val" style="text-align:right"></span>
@@ -1192,21 +1253,23 @@
       <div class="summary-row hidden" id="cart-voucher-row" onclick="showVoucherPopup()" style="cursor:pointer;align-items:center">
         <span>🎟️ Voucher</span><span id="cart-voucher-summary" style="color:var(--ink);display:flex;align-items:center;gap:4px"></span>
       </div>
-      <div class="summary-row" id="pay-method-row" onclick="openPayMethodSheet()" style="cursor:pointer;align-items:center">
-        <span>💳 Metode Pembayaran</span><span id="pay-method-summary" style="color:var(--ink);display:flex;align-items:center;gap:4px">Midtrans <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg></span>
-      </div>
-      <div id="pay-test-note" style="display:none;font-size:11.5px;line-height:1.45;color:var(--muted);padding:2px 0 10px">Masa uji coba: pembayaran online belum menerima uang sungguhan. Untuk memesan sekarang, pilih metode WhatsApp.</div>
       <div class="discount-row hidden" id="discount-row">
         <span>Diskon voucher</span><span id="discount-val"></span>
       </div>
       <div class="cart-total-row">
-        <span class="cart-total-label">Total Belanja</span>
+        <span class="cart-total-label">Total Sementara</span>
         <span class="cart-total-val" id="cart-total">Rp 0</span>
       </div>
-      <button class="btn-checkout" id="btn-checkout-main" onclick="cartCheckout()">
-        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
-        <span id="btn-checkout-label">Checkout via WhatsApp</span>
+      <button class="btn-checkout pay-online" id="btn-checkout-main" onclick="coOpen()">
+        <span id="btn-checkout-label">Checkout</span>
       </button>
+    </div>
+    <div class="co-view" id="co-view">
+      <div class="co-body" id="co-body"></div>
+      <div class="co-bar">
+        <div class="co-bar-total"><span id="co-bar-label">Total harga</span><strong id="co-bar-total">Rp 0</strong></div>
+        <button class="co-pay" id="co-pay-btn" data-act="" onclick="coBarClick()">Bayar Sekarang</button>
+      </div>
     </div>
   </div>
 </div>
@@ -1327,6 +1390,19 @@ let rejectedVoucherIds = new Set();     // voucher yang ditolak server pada sesi
 let vouchersReady = Promise.resolve();  // selesai saat daftar voucher aktif sudah dimuat
 const CLAIM_FLAG = 'zenot_claim_new_member'; // diset saat pembeli menekan "Daftar & Klaim", dipakai setelah akun jadi
 const SHIP_REF_COST = 30000;            // ongkir acuan untuk memilih voucher ongkir terbaik; ongkir sebenarnya dihitung server
+// ---- Checkout baru: status layar Checkout, pilihan metode bayar, dan penyimpanan keranjang ----
+const PAY_CHOICE_KEY = 'zenot_pay_choice';
+const CART_KEY = 'zenot_cart_v1';
+let payChoice = null;                   // null | 'wa' | 'other' | kode Midtrans (mis. 'bri_va'); diingat untuk belanja berikutnya
+try { payChoice = localStorage.getItem(PAY_CHOICE_KEY) || null; } catch (_) {}
+let coAddrId = null;                    // alamat yang dipilih untuk pesanan ini (bawaan: alamat utama)
+let coQuote = null;                     // hasil hitung ongkir dari server: { key, cost, service, etd }
+let coQState = 'idle';                  // idle | loading | ok | error
+let coQErr = '', coQCode = '';
+let coQSeq = 0, coQTimer = null, coQInflightKey = '';
+const coQCache = new Map();             // pratinjau ongkir selama layar Checkout terbuka (kunci: alamat + jumlah barang)
+let _coBusy = false;                    // pesanan sedang dibuat / pembayaran sedang disiapkan
+let _cartRestored = false;              // keranjang tersimpan sudah dipulihkan (baru boleh menyimpan ulang)
 let reviewRating = 0;
 let allCategories = [];
 
@@ -1344,6 +1420,8 @@ async function loadProducts() {
   renderHome();
   renderDrawerSubs();
   renderFooterBelanja();
+  restoreCart();
+  maybeResumeCheckout();
   const sharedId = new URLSearchParams(location.search).get('p');
   if (sharedId && products.some(p=>p.id===sharedId)) openProduct(sharedId, { noPush: true });
   else if (sharedId) { seoCanonical(SEO_SITE); seoMeta('meta[property="og:url"]', SEO_SITE); }
@@ -1730,6 +1808,7 @@ function openSidePanel(title, bodyHtml) {
 function closeSidePanel() {
   document.getElementById('side-panel').classList.remove('open');
   document.getElementById('panel-scrim').classList.remove('open');
+  try { coOnPanelClosed(); } catch (_) {}
 }
 // ===================== WISHLIST =====================
 let wishlistIds = new Set();
@@ -3515,7 +3594,7 @@ function updateCartUI() {
   document.getElementById('header-cart-count').classList.toggle('hidden', count===0);
   document.getElementById('cart-total').textContent = fRp(total);
   document.getElementById('subtotal-val').textContent = fRp(subtotal);
-  updatePayMethodUI();
+  updateCheckoutButton(total);
   
   const svRow = document.getElementById('ship-voucher-row');
   if (shipVoucher) {
@@ -3530,6 +3609,8 @@ function updateCartUI() {
     document.getElementById('discount-val').textContent = `-${fRp(disc)}`;
   } else { discRow.classList.add('hidden'); }
 
+  persistCart();
+  if (coActive()) coRender();
   const list = document.getElementById('cart-items-list');
   // Ringkasan dan tombol bayar disembunyikan kalau keranjang kosong
   const cartFooter = document.getElementById('cart-footer');
@@ -3567,12 +3648,13 @@ function cartQty(key, d) {
 }
 
 function openCart() {
+  setCartMode('cart');
   updateCartUI();
   document.getElementById('cart-drawer').classList.add('open');
   document.body.style.overflow='hidden';
 }
 
-function closeCart() { document.getElementById('cart-drawer').classList.remove('open'); document.body.style.overflow=''; }
+function closeCart() { setCartMode('cart'); document.getElementById('cart-drawer').classList.remove('open'); document.body.style.overflow=''; }
 
 // ===================== VOUCHER PROMO (popup + auto-apply) =====================
 let upcomingVouchers = [];
@@ -3775,7 +3857,7 @@ function bestVoucherOf(list, amountOf) {
 function autoApplyBestVoucher(subtotal) {
   const eligible = allVouchers.filter(v => isVoucherClaimed(v) && subtotal >= v.min_order);
   voucher = bestVoucherOf(eligible.filter(v => !isShipVoucher(v)), v => discAmountFor(v, subtotal));
-  shipVoucher = bestVoucherOf(eligible.filter(isShipVoucher), v => discAmountFor(v, SHIP_REF_COST));
+  shipVoucher = bestVoucherOf(eligible.filter(isShipVoucher), v => discAmountFor(v, (coQState === 'ok' && coQuote && payChoice !== 'wa') ? coQuote.cost : SHIP_REF_COST));
 }
 
 // ---- Voucher member baru: popup, klaim ke akun setelah daftar/masuk ----
@@ -3854,6 +3936,7 @@ async function refreshVoucherClaims() {
 async function onBuyerSignedIn() {
   await vouchersReady;
   await refreshVoucherClaims();
+  if (coActive()) coOnPanelClosed();
   let pending = false;
   try { pending = localStorage.getItem(CLAIM_FLAG) === '1'; } catch (_) {}
   if (!pending) return;
@@ -3901,8 +3984,393 @@ async function autoClaimNewMemberRun(showMsg) {
   }
 }
 
-// ===================== CHECKOUT WA =====================
-async function checkoutWA(payOnline) {
+// ===================== KERANJANG TERSIMPAN =====================
+// Keranjang disimpan di browser supaya tidak hilang saat pembeli diarahkan ke login Google lalu kembali ke toko.
+// Harga dan stok selalu diambil ulang dari data produk terbaru; varian yang sudah hilang atau habis dibuang.
+function persistCart() {
+  if (!_cartRestored) return;   // jangan menimpa keranjang tersimpan sebelum sempat dipulihkan
+  try {
+    localStorage.setItem(CART_KEY, JSON.stringify({ t: Date.now(), items: cart.map(i => ({ productId: i.productId, variantId: i.variantId, qty: i.qty })) }));
+  } catch (_) {}
+}
+function restoreCart() {
+  if (_cartRestored) return;
+  _cartRestored = true;
+  try {
+    const raw = localStorage.getItem(CART_KEY);
+    if (!raw) return;
+    const d = JSON.parse(raw);
+    if (!d || !Array.isArray(d.items) || Date.now() - (Number(d.t) || 0) > 7 * 86400000) { localStorage.removeItem(CART_KEY); return; }
+    if (cart.length) return;    // pembeli sudah menambah barang sebelum data selesai dimuat: biarkan
+    const out = [];
+    for (const s of d.items) {
+      const p = products.find(x => x.id === s.productId);
+      const v = p && (p.variants || []).find(x => x.id === s.variantId);
+      if (!p || !v || v.is_active === false) continue;
+      const stock = Number(v.stock) || 0;
+      if (stock < 1) continue;
+      const q = Math.min(Math.max(1, Math.round(Number(s.qty)) || 1), stock);
+      out.push({ key: `${p.id}-${v.id}`, productId: p.id, variantId: v.id, name: p.name, price: v.price, color: v.color_name, size: v.size, qty: q, image: p.image_url, stock });
+    }
+    if (out.length) { cart = out; updateCartUI(); }
+  } catch (_) {}
+}
+
+// ===================== CHECKOUT (layar di dalam drawer keranjang) =====================
+// Alur: Keranjang -> tombol Checkout -> layar Checkout -> Bayar Sekarang.
+// Layar Checkout menampilkan alamat kirim, ongkir (dihitung server lewat fungsi ongkir-quote), metode bayar, voucher,
+// dan rincian harga. Harga final TETAP ditentukan server (buat_pesanan + midtrans-create); angka di layar adalah
+// pratinjau dengan rumus yang sama.
+const QUOTE_URL = SUPABASE_URL + '/functions/v1/ongkir-quote';
+const CO_SVG = (inner) => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">' + inner + '</svg>';
+const CO_ICONS = {
+  pin: CO_SVG('<path d="M12 21s7-5.2 7-11a7 7 0 1 0-14 0c0 5.8 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/>'),
+  truck: CO_SVG('<path d="M3 7h11v9H3z"/><path d="M14 10h4l3 3v3h-7z"/><circle cx="7" cy="17.5" r="1.7"/><circle cx="17" cy="17.5" r="1.7"/>'),
+  card: CO_SVG('<rect x="3" y="6" width="18" height="12" rx="2"/><path d="M3 10h18"/>'),
+  ticket: CO_SVG('<path d="M3 9V7a1 1 0 0 1 1-1h16a1 1 0 0 1 1 1v2a2 2 0 0 0 0 4v2a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-2a2 2 0 0 0 0-4z"/><path d="M9 6v12" stroke-dasharray="2 2"/>')
+};
+const CO_CHEV = '<svg class="co-chev" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg>';
+
+function coActive() { const p = document.getElementById('cart-panel'); return !!p && p.classList.contains('co-mode'); }
+function setCartMode(mode) {
+  const p = document.getElementById('cart-panel');
+  if (!p) return;
+  p.classList.toggle('co-mode', mode === 'co');
+  const t = document.getElementById('cart-title'); if (t) t.textContent = mode === 'co' ? 'Checkout' : 'Keranjang';
+  const b = document.getElementById('co-back'); if (b) b.classList.toggle('hidden', mode !== 'co');
+}
+function cartQtyTotal() { return cart.reduce((s, i) => s + i.qty, 0); }
+function coCurrentAddress() {
+  if (!buyerUser || !buyerAddresses.length) return null;
+  return buyerAddresses.find(a => a.id === coAddrId) || buyerAddresses.find(a => a.is_default) || buyerAddresses[0];
+}
+function coAddrLine(a) {
+  return [a.address_detail, a.address_note, a.village, a.district, a.city, a.province].filter(Boolean).join(', ') + (a.postal_code ? ' ' + a.postal_code : '');
+}
+function coQuoteKey(a) { return [a.id, a.city, a.district, a.postal_code || '', cartQtyTotal()].join('|'); }
+function fmtEtd(s) {
+  let t = String(s || '').trim().replace(/\bdays?\b/i, 'hari');
+  if (/^\d+(\s*-\s*\d+)?$/.test(t)) t += ' hari';
+  return t;
+}
+
+// ---- Metode pembayaran: daftar diambil dari FOOTER_PAYMENTS (on:true + punya kode Midtrans 'snap') ----
+function payChoices() {
+  if (!payOnlineEnabled()) return [];
+  return FOOTER_PAYMENTS.filter(m => m.on && m.snap);
+}
+function payChoiceValid(c) {
+  if (!c) return false;
+  if (c === 'wa') return true;
+  if (!payOnlineEnabled()) return false;
+  if (c === 'other') return true;
+  return payChoices().some(m => m.snap === c);
+}
+function payLabel(m) {
+  if (m.g === 'va') return m.n + ' Virtual Account';
+  if (m.n === 'GoPay') return 'GoPay / GoPay Later';
+  return m.n;
+}
+function payInfo(c) {
+  if (c === 'wa') return { name: 'Pesan via WhatsApp', sub: 'Konfirmasi pesanan dan pembayaran lewat chat admin', logo: '' };
+  if (c === 'other') return { name: 'Metode lain', sub: 'Pilih di halaman pembayaran Midtrans', logo: '' };
+  const m = payChoices().find(x => x.snap === c);
+  if (!m) return null;
+  return { name: payLabel(m), sub: m.g === 'va' ? 'Bayar lewat ATM, m-banking, atau internet banking' : (m.g === 'qr' ? 'Bayar dengan scan kode QR' : 'Bayar lewat aplikasi'), logo: FOOTER_PAY_DIR + m.f };
+}
+function openPayMethodSheet() {
+  const cur = payChoiceValid(payChoice) ? payChoice : null;
+  const ms = payChoices();
+  const opt = (id, logoHtml, title, sub) => `<button class="paym-opt${cur === id ? ' sel' : ''}" onclick="selectPayMethod('${id}')">${logoHtml}<span class="paym-opt-main"><div class="paym-opt-title">${title}</div>${sub ? `<div class="paym-opt-sub">${sub}</div>` : ''}</span><span class="paym-radio"></span></button>`;
+  const logo = m => `<span class="paym-logo"><img src="${FOOTER_PAY_DIR}${m.f}" alt=""></span>`;
+  const grp = (title, arr) => arr.length ? `<div class="paym-grp">${title}</div>${arr.join('')}` : '';
+  let html = '';
+  html += grp('E-Wallet', ms.filter(m => m.g === 'ew').map(m => opt(m.snap, logo(m), payLabel(m), 'Bayar lewat aplikasi')));
+  html += grp('QRIS', ms.filter(m => m.g === 'qr').map(m => opt(m.snap, logo(m), payLabel(m), 'Bayar dengan scan kode QR')));
+  html += grp('Virtual Account', ms.filter(m => m.g === 'va').map(m => opt(m.snap, logo(m), payLabel(m), '')));
+  const more = [];
+  if (ms.length) more.push(opt('other', '<span class="paym-logo paym-emoji">💳</span>', 'Metode lain', 'Pilih bank atau dompet lain di halaman pembayaran Midtrans'));
+  more.push(opt('wa', '<span class="paym-logo paym-emoji">💬</span>', 'Pesan via WhatsApp', 'Konfirmasi pesanan dan pembayaran lewat chat admin'));
+  html += grp(ms.length ? 'Lainnya' : 'Metode', more);
+  document.getElementById('pay-method-body').innerHTML = html;
+  document.getElementById('pay-method-overlay').classList.add('open');
+}
+function closePayMethodSheet() { document.getElementById('pay-method-overlay').classList.remove('open'); }
+function selectPayMethod(id) {
+  if (!payChoiceValid(id)) return;
+  payChoice = id;
+  try { localStorage.setItem(PAY_CHOICE_KEY, id); } catch (_) {}
+  closePayMethodSheet();
+  if (coActive()) coRequestQuote();
+}
+
+// ---- Ongkir (pratinjau dari server) ----
+function coRequestQuote(force) {
+  const addr = coCurrentAddress();
+  const q = cartQtyTotal();
+  if (!coActive() || !buyerUser || !addr || !q || payChoice === 'wa') {
+    clearTimeout(coQTimer);
+    coQSeq++; coQuote = null; coQState = 'idle'; coQInflightKey = '';
+    coRender();
+    return;
+  }
+  const key = coQuoteKey(addr);
+  // Permintaan yang sama sedang berjalan: biarkan (jangan batalkan timernya, kalau tidak ongkir tertahan selamanya)
+  if (!force && coQState === 'loading' && coQInflightKey === key) return;
+  clearTimeout(coQTimer);
+  if (!force && coQCache.has(key)) { coQSeq++; coQuote = coQCache.get(key); coQState = 'ok'; coQInflightKey = ''; updateCartUI(); return; }
+  coQuote = null; coQState = 'loading'; coQErr = ''; coQCode = ''; coQInflightKey = key;
+  coRender();
+  const seq = ++coQSeq;
+  coQTimer = setTimeout(async () => {
+    let result = null, err = '', code = '';
+    try {
+      const { data: { session } } = await sb.auth.getSession();
+      if (!session) { err = 'Sesi habis, silakan masuk lagi'; code = 'sesi'; }
+      else {
+        const res = await fetch(QUOTE_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
+          body: JSON.stringify({ address_id: addr.id, qty: q })
+        });
+        const data = await res.json().catch(() => ({}));
+        if (res.ok && Number.isFinite(Number(data.cost)) && Number(data.cost) > 0) {
+          result = { key, cost: Math.round(Number(data.cost)), service: String(data.service || ''), etd: String(data.etd || '') };
+        } else { err = data.error || 'Ongkir belum bisa dihitung, coba lagi'; code = data.code || ''; }
+      }
+    } catch (e) { err = 'Koneksi bermasalah, coba lagi'; }
+    if (seq !== coQSeq) return;   // sudah ada permintaan yang lebih baru
+    coQInflightKey = '';
+    if (result) { coQuote = result; coQState = 'ok'; coQCache.set(key, result); }
+    else { coQuote = null; coQState = 'error'; coQErr = err; coQCode = code; }
+    updateCartUI();   // memasang ulang voucher ongkir terbaik dengan ongkir sebenarnya, lalu menggambar ulang checkout
+  }, force ? 0 : 350);
+}
+function coRetryQuote() {
+  if (coQCode === 'ongkir_alamat') { coPickAddress(); return; }
+  coRequestQuote(true);
+}
+
+// ---- Hitungan tampilan (pratinjau; server tetap yang final) ----
+function coTotals(online) {
+  const subtotal = cart.reduce((s, i) => s + i.price * i.qty, 0);
+  const disc = voucher ? discAmountFor(voucher, subtotal) : 0;
+  const after = Math.max(0, subtotal - disc);
+  const costKnown = online && coQState === 'ok' && !!coQuote;
+  const cost = costKnown ? coQuote.cost : 0;
+  const shipDisc = (costKnown && shipVoucher) ? discAmountFor(shipVoucher, cost) : 0;   // rumus sama dengan server: persen/nominal, tidak melebihi ongkir
+  return { subtotal, disc, after, costKnown, cost, shipDisc, total: after + cost - shipDisc };
+}
+function coBtnState(addr, online) {
+  if (_coBusy) return { t: 'Memproses...', off: true };
+  if (!buyerUser) return { t: 'Masuk untuk melanjutkan', act: 'login', warn: true };
+  if (!addr) return { t: 'Lengkapi alamat', act: 'addr', warn: true };
+  if (!payChoiceValid(payChoice)) return { t: 'Pilih metode pembayaran', act: 'pay', warn: true };
+  if (!online) return { t: 'Pesan via WhatsApp', act: 'go' };
+  if (coQState === 'loading' || coQState === 'idle') return { t: 'Menghitung ongkir...', off: true };
+  if (coQState === 'error') return coQCode === 'ongkir_alamat' ? { t: 'Ganti alamat', act: 'pickaddr', warn: true } : { t: 'Hitung ulang ongkir', act: 'retry', warn: true };
+  return { t: 'Bayar Sekarang', act: 'go' };
+}
+function coRender() {
+  if (!coActive()) return;
+  const body = document.getElementById('co-body');
+  const btn = document.getElementById('co-pay-btn');
+  const totEl = document.getElementById('co-bar-total');
+  const lblEl = document.getElementById('co-bar-label');
+  if (!body || !btn || !totEl) return;
+  if (!cart.length) {
+    if (_coBusy) {
+      body.innerHTML = '<p class="co-wait">Menyiapkan pembayaran...</p>';
+      btn.disabled = true; btn.textContent = 'Memproses...'; btn.setAttribute('data-act', '');
+      return;
+    }
+    setCartMode('cart');
+    return;
+  }
+  const esc = chatEsc;
+  const addr = coCurrentAddress();
+  const online = payChoice !== 'wa';
+  const T = coTotals(online);
+  const row = (onclick, icon, title, sub, need, right) => {
+    const inner = `<span class="co-ico">${icon}</span><span class="co-main"><b>${title}</b><span class="co-sub">${sub}</span></span>${right || ''}`;
+    return onclick
+      ? `<button class="co-row${need ? ' need' : ''}" onclick="${onclick}">${inner}${CO_CHEV}</button>`
+      : `<div class="co-row static${need ? ' need' : ''}">${inner}</div>`;
+  };
+
+  // Alamat
+  let addrRow;
+  if (!buyerUser) addrRow = row('coLogin()', CO_ICONS.pin, 'Masuk untuk melanjutkan', 'Masuk atau daftar dulu supaya alamat dan voucher tersimpan', true);
+  else if (!addr) addrRow = row('coAddAddress()', CO_ICONS.pin, 'Alamat Pengiriman', 'Masukkan alamat pengiriman', true);
+  else addrRow = row('coPickAddress()', CO_ICONS.pin, `${esc(addr.recipient_name)} | ${esc(addr.phone)}`, esc(coAddrLine(addr)), false);
+
+  // Pengiriman (ongkir)
+  let shipRow;
+  if (!online) shipRow = row('', CO_ICONS.truck, 'Pengiriman', 'Ongkir dikonfirmasi admin lewat WhatsApp', false);
+  else if (!buyerUser || !addr) shipRow = row('', CO_ICONS.truck, 'Pengiriman', 'Isi alamat dulu untuk melihat ongkir', false);
+  else if (coQState === 'error') shipRow = row(coQCode === 'ongkir_alamat' ? 'coPickAddress()' : 'coRetryQuote()', CO_ICONS.truck, 'Pengiriman', esc(coQErr) + (coQCode === 'ongkir_alamat' ? ' Ketuk untuk ganti alamat.' : ' Ketuk untuk coba lagi.'), true);
+  else if (coQState !== 'ok' || !coQuote) shipRow = row('', CO_ICONS.truck, 'Pengiriman', 'Menghitung ongkir...', false);
+  else {
+    const priceHtml = T.shipDisc > 0
+      ? `<s>${fRp(T.cost)}</s> <b>${T.cost - T.shipDisc > 0 ? fRp(T.cost - T.shipDisc) : 'Gratis'}</b>`
+      : `<b>${fRp(T.cost)}</b>`;
+    shipRow = row('', CO_ICONS.truck, esc(coQuote.service || 'Pengiriman'), coQuote.etd ? 'Estimasi tiba ' + esc(fmtEtd(coQuote.etd)) : 'Ongkir dihitung dari alamat kirim', false, `<span class="co-val">${priceHtml}</span>`);
+  }
+
+  // Metode pembayaran
+  const pi = payChoiceValid(payChoice) ? payInfo(payChoice) : null;
+  const payRow = pi
+    ? row('openPayMethodSheet()', pi.logo ? `<img class="co-paylogo" src="${pi.logo}" alt="">` : CO_ICONS.card, esc(pi.name), pi.sub, false)
+    : row('openPayMethodSheet()', CO_ICONS.card, 'Metode Pembayaran', 'Silakan pilih metode pembayaran', true);
+
+  // Voucher
+  const saved = T.disc + T.shipDisc;
+  const names = [voucher ? voucherTitle(voucher, shortRp) : '', (online && shipVoucher) ? voucherTitle(shipVoucher, shortRp) : ''].filter(Boolean).join(' + ');
+  const avail = allVouchers.filter(v => !voucherTidakBerlaku(v)).length;
+  let vRow = '';
+  if (saved > 0 || names || avail) {
+    vRow = row('showVoucherPopup()', CO_ICONS.ticket, 'Voucher',
+      saved > 0 ? `<span class="co-save">Kamu hemat ${fRp(saved)}</span>${names ? ' · ' + esc(names) : ''}` : (names ? esc(names) : `${avail} voucher tersedia`), false);
+  }
+
+  // Daftar barang (ringkas)
+  const items = cart.map(i => `<div class="co-item"><div class="co-item-img">${i.image ? `<img src="${esc(i.image)}" alt="">` : ''}</div><div class="co-item-info"><p>${esc(i.name)}</p><span>${esc(i.color)} · ${esc(i.size)} · ${i.qty} pcs</span></div><b>${fRp(i.price * i.qty)}</b></div>`).join('');
+
+  // Rincian harga (langsung terlihat)
+  const sRow = (l, v, cls) => `<div class="co-sum-row${cls ? ' ' + cls : ''}"><span>${l}</span><span>${v}</span></div>`;
+  let sum = sRow('Subtotal', fRp(T.subtotal));
+  if (T.disc > 0) sum += sRow('Diskon voucher', '-' + fRp(T.disc), 'green');
+  if (!online) sum += sRow('Ongkos kirim', 'Dikonfirmasi admin');
+  else if (T.costKnown) {
+    sum += sRow('Ongkos kirim', fRp(T.cost));
+    if (T.shipDisc > 0) sum += sRow('Voucher ongkir', '-' + fRp(T.shipDisc), 'green');
+  } else sum += sRow('Ongkos kirim', coQState === 'loading' ? 'Menghitung...' : '-');
+  sum += sRow(online && T.costKnown ? 'Total' : 'Total (belum termasuk ongkir)', fRp(T.total), 'total');
+
+  const prev = body.scrollTop;
+  body.innerHTML = `<p class="co-sec">Pengiriman &amp; Pembayaran</p>${addrRow}${shipRow}${payRow}${vRow}<p class="co-sec">Pesanan (${cartQtyTotal()} pcs)</p>${items}<p class="co-sec">Ringkasan Belanja</p><div class="co-sum">${sum}</div>`;
+  body.scrollTop = prev;
+
+  totEl.textContent = fRp(T.total);
+  if (lblEl) lblEl.textContent = (online && !T.costKnown) ? 'Belum termasuk ongkir' : 'Total harga';
+  const st = coBtnState(addr, online);
+  btn.textContent = st.t;
+  btn.disabled = !!st.off;
+  btn.classList.toggle('warn', !!st.warn);
+  btn.setAttribute('data-act', st.act || '');
+
+  // Jaring pengaman: kalau semua syarat hitung ongkir sudah ada tapi belum pernah dimulai, mulai sekarang
+  if (online && buyerUser && addr && coQState === 'idle') {
+    setTimeout(() => { if (coActive() && coQState === 'idle') coRequestQuote(); }, 0);
+  }
+}
+function coBarClick() {
+  const btn = document.getElementById('co-pay-btn');
+  const act = btn ? btn.getAttribute('data-act') : '';
+  if (act === 'login') coLogin();
+  else if (act === 'addr') coAddAddress();
+  else if (act === 'pay') openPayMethodSheet();
+  else if (act === 'retry') coRequestQuote(true);
+  else if (act === 'pickaddr') coPickAddress();
+  else if (act === 'go') coPay();
+}
+
+// ---- Buka / tutup layar Checkout ----
+async function coOpen() {
+  if (!cart.length) return;
+  setCartMode('co');
+  coQCache.clear(); coQuote = null; coQState = 'idle'; coQSeq++; coQInflightKey = '';
+  try { sessionStorage.removeItem('zenot_resume_checkout'); } catch (_) {}
+  if (!payOnlineEnabled()) payChoice = 'wa';
+  if (!payChoiceValid(payChoice)) payChoice = null;
+  coRender();
+  if (buyerUser) {
+    await loadBuyerAddresses();
+    const a = coCurrentAddress();
+    if (a && a.phone) autoClaimNewMember(false);   // voucher member baru langsung terpasang kalau berhak
+  }
+  coRequestQuote();
+}
+function coBack() {
+  clearTimeout(coQTimer); coQSeq++; coQInflightKey = '';
+  setCartMode('cart');
+}
+function coLogin() {
+  // Login Google memuat ulang halaman: tandai supaya setelah kembali, Checkout terbuka lagi (keranjang tersimpan)
+  try { sessionStorage.setItem('zenot_resume_checkout', String(Date.now())); } catch (_) {}
+  openAccount();
+}
+function maybeResumeCheckout() {
+  try {
+    const t = Number(sessionStorage.getItem('zenot_resume_checkout') || 0);
+    if (!t) return;
+    if (Date.now() - t > 10 * 60 * 1000) { sessionStorage.removeItem('zenot_resume_checkout'); return; }
+    if (!_cartRestored || !buyerUser) return;   // dipanggil lagi begitu keduanya siap
+    sessionStorage.removeItem('zenot_resume_checkout');
+    if (!cart.length) return;
+    openCart();
+    coOpen();
+  } catch (_) {}
+}
+// Dipanggil setiap panel samping (Akun/Alamat) ditutup: segarkan alamat dan ongkir kalau Checkout sedang terbuka
+async function coOnPanelClosed() {
+  if (!coActive()) return;
+  if (!buyerUser) { coRender(); return; }
+  await loadBuyerAddresses();
+  const a = coCurrentAddress();
+  if (a && a.phone) autoClaimNewMember(false);
+  coRequestQuote();
+}
+
+// ---- Alamat ----
+function coAddAddress() {
+  coCloseAddrSheet();
+  openAddressForm();
+}
+function coManageAddresses() {
+  coCloseAddrSheet();
+  renderAddressList();
+}
+function coCloseAddrSheet() { document.getElementById('co-addr-overlay').classList.remove('open'); }
+function coPickAddress() {
+  if (!buyerUser) { coLogin(); return; }
+  if (!buyerAddresses.length) { coAddAddress(); return; }
+  const cur = coCurrentAddress();
+  const esc = chatEsc;
+  document.getElementById('co-addr-body').innerHTML =
+    buyerAddresses.map(a => `<button class="paym-opt${cur && cur.id === a.id ? ' sel' : ''}" onclick="coSelectAddress('${a.id}')"><span class="paym-opt-main"><div class="paym-opt-title">${esc(a.recipient_name)} <span class="co-phone">${esc(a.phone)}</span>${a.is_default ? ' <span class="co-phone">★ Utama</span>' : ''}</div><div class="paym-opt-sub">${esc(coAddrLine(a))}</div></span><span class="paym-radio"></span></button>`).join('') +
+    `<button class="co-link" onclick="coAddAddress()">+ Tambah alamat baru</button><button class="co-link" onclick="coManageAddresses()">Kelola alamat</button>`;
+  document.getElementById('co-addr-overlay').classList.add('open');
+}
+function coSelectAddress(id) {
+  coAddrId = id;
+  coCloseAddrSheet();
+  coRequestQuote();
+}
+
+// ---- Tombol Bayar ----
+function coPay() {
+  if (_coBusy) return;
+  const addr = coCurrentAddress();
+  if (!buyerUser || !addr || !payChoiceValid(payChoice)) return;
+  if (payChoice === 'wa') { checkoutWA(false); return; }
+  if (coQState !== 'ok' || !coQuote) return;
+  checkoutWA(true, payChoice === 'other' ? null : payChoice);
+}
+
+// ===================== CHECKOUT: buat pesanan =====================
+// Pembungkus: menjaga supaya tombol tidak bisa ditekan dua kali (mencegah pesanan ganda) dan menggambar ulang layar.
+async function checkoutWA(payOnline, payMethod) {
+  if (_coBusy) return;
+  _coBusy = true;
+  if (coActive()) coRender();
+  try { await checkoutWAInner(payOnline, payMethod); }
+  finally {
+    _coBusy = false;
+    if (coActive()) coRender();
+  }
+}
+async function checkoutWAInner(payOnline, payMethod) {
   if (!cart.length) return;
 
   // Wajib login dulu sebelum checkout
@@ -3912,14 +4380,13 @@ async function checkoutWA(payOnline) {
     return;
   }
 
-  // Pastikan data alamat sudah dimuat & terbaru
+  // Pastikan data alamat sudah dimuat & terbaru; pakai alamat yang dipilih di layar Checkout
   await loadBuyerAddresses();
-  const shippingAddress = buyerAddresses.find(a=>a.is_default) || buyerAddresses[0];
+  const shippingAddress = coCurrentAddress();
 
   // Wajib punya alamat tersimpan sebelum checkout
   if (!shippingAddress) {
     showToast('Lengkapi alamat pengiriman dulu untuk checkout');
-    openAccount();
     openAddressForm();
     return;
   }
@@ -3927,8 +4394,6 @@ async function checkoutWA(payOnline) {
   const ongkirBiaya = 0; // ongkir dihitung server dari alamat pesanan saat pembayaran, bukan dari browser
 
   // Harga, voucher, dan nomor pesanan dihitung di server (fungsi buat_pesanan), bukan di browser
-  const checkoutBtn = document.querySelector('.btn-checkout');
-  if (checkoutBtn) checkoutBtn.disabled = true;
   // Data diri sudah lengkap (email akun + alamat dengan nama dan telepon): klaim voucher member baru otomatis, lalu pasang sebelum pesanan dibuat
   if (shippingAddress.phone) await autoClaimNewMember(false);
   const { data: order, error: orderErr } = await sb.rpc('buat_pesanan', {
@@ -3938,7 +4403,6 @@ async function checkoutWA(payOnline) {
     p_shipping_cost: ongkirBiaya,
     p_ship_voucher_code: shipVoucher ? shipVoucher.code : null
   });
-  if (checkoutBtn) checkoutBtn.disabled = false;
   if (orderErr) {
     const m = orderErr.message || 'Gagal membuat pesanan';
     const rejected = m.startsWith('VOUCHER: ') ? voucher : (m.startsWith('ONGKIR: ') ? shipVoucher : null);
@@ -3969,15 +4433,8 @@ async function checkoutWA(payOnline) {
       orderId = last && last[0] && last[0].id;
     }
     if (!orderId) { showToast('Pesanan dibuat. Buka Akun Saya untuk membayar', 3500); return; }
-    const lbl = document.getElementById('btn-checkout-label');
-    const oldLbl = lbl ? lbl.textContent : '';
-    if (lbl) lbl.textContent = 'Menyiapkan pembayaran...';
-    if (checkoutBtn) checkoutBtn.disabled = true;
-    try { await buyerPayOrder(orderId, null); }
-    finally {
-      if (lbl) lbl.textContent = oldLbl;
-      if (checkoutBtn) checkoutBtn.disabled = false;
-    }
+    const started = await buyerPayOrder(orderId, null, payMethod);
+    if (!started) setTimeout(() => showToast('Pesanan tersimpan. Lanjutkan pembayaran dari Akun Saya > Riwayat Pesanan', 4200), 2800);
     return;
   }
 
@@ -3995,40 +4452,10 @@ async function checkoutWA(payOnline) {
   window.open(`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(msg)}`, '_blank');
 }
 
-// ===================== METODE PEMBAYARAN (keranjang) =====================
-let cartPayMethod = 'midtrans'; // 'midtrans' = bayar online, 'wa' = pesan via WhatsApp
-function getPayMethod() { return payOnlineEnabled() ? cartPayMethod : 'wa'; }
-function updatePayMethodUI() {
-  const row = document.getElementById('pay-method-row');
-  const btn = document.getElementById('btn-checkout-main');
+function updateCheckoutButton(total) {
   const lbl = document.getElementById('btn-checkout-label');
-  if (!row || !btn || !lbl) return;
-  const online = getPayMethod() === 'midtrans';
-  row.style.display = payOnlineEnabled() ? '' : 'none';
-  const chevron = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg>';
-  document.getElementById('pay-method-summary').innerHTML = (online ? 'Bayar Online (Midtrans)' : 'WhatsApp') + ' ' + chevron;
-  const testNote = document.getElementById('pay-test-note');
-  if (testNote) testNote.style.display = (online && PAYMENT_ONLINE_TEST_MODE) ? '' : 'none';
-  btn.classList.toggle('pay-online', online);
-  const ico = btn.querySelector('svg');
-  if (ico) ico.style.display = online ? 'none' : '';
-  if (!btn.disabled) lbl.textContent = online ? 'Bayar Sekarang' : 'Checkout via WhatsApp';
+  if (lbl) lbl.textContent = 'Checkout \u2022 ' + fRp(total);
 }
-function openPayMethodSheet() {
-  const cur = getPayMethod();
-  const opt = (id, title, sub) => `<button class="paym-opt${cur === id ? ' sel' : ''}" onclick="selectPayMethod('${id}')"><span class="paym-opt-main"><div class="paym-opt-title">${title}</div><div class="paym-opt-sub">${sub}</div></span><span class="paym-radio"></span></button>`;
-  document.getElementById('pay-method-body').innerHTML =
-    opt('midtrans', 'Bayar Online (Midtrans)', 'Pilih metode bayar di halaman pembayaran resmi Midtrans' + (PAYMENT_ONLINE_TEST_MODE ? ' — masa uji coba, belum menerima pembayaran sungguhan' : '')) +
-    opt('wa', 'Pesan via WhatsApp', 'Konfirmasi pesanan dan pembayaran lewat chat admin');
-  document.getElementById('pay-method-overlay').classList.add('open');
-}
-function closePayMethodSheet() { document.getElementById('pay-method-overlay').classList.remove('open'); }
-function selectPayMethod(m) {
-  cartPayMethod = (m === 'wa') ? 'wa' : 'midtrans';
-  updatePayMethodUI();
-  closePayMethodSheet();
-}
-function cartCheckout() { return checkoutWA(getPayMethod() === 'midtrans'); }
 
 // ===================== RIWAYAT PESANAN =====================
 async function loadOrderHistory() {
@@ -4090,29 +4517,33 @@ function payOnlineEnabled() {
   try { return localStorage.getItem('zenot_pay_test') === '1'; } catch (_) { return false; }
 }
 let _payBusy = false;
-async function buyerPayOrder(orderId, btn) {
-  if (_payBusy) return;
+// payMethod (opsional): kode metode Midtrans pilihan pembeli di checkout (mis. 'bri_va'). Kosong = semua metode di halaman Midtrans.
+// Mengembalikan true kalau pembeli sudah diarahkan ke halaman pembayaran.
+async function buyerPayOrder(orderId, btn, payMethod) {
+  if (_payBusy) return false;
   _payBusy = true;
   const label = btn ? btn.textContent : '';
   if (btn) { btn.disabled = true; btn.textContent = 'Menyiapkan pembayaran...'; }
+  let started = false;
   try {
     const { data: { session } } = await sb.auth.getSession();
-    if (!session) { showToast('Sesi habis, silakan masuk lagi', 3000); return; }
+    if (!session) { showToast('Sesi habis, silakan masuk lagi', 3000); return false; }
     const res = await fetch(`${SUPABASE_URL}/functions/v1/midtrans-create`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
-      body: JSON.stringify({ order_id: orderId })
+      body: JSON.stringify(payMethod ? { order_id: orderId, payment_method: payMethod } : { order_id: orderId })
     });
     const data = await res.json().catch(() => ({}));
-    if (!res.ok || !data.redirect_url) { showToast(data.error || 'Gagal menyiapkan pembayaran, coba lagi', 4000); return; }
+    if (!res.ok || !data.redirect_url) { showToast(data.error || 'Gagal menyiapkan pembayaran, coba lagi', 4000); return false; }
     // Hanya mau membuka halaman bayar resmi Midtrans
-    if (!/^https:\/\/app(\.sandbox)?\.midtrans\.com\//.test(data.redirect_url)) { showToast('Alamat pembayaran tidak valid', 3000); return; }
+    if (!/^https:\/\/app(\.sandbox)?\.midtrans\.com\//.test(data.redirect_url)) { showToast('Alamat pembayaran tidak valid', 3000); return false; }
     // Ongkir dihitung ulang server dari alamat kirim: beri tahu pembeli kalau totalnya berubah sebelum pindah ke halaman bayar
     if (data.shipping_adjusted && Number.isFinite(Number(data.total))) {
       showToast('Ongkos kirim ke alamatmu ' + fRp(data.shipping_cost) + '. Total ' + fRp(data.total), 2600);
       await new Promise(r => setTimeout(r, 2300));
     }
     try { sessionStorage.setItem('zenot_pay_started', '1'); } catch (_) {}
+    started = true;
     window.location.href = data.redirect_url;
   } catch (e) {
     showToast('Koneksi bermasalah, coba lagi', 3000);
@@ -4120,7 +4551,9 @@ async function buyerPayOrder(orderId, btn) {
     _payBusy = false;
     if (btn && document.body.contains(btn)) { btn.disabled = false; btn.textContent = label; }
   }
+  return started;
 }
+
 // Kembali dari halaman bayar lewat tombol Back (halaman dipulihkan dari memori): muat ulang riwayat sekali
 window.addEventListener('pageshow', e => {
   try {
@@ -4215,20 +4648,23 @@ async function loadFooterSocial() {
 // w/h = ukuran asli file (untuk mencegah layout bergeser saat gambar dimuat).
 // File logo ada di akar repo. Kalau nanti dipindah ke folder pay/, cukup ubah FOOTER_PAY_DIR jadi 'pay/'.
 const FOOTER_PAY_DIR = '';
+// g = kelompok di daftar pilihan checkout (ew = e-wallet, qr = QRIS, va = virtual account).
+// snap = kode metode di Midtrans (enabled_payments). Metode dengan on:true DAN snap terisi tampil sebagai pilihan di checkout.
+// snap:null (mis. BSI, OVO, SeaBank) = belum dipetakan: tetap tampil di logo footer dan bisa dipilih lewat "Metode lain" di halaman Midtrans.
 const FOOTER_PAYMENTS = [
-  { n: 'QRIS',         f: 'qris.png',         w: 328, h: 56, on: false },
-  { n: 'BCA',          f: 'bca.png',          w: 180, h: 56, on: false },
-  { n: 'BRI',          f: 'bri.png',          w: 148, h: 56, on: true },
-  { n: 'BNI',          f: 'bni.png',          w: 193, h: 56, on: true },
-  { n: 'Mandiri',      f: 'mandiri.png',      w: 192, h: 56, on: true },
-  { n: 'CIMB Niaga',   f: 'cimb-niaga.png',   w: 384, h: 56, on: true },
-  { n: 'PermataBank',  f: 'permata-bank.png', w: 226, h: 56, on: true },
-  { n: 'BSI',          f: 'bsi.png',          w: 151, h: 47, on: true, d: 22 },
-  { n: 'SeaBank',      f: 'seabank.png',      w: 104, h: 144, on: false, d: 34 },
-  { n: 'GoPay',        f: 'gopay.png',        w: 258, h: 56, on: true },
-  { n: 'OVO',          f: 'ovo.png',          w: 136, h: 53, on: false },
-  { n: 'DANA',         f: 'dana.png',         w: 175, h: 54, on: false },
-  { n: 'ShopeePay',    f: 'shopeepay.png',    w: 153, h: 64, on: false, d: 20 }
+  { n: 'QRIS',         f: 'qris.png',         w: 328, h: 56, on: false, g: 'qr', snap: 'other_qris' },
+  { n: 'BCA',          f: 'bca.png',          w: 180, h: 56, on: false, g: 'va', snap: 'bca_va' },
+  { n: 'BRI',          f: 'bri.png',          w: 148, h: 56, on: true, g: 'va', snap: 'bri_va' },
+  { n: 'BNI',          f: 'bni.png',          w: 193, h: 56, on: true, g: 'va', snap: 'bni_va' },
+  { n: 'Mandiri',      f: 'mandiri.png',      w: 192, h: 56, on: true, g: 'va', snap: 'echannel' },
+  { n: 'CIMB Niaga',   f: 'cimb-niaga.png',   w: 384, h: 56, on: true, g: 'va', snap: 'cimb_va' },
+  { n: 'PermataBank',  f: 'permata-bank.png', w: 226, h: 56, on: true, g: 'va', snap: 'permata_va' },
+  { n: 'BSI',          f: 'bsi.png',          w: 151, h: 47, on: true, d: 22, g: 'va', snap: null },
+  { n: 'SeaBank',      f: 'seabank.png',      w: 104, h: 144, on: false, d: 34, g: 'va', snap: null },
+  { n: 'GoPay',        f: 'gopay.png',        w: 258, h: 56, on: true, g: 'ew', snap: 'gopay' },
+  { n: 'OVO',          f: 'ovo.png',          w: 136, h: 53, on: false, g: 'ew', snap: null },
+  { n: 'DANA',         f: 'dana.png',         w: 175, h: 54, on: false, g: 'ew', snap: 'dana' },
+  { n: 'ShopeePay',    f: 'shopeepay.png',    w: 153, h: 64, on: false, d: 20, g: 'ew', snap: 'shopeepay' }
 ];
 
 function chatEsc(s) {
@@ -4614,6 +5050,7 @@ sb.auth.getSession().then(async ({data}) => {
     await loadWishlistIds();
     renderProducts();
     onBuyerSignedIn();
+    maybeResumeCheckout();
   }
   // Kembali dari login Google: buka lagi halaman/filter yang tadi dibuka (hash sudah bersih setelah sesi terbaca)
   try {
