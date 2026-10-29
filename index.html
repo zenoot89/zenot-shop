@@ -1386,6 +1386,7 @@ let allVouchers = [];
 let shipVoucher = null;                 // voucher ongkir yang terpasang di keranjang
 let serverClaimedIds = new Set();       // voucher member baru yang sudah diklaim di akun yang sedang login
 let buyerHasOrder = false;              // akun yang login sudah pernah punya pesanan (bukan batal): voucher member baru tidak berlaku lagi
+let buyerVoucherUse = {};               // kode voucher (huruf besar) -> berapa kali dipakai akun ini di pesanan yang tidak dibatalkan; untuk batas "per pembeli"
 let rejectedVoucherIds = new Set();     // voucher yang ditolak server pada sesi ini: tidak dipasang otomatis lagi
 let vouchersReady = Promise.resolve();  // selesai saat daftar voucher aktif sudah dimuat
 const CLAIM_FLAG = 'zenot_claim_new_member'; // diset saat pembeli menekan "Daftar & Klaim", dipakai setelah akun jadi
@@ -2824,6 +2825,7 @@ async function doBuyerLogout() {
   buyerUser = null; buyerProfile = null; wishlistIds = new Set();
   serverClaimedIds = new Set();
   buyerHasOrder = false;
+  buyerVoucherUse = {};
   closeSidePanel();
   renderProducts();
   renderVoucherPopupList();
@@ -3716,8 +3718,12 @@ function voucherExpiryInfo(v, upcoming) {
   return { text: 'Hingga: ' + voucherDMY(new Date(v.expires_at)), soon: false };
 }
 function voucherTidakBerlaku(v) {
+  if (!buyerUser) return false;
   // Voucher member baru sudah tidak bisa dipakai akun yang pernah punya pesanan
-  return isNewMemberVoucher(v) && !!buyerUser && buyerHasOrder;
+  if (isNewMemberVoucher(v) && buyerHasOrder) return true;
+  // Batas pemakaian per pembeli (kolom per_user_limit): dihitung dari pesanan akun ini yang tidak dibatalkan, sama seperti di server
+  if (v.per_user_limit != null && (buyerVoucherUse[String(v.code).toUpperCase()] || 0) >= Number(v.per_user_limit)) return true;
+  return false;
 }
 function voucherCardHTML(v, upcoming) {
   const used = !upcoming && voucherTidakBerlaku(v);
@@ -3855,7 +3861,7 @@ function bestVoucherOf(list, amountOf) {
   return best;
 }
 function autoApplyBestVoucher(subtotal) {
-  const eligible = allVouchers.filter(v => isVoucherClaimed(v) && subtotal >= v.min_order);
+  const eligible = allVouchers.filter(v => isVoucherClaimed(v) && !voucherTidakBerlaku(v) && subtotal >= v.min_order);
   voucher = bestVoucherOf(eligible.filter(v => !isShipVoucher(v)), v => discAmountFor(v, subtotal));
   shipVoucher = bestVoucherOf(eligible.filter(isShipVoucher), v => discAmountFor(v, (coQState === 'ok' && coQuote && payChoice !== 'wa') ? coQuote.cost : SHIP_REF_COST));
 }
@@ -3920,12 +3926,15 @@ function welcomeRegister() {
 async function refreshVoucherClaims() {
   serverClaimedIds = new Set();
   buyerHasOrder = false;
+  buyerVoucherUse = {};
   if (buyerUser) {
     const { data } = await sb.from('voucher_claims').select('voucher_id');
     serverClaimedIds = new Set((data || []).map(r => r.voucher_id));
     try {
-      const { data: od } = await sb.from('orders').select('id').eq('user_id', buyerUser.id).neq('status', 'dibatalkan').limit(1);
+      // Pesanan akun ini yang tidak dibatalkan: untuk voucher member baru (pembelian pertama) dan batas per pembeli, sama seperti _voucher_validate di server
+      const { data: od } = await sb.from('orders').select('voucher_code,ship_voucher_code').eq('user_id', buyerUser.id).neq('status', 'dibatalkan').limit(1000);
       buyerHasOrder = !!(od && od.length);
+      (od || []).forEach(o => [o.voucher_code, o.ship_voucher_code].forEach(c => { if (c) { const k = String(c).toUpperCase(); buyerVoucherUse[k] = (buyerVoucherUse[k] || 0) + 1; } }));
     } catch (_) { /* biarkan false: server tetap menolak kalau memang sudah tidak berlaku */ }
   }
   renderVoucherPopupList();
@@ -4411,6 +4420,7 @@ async function checkoutWAInner(payOnline, payMethod) {
       claimedCodes = claimedCodes.filter(c => c !== rejected.code);
       localStorage.setItem('zenot_claimed_vouchers', JSON.stringify(claimedCodes));
       rejectedVoucherIds.add(rejected.id);
+      if (/sudah kamu pakai/i.test(m) && rejected.per_user_limit != null) buyerVoucherUse[String(rejected.code).toUpperCase()] = Number(rejected.per_user_limit);
       if (rejected === voucher) voucher = null; else shipVoucher = null;
       updateCartUI();
       showToast(m.replace(/^(VOUCHER|ONGKIR): /, '') + ' - voucher dilepas, coba checkout lagi');
@@ -4420,6 +4430,7 @@ async function checkoutWAInner(payOnline, payMethod) {
     return;
   }
   buyerHasOrder = true; // pesanan sudah dibuat: voucher member baru tidak berlaku lagi untuk akun ini (dihitung ulang kalau pesanan dibatalkan)
+  [voucher, shipVoucher].forEach(v => { if (v) { const k = String(v.code).toUpperCase(); buyerVoucherUse[k] = (buyerVoucherUse[k] || 0) + 1; } });   // satu jatah "per pembeli" terpakai
   renderVoucherPopupList();
 
   // Bayar online: pesanan sudah dibuat server, langsung lanjut ke halaman pembayaran Midtrans (tanpa WhatsApp)
