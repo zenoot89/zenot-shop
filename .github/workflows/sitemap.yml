@@ -2,7 +2,7 @@ name: Update sitemap dan halaman bagikan
 
 on:
   schedule:
-    - cron: '0 20 * * *'   # tiap hari 03.00 WIB
+    - cron: '45 */4 * * *'   # tiap 4 jam, menit ke-45 (feed jalan di menit ke-15), supaya produk baru cepat punya halaman
   workflow_dispatch:        # tombol manual di tab Actions
 
 permissions:
@@ -19,76 +19,26 @@ jobs:
       - name: Ambil kode repo
         uses: actions/checkout@v4
 
-      - name: Ambil daftar produk aktif dari Supabase
+      - name: Ambil data toko dari Supabase
         env:
           SUPABASE_URL: https://xvaxwxnvjzrazxgdxsrt.supabase.co
           SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh2YXh3eG52anpyYXp4Z2R4c3J0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU3ODk4OTQsImV4cCI6MjEwMTM2NTg5NH0.JbL_0Q_zq0LGLnKIro8wzpvPvRxMj3OqWZTxYUYAj5o
         run: |
-          curl -fsS --retry 3 --retry-delay 5 \
-            -H "apikey: $SUPABASE_ANON_KEY" \
-            -H "Authorization: Bearer $SUPABASE_ANON_KEY" \
-            "$SUPABASE_URL/rest/v1/products?select=*,variants(*)&is_active=eq.true&order=created_at.desc&limit=1000" \
-            -o products.json
+          get() {
+            curl -fsS --retry 3 --retry-delay 5 \
+              -H "apikey: $SUPABASE_ANON_KEY" \
+              -H "Authorization: Bearer $SUPABASE_ANON_KEY" \
+              "$SUPABASE_URL/rest/v1/$1" -o "$2"
+          }
+          # produk wajib berhasil (kalau gagal, job berhenti dan tidak ada file yang diubah)
+          get "products?select=*,variants(*)&is_active=eq.true&order=created_at.desc&limit=1000" products.json
+          # data pelengkap: kalau gagal, halaman tetap dibuat tanpa data itu
+          get "categories?select=*&order=name" categories.json || echo '[]' > categories.json
+          get "reviews?select=product_id,rating&limit=5000" reviews.json || echo '[]' > reviews.json
+          get "bio_links?select=wa_number&id=eq.1" bio.json || echo '[]' > bio.json
 
-      - name: Susun sitemap.xml
-        run: |
-          python3 - <<'PY'
-          import json, re, sys, datetime
-          import xml.etree.ElementTree as ET
-          from xml.sax.saxutils import escape
-
-          SITE = 'https://zenoot.web.id/'
-          NS = '{http://www.sitemaps.org/schemas/sitemap/0.9}'
-          today = datetime.datetime.now(datetime.timezone.utc).strftime('%Y-%m-%d')
-
-          data = json.load(open('products.json'))
-          if not isinstance(data, list):
-              sys.exit('Respons Supabase bukan daftar, sitemap TIDAK diubah: %r' % (data,))
-          ids = [str(r.get('id', '')) for r in data]
-          ids = [i for i in ids if re.fullmatch(r'[0-9a-fA-F-]{8,64}', i)]
-          if not ids:
-              sys.exit('Tidak ada produk aktif terbaca, sitemap TIDAK diubah (pengaman).')
-
-          # lastmod lama dipertahankan supaya file tidak berubah tiap hari
-          old = {}
-          try:
-              for u in ET.parse('sitemap.xml').getroot().iter(NS + 'url'):
-                  loc = u.find(NS + 'loc').text.strip()
-                  lm = u.find(NS + 'lastmod')
-                  old[loc] = lm.text.strip() if lm is not None and lm.text else today
-          except Exception:
-              pass
-
-          static_top = [(SITE, 'daily', '1.0'), (SITE + 'bio/', 'weekly', '0.9')]
-          static_end = [
-              (SITE + 'tentang-kami.html', 'monthly', '0.6'),
-              (SITE + 'kontak.html', 'monthly', '0.5'),
-              (SITE + 'syarat-ketentuan.html', 'monthly', '0.4'),
-              (SITE + 'kebijakan-pengiriman.html', 'monthly', '0.4'),
-              (SITE + 'kebijakan-pengembalian.html', 'monthly', '0.4'),
-              (SITE + 'privacy.html', 'monthly', '0.4'),
-          ]
-          rows = [(u, c, p) for u, c, p in static_top]
-          rows += [(SITE + '?p=' + i, 'weekly', '0.8') for i in ids]
-          rows += static_end
-
-          # beranda ikut diperbarui hanya kalau daftar produk berubah
-          prev_products = {u for u in old if '?p=' in u}
-          new_products = {r[0] for r in rows if '?p=' in r[0]}
-          changed = prev_products != new_products
-
-          out = ['<?xml version="1.0" encoding="UTF-8"?>',
-                 '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">']
-          for loc, cf, pr in rows:
-              if loc == SITE and changed:
-                  lm = today
-              else:
-                  lm = old.get(loc, today)
-              out.append('  <url>\n    <loc>%s</loc>\n    <lastmod>%s</lastmod>\n    <changefreq>%s</changefreq>\n    <priority>%s</priority>\n  </url>' % (escape(loc), lm, cf, pr))
-          out.append('</urlset>')
-          open('sitemap.xml', 'w').write('\n'.join(out) + '\n')
-          print('Produk aktif:', len(ids), '| daftar berubah:', changed)
-          PY
+      - name: Susun halaman produk, halaman kategori, dan sitemap
+        run: python3 .github/scripts/build-static.py
 
       - name: Pasang Pillow (untuk gambar pratinjau)
         continue-on-error: true
@@ -165,11 +115,12 @@ jobs:
               pid = p['id']
               e = lambda s: html.escape(s, quote=True)
               home = '/?p=' + pid
+              canon = '%s/produk/%s/' % (SITE, slugmap[pid]) if pid in slugmap else SITE + home   # halaman statis kalau ada
               return ('<!doctype html>\n<html lang="id">\n<head>\n<meta charset="utf-8">\n'
                   '<meta name="viewport" content="width=device-width,initial-scale=1">\n'
                   '<title>%s | Zenoot</title>\n'
                   '<meta name="description" content="%s">\n'
-                  '<link rel="canonical" href="%s%s">\n'
+                  '<link rel="canonical" href="%s">\n'
                   '<meta property="og:type" content="website">\n'
                   '<meta property="og:site_name" content="Zenoot">\n'
                   '<meta property="og:title" content="%s">\n'
@@ -185,9 +136,16 @@ jobs:
                   '<p>Membuka produk&hellip; <a href="%s">Klik di sini</a> kalau tidak berpindah.</p>\n'
                   '<script>location.replace(%s);</script>\n'
                   '</body>\n</html>\n') % (
-                  e(name), e(desc), SITE, home,
+                  e(name), e(desc), canon,
                   e(name), e(desc), SITE, code, e(og_img), home,
                   e(src or ''), bgv, home, json.dumps(home))
+
+          slugmap = {}
+          try:
+              t = open('slug-map.js', encoding='utf-8').read()
+              slugmap = json.loads(t[t.index('{'):t.rindex('}') + 1])
+          except Exception:
+              pass
 
           data = json.load(open('products.json'))
           if not isinstance(data, list) or not data:
@@ -268,15 +226,15 @@ jobs:
 
       - name: Simpan kalau ada perubahan
         run: |
-          rm -f products.json
-          git add sitemap.xml
-          if [ -d p ]; then git add p; fi
+          rm -f products.json categories.json reviews.json bio.json
+          git add sitemap.xml slug-map.js index.html
+          for d in p produk kategori; do if [ -d "$d" ]; then git add -A "$d"; fi; done
           if git diff --cached --quiet; then
             echo "Tidak ada perubahan, tidak ada yang disimpan."
           else
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git commit -m "Update sitemap dan halaman bagikan otomatis"
+            git commit -m "Update halaman produk, kategori, sitemap, dan halaman bagikan otomatis"
             git pull --rebase --autostash
             git push
           fi
