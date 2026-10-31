@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
   <url>
     <loc>https://zenoot.web.id/</loc>
-    <lastmod>2026-10-21</lastmod>
+    <lastmod>2026-10-31</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
@@ -13,58 +13,295 @@
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://zenoot.web.id/?p=5fe57a2b-f6dd-4830-a25a-3ee1573a8128</loc>
-    <lastmod>2026-10-14</lastmod>
+    <loc>https://zenoot.web.id/kategori/anak/</loc>
+    <lastmod>2026-10-31</lastmod>
     <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
+    <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://zenoot.web.id/?p=fa731436-026c-4da2-9651-8da24293a715</loc>
-    <lastmod>2026-10-14</lastmod>
+    <loc>https://zenoot.web.id/kategori/pria/</loc>
+    <lastmod>2026-10-31</lastmod>
     <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
+    <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://zenoot.web.id/?p=91c6f604-cd34-45c2-b79e-46fedb2571d8</loc>
-    <lastmod>2026-10-14</lastmod>
+    <loc>https://zenoot.web.id/kategori/wanita/</loc>
+    <lastmod>2026-10-31</lastmod>
     <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
+    <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://zenoot.web.id/?p=ff024e0e-a068-47a2-bac8-f27dd3cb71db</loc>
-    <lastmod>2026-10-14</lastmod>
+    <loc>https://zenoot.web.id/kategori/sweater-anak/</loc>
+    <lastmod>2026-10-31</lastmod>
     <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
+    <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://zenoot.web.id/?p=a8cecdd3-d887-4488-8616-c1306cb462cb</loc>
-    <lastmod>2026-10-14</lastmod>
+    <loc>https://zenoot.web.id/kategori/sweater-pria/</loc>
+    <lastmod>2026-10-31</lastmod>
     <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
+    <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://zenoot.web.id/?p=e26a6570-3339-4876-b569-47a5d8b666f8</loc>
-    <lastmod>2026-10-14</lastmod>
+    <loc>https://zenoot.web.id/kategori/cardigan-wanita/</loc>
+    <lastmod>2026-10-31</lastmod>
     <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
+    <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://zenoot.web.id/?p=65fee309-ec8d-4a46-a43e-40d22b4dacd8</loc>
-    <lastmod>2026-10-14</lastmod>
+    <loc>https://zenoot.web.id/kategori/polo-knit-wanita/</loc>
+    <lastmod>2026-10-31</lastmod>
     <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
+    <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://zenoot.web.id/?p=3bcb02d0-68e2-4341-911c-84b6dfecbe86</loc>
-    <lastmod>2026-10-14</lastmod>
+    <loc>https://zenoot.web.id/produk/sweater-rajut-half-zip-stripe-pria-knit-turtleneck-casual/</loc>
+    <lastmod>2026-10-31</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://xvaxwxnvjzrazxgdxsrt.supabase.co/storage/v1/object/public/product-photos/1791218562852-jtm4h.jpg</image:loc>
+    </image:image>
+    <image:image>
+      <image:loc>https://xvaxwxnvjzrazxgdxsrt.supabase.co/storage/v1/object/public/product-photos/1791218564885-up36f.jpg</image:loc>
+    </image:image>
+    <image:image>
+      <image:loc>https://xvaxwxnvjzrazxgdxsrt.supabase.co/storage/v1/object/public/product-photos/1791218566376-7lc7l.jpg</image:loc>
+    </image:image>
+    <image:image>
+      <image:loc>https://xvaxwxnvjzrazxgdxsrt.supabase.co/storage/v1/object/public/product-photos/1791218567728-xg1z3.jpg</image:loc>
+    </image:image>
+    <image:image>
+      <image:loc>https://xvaxwxnvjzrazxgdxsrt.supabase.co/storage/v1/object/public/product-photos/1791218569102-gpspz.jpg</image:loc>
+    </image:image>
+    <image:image>
+      <image:loc>https://xvaxwxnvjzrazxgdxsrt.supabase.co/storage/v1/object/public/product-photos/1791218570476-ypng9.jpg</image:loc>
+    </image:image>
+    <image:image>
+      <image:loc>https://xvaxwxnvjzrazxgdxsrt.supabase.co/storage/v1/object/public/product-photos/1791218571899-lykl8.jpg</image:loc>
+    </image:image>
+    <image:image>
+      <image:loc>https://xvaxwxnvjzrazxgdxsrt.supabase.co/storage/v1/object/public/product-photos/1791218573312-v8usz.jpg</image:loc>
+    </image:image>
   </url>
   <url>
-    <loc>https://zenoot.web.id/?p=194151cd-fe7d-4368-8280-c59b8a87faa8</loc>
-    <lastmod>2026-10-14</lastmod>
+    <loc>https://zenoot.web.id/produk/sweater-rajut-turtleneck-pria/</loc>
+    <lastmod>2026-10-31</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://xvaxwxnvjzrazxgdxsrt.supabase.co/storage/v1/object/public/product-photos/1787824788109-fss7x.jpg</image:loc>
+    </image:image>
+    <image:image>
+      <image:loc>https://xvaxwxnvjzrazxgdxsrt.supabase.co/storage/v1/object/public/product-photos/1787717126695-jdk2x.jpg</image:loc>
+    </image:image>
+    <image:image>
+      <image:loc>https://xvaxwxnvjzrazxgdxsrt.supabase.co/storage/v1/object/public/product-photos/1787717128030-pkwh0.jpg</image:loc>
+    </image:image>
+    <image:image>
+      <image:loc>https://xvaxwxnvjzrazxgdxsrt.supabase.co/storage/v1/object/public/product-photos/1787717129277-voko2.jpg</image:loc>
+    </image:image>
+    <image:image>
+      <image:loc>https://xvaxwxnvjzrazxgdxsrt.supabase.co/storage/v1/object/public/product-photos/1787717129885-o3ik9.jpg</image:loc>
+    </image:image>
+    <image:image>
+      <image:loc>https://xvaxwxnvjzrazxgdxsrt.supabase.co/storage/v1/object/public/product-photos/1787717132074-1tg0f.jpg</image:loc>
+    </image:image>
+    <image:image>
+      <image:loc>https://xvaxwxnvjzrazxgdxsrt.supabase.co/storage/v1/object/public/product-photos/1787824788593-67qzz.jpg</image:loc>
+    </image:image>
+    <image:image>
+      <image:loc>https://xvaxwxnvjzrazxgdxsrt.supabase.co/storage/v1/object/public/product-photos/variant-1787757044033-esj7l.jpg</image:loc>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://zenoot.web.id/produk/starla-cardigan-rajut-wanita-kancing-gold-acrylic/</loc>
+    <lastmod>2026-10-31</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://xvaxwxnvjzrazxgdxsrt.supabase.co/storage/v1/object/public/product-photos/1787662230566-2q3u3.jpg</image:loc>
+    </image:image>
+    <image:image>
+      <image:loc>https://xvaxwxnvjzrazxgdxsrt.supabase.co/storage/v1/object/public/product-photos/1787662231318-dddyw.jpg</image:loc>
+    </image:image>
+    <image:image>
+      <image:loc>https://xvaxwxnvjzrazxgdxsrt.supabase.co/storage/v1/object/public/product-photos/1787662231627-ticp8.jpg</image:loc>
+    </image:image>
+    <image:image>
+      <image:loc>https://xvaxwxnvjzrazxgdxsrt.supabase.co/storage/v1/object/public/product-photos/1787662231879-aqf7m.jpg</image:loc>
+    </image:image>
+    <image:image>
+      <image:loc>https://xvaxwxnvjzrazxgdxsrt.supabase.co/storage/v1/object/public/product-photos/1787662232124-62puq.jpg</image:loc>
+    </image:image>
+    <image:image>
+      <image:loc>https://xvaxwxnvjzrazxgdxsrt.supabase.co/storage/v1/object/public/product-photos/1787662232438-qqs3b.jpg</image:loc>
+    </image:image>
+    <image:image>
+      <image:loc>https://xvaxwxnvjzrazxgdxsrt.supabase.co/storage/v1/object/public/product-photos/1787662232681-z89oi.jpg</image:loc>
+    </image:image>
+    <image:image>
+      <image:loc>https://xvaxwxnvjzrazxgdxsrt.supabase.co/storage/v1/object/public/product-photos/1787662232925-9jicw.jpg</image:loc>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://zenoot.web.id/produk/sweater-o-neck-anak/</loc>
+    <lastmod>2026-10-31</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://xvaxwxnvjzrazxgdxsrt.supabase.co/storage/v1/object/public/product-photos/1786287339257-qzad9.jpg</image:loc>
+    </image:image>
+    <image:image>
+      <image:loc>https://xvaxwxnvjzrazxgdxsrt.supabase.co/storage/v1/object/public/product-photos/1786303528783-3dmqs.jpg</image:loc>
+    </image:image>
+    <image:image>
+      <image:loc>https://xvaxwxnvjzrazxgdxsrt.supabase.co/storage/v1/object/public/product-photos/1786287341018-dkgr0.jpg</image:loc>
+    </image:image>
+    <image:image>
+      <image:loc>https://xvaxwxnvjzrazxgdxsrt.supabase.co/storage/v1/object/public/product-photos/1786287341225-ycyns.jpg</image:loc>
+    </image:image>
+    <image:image>
+      <image:loc>https://xvaxwxnvjzrazxgdxsrt.supabase.co/storage/v1/object/public/product-photos/1786287341453-h6h6l.jpg</image:loc>
+    </image:image>
+    <image:image>
+      <image:loc>https://xvaxwxnvjzrazxgdxsrt.supabase.co/storage/v1/object/public/product-photos/1786287342048-rt1qc.jpg</image:loc>
+    </image:image>
+    <image:image>
+      <image:loc>https://xvaxwxnvjzrazxgdxsrt.supabase.co/storage/v1/object/public/product-photos/1786287341742-xxp43.jpg</image:loc>
+    </image:image>
+    <image:image>
+      <image:loc>https://xvaxwxnvjzrazxgdxsrt.supabase.co/storage/v1/object/public/product-photos/variant-1786307676894-h6bd3.jpg</image:loc>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://zenoot.web.id/produk/reiko-polo-knit-wanita-atasan-rajut-lengan-panjang/</loc>
+    <lastmod>2026-10-31</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://xvaxwxnvjzrazxgdxsrt.supabase.co/storage/v1/object/public/product-photos/1786153575385-48ahh.jpg</image:loc>
+    </image:image>
+    <image:image>
+      <image:loc>https://xvaxwxnvjzrazxgdxsrt.supabase.co/storage/v1/object/public/product-photos/1786153575851-dslp5.jpg</image:loc>
+    </image:image>
+    <image:image>
+      <image:loc>https://xvaxwxnvjzrazxgdxsrt.supabase.co/storage/v1/object/public/product-photos/1786153576444-x38cv.jpg</image:loc>
+    </image:image>
+    <image:image>
+      <image:loc>https://xvaxwxnvjzrazxgdxsrt.supabase.co/storage/v1/object/public/product-photos/1786153576790-9g4yx.jpg</image:loc>
+    </image:image>
+    <image:image>
+      <image:loc>https://xvaxwxnvjzrazxgdxsrt.supabase.co/storage/v1/object/public/product-photos/1786153577156-ouucn.jpg</image:loc>
+    </image:image>
+    <image:image>
+      <image:loc>https://xvaxwxnvjzrazxgdxsrt.supabase.co/storage/v1/object/public/product-photos/1786153577400-o9ugk.jpg</image:loc>
+    </image:image>
+    <image:image>
+      <image:loc>https://xvaxwxnvjzrazxgdxsrt.supabase.co/storage/v1/object/public/product-photos/1786153577664-6ytqs.jpg</image:loc>
+    </image:image>
+    <image:image>
+      <image:loc>https://xvaxwxnvjzrazxgdxsrt.supabase.co/storage/v1/object/public/product-photos/1786153577913-o99xq.jpg</image:loc>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://zenoot.web.id/produk/polo-rumy-polo-knit-wanita/</loc>
+    <lastmod>2026-10-31</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://xvaxwxnvjzrazxgdxsrt.supabase.co/storage/v1/object/public/product-photos/1786077798498-16aeg.jpg</image:loc>
+    </image:image>
+    <image:image>
+      <image:loc>https://xvaxwxnvjzrazxgdxsrt.supabase.co/storage/v1/object/public/product-photos/1786077799437-ztqa4.jpg</image:loc>
+    </image:image>
+    <image:image>
+      <image:loc>https://xvaxwxnvjzrazxgdxsrt.supabase.co/storage/v1/object/public/product-photos/1786077801561-s0wo8.jpg</image:loc>
+    </image:image>
+    <image:image>
+      <image:loc>https://xvaxwxnvjzrazxgdxsrt.supabase.co/storage/v1/object/public/product-photos/1786077801792-9rqgi.jpg</image:loc>
+    </image:image>
+    <image:image>
+      <image:loc>https://xvaxwxnvjzrazxgdxsrt.supabase.co/storage/v1/object/public/product-photos/1786077802235-0zjsi.jpg</image:loc>
+    </image:image>
+    <image:image>
+      <image:loc>https://xvaxwxnvjzrazxgdxsrt.supabase.co/storage/v1/object/public/product-photos/variant-1786077802899-df8fe.jpg</image:loc>
+    </image:image>
+    <image:image>
+      <image:loc>https://xvaxwxnvjzrazxgdxsrt.supabase.co/storage/v1/object/public/product-photos/variant-1786077803184-mya5e.jpg</image:loc>
+    </image:image>
+    <image:image>
+      <image:loc>https://xvaxwxnvjzrazxgdxsrt.supabase.co/storage/v1/object/public/product-photos/variant-1786077803517-zv9uq.jpg</image:loc>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://zenoot.web.id/produk/yuna-polo-strip/</loc>
+    <lastmod>2026-10-31</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://xvaxwxnvjzrazxgdxsrt.supabase.co/storage/v1/object/public/product-photos/1786077179481-095ls.jpg</image:loc>
+    </image:image>
+    <image:image>
+      <image:loc>https://xvaxwxnvjzrazxgdxsrt.supabase.co/storage/v1/object/public/product-photos/1786077180093-t8lhn.jpg</image:loc>
+    </image:image>
+    <image:image>
+      <image:loc>https://xvaxwxnvjzrazxgdxsrt.supabase.co/storage/v1/object/public/product-photos/variant-1786077268441-l8gzk.jpg</image:loc>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://zenoot.web.id/produk/mayra-cardigan-rajut-komputer-wanita-acrylic-premium/</loc>
+    <lastmod>2026-10-31</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://xvaxwxnvjzrazxgdxsrt.supabase.co/storage/v1/object/public/product-photos/1786076219716-7xrm9.jpg</image:loc>
+    </image:image>
+    <image:image>
+      <image:loc>https://xvaxwxnvjzrazxgdxsrt.supabase.co/storage/v1/object/public/product-photos/1786075593034-k2ywz.jpg</image:loc>
+    </image:image>
+    <image:image>
+      <image:loc>https://xvaxwxnvjzrazxgdxsrt.supabase.co/storage/v1/object/public/product-photos/1786075593925-xblm9.jpg</image:loc>
+    </image:image>
+    <image:image>
+      <image:loc>https://xvaxwxnvjzrazxgdxsrt.supabase.co/storage/v1/object/public/product-photos/1786075594191-aojeo.jpg</image:loc>
+    </image:image>
+    <image:image>
+      <image:loc>https://xvaxwxnvjzrazxgdxsrt.supabase.co/storage/v1/object/public/product-photos/1786075594600-0bkug.jpg</image:loc>
+    </image:image>
+    <image:image>
+      <image:loc>https://xvaxwxnvjzrazxgdxsrt.supabase.co/storage/v1/object/public/product-photos/1786075594977-sw4tk.jpg</image:loc>
+    </image:image>
+    <image:image>
+      <image:loc>https://xvaxwxnvjzrazxgdxsrt.supabase.co/storage/v1/object/public/product-photos/variant-1786076221266-kxvxn.jpg</image:loc>
+    </image:image>
+    <image:image>
+      <image:loc>https://xvaxwxnvjzrazxgdxsrt.supabase.co/storage/v1/object/public/product-photos/variant-1786076222208-xdjkn.jpg</image:loc>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://zenoot.web.id/produk/calyra-cardigan-rajut-wanita-motif-bunga-premium/</loc>
+    <lastmod>2026-10-31</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://xvaxwxnvjzrazxgdxsrt.supabase.co/storage/v1/object/public/product-photos/1785916081635.jpg</image:loc>
+    </image:image>
+    <image:image>
+      <image:loc>https://xvaxwxnvjzrazxgdxsrt.supabase.co/storage/v1/object/public/product-photos/1785917535805-pclli.jpg</image:loc>
+    </image:image>
+    <image:image>
+      <image:loc>https://xvaxwxnvjzrazxgdxsrt.supabase.co/storage/v1/object/public/product-photos/1785959095531-4o8ph.jpg</image:loc>
+    </image:image>
+    <image:image>
+      <image:loc>https://xvaxwxnvjzrazxgdxsrt.supabase.co/storage/v1/object/public/product-photos/variant-1785916700748-8c6qd.jpg</image:loc>
+    </image:image>
+    <image:image>
+      <image:loc>https://xvaxwxnvjzrazxgdxsrt.supabase.co/storage/v1/object/public/product-photos/variant-1785916700009-z3g37.jpg</image:loc>
+    </image:image>
+    <image:image>
+      <image:loc>https://xvaxwxnvjzrazxgdxsrt.supabase.co/storage/v1/object/public/product-photos/variant-1786380051834-wv4ci.jpg</image:loc>
+    </image:image>
   </url>
   <url>
     <loc>https://zenoot.web.id/tentang-kami.html</loc>
