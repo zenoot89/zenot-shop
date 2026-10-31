@@ -27,6 +27,7 @@ var CDN_ASSETS = [
 // File JS — network-first: selalu ambil versi terbaru, fallback cache kalau offline
 var JS_APP_FILES = [
   'admin-products.js',
+  'slug-map.js',
 ];
 // index.html selalu dari network agar versi SW terbaru langsung aktif
 var NO_CACHE_PATTERNS = ['index.html'];
@@ -37,7 +38,7 @@ var NO_CACHE_PATTERNS = ['index.html'];
 // 2. Copy hasilnya ke baris JS_CACHE di bawah.
 // 3. Upload sw.js → browser deteksi SW berubah → auto update tanpa Ctrl+Shift+R.
 // ─────────────────────────────────────────────────────────────
-var JS_CACHE = 'zenot-shop-js-20260825-init'; // setup awal: tambah sw.js + auto-update mechanism
+var JS_CACHE = 'zenot-shop-js-20261031-seo'; // tambah slug-map.js (peta slug halaman statis /produk/)
 
 // ─── SKIP WAITING ────────────────────────────────────────────
 self.addEventListener('message', function(e) {

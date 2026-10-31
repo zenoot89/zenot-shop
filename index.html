@@ -150,6 +150,9 @@
     .footer-bottom{border-top:1px solid var(--border);padding:18px 0 22px;display:flex;flex-wrap:wrap;justify-content:space-between;gap:10px;font-size:12px;color:var(--muted)}
     .footer-bottom a{color:var(--muted);text-decoration:none;margin-left:16px}
     .footer-bottom a:hover{color:var(--ink)}
+    .footer-seo{border-top:1px solid var(--border);padding:14px 0 2px;font-size:12px;color:var(--muted);display:flex;flex-wrap:wrap;gap:6px 16px}
+    .footer-seo a{color:var(--muted);text-decoration:none}
+    .footer-seo a:hover{color:var(--ink);text-decoration:underline}
     @media(max-width:900px){.footer-grid{grid-template-columns:1fr 1fr}.footer-col-belanja{grid-column:1/-1}}
     @media(max-width:768px){.footer-bottom{padding-bottom:84px}}
     @media(max-width:560px){.footer-grid{grid-template-columns:1fr;gap:28px}.footer-bottom a{margin:0 16px 0 0}}
@@ -916,6 +919,7 @@
     .home-more{display:flex;justify-content:center;margin:32px 0 8px}
     @media(max-width:560px){.footer-grid{grid-template-columns:1fr 1fr;gap:28px 16px}.footer-brand-col,.footer-col-belanja,.footer-grid>.footer-col:last-child{grid-column:1/-1}}
 </style>
+<script src="slug-map.js"></script>
 </head>
 <body class="view-home">
 
@@ -1052,6 +1056,7 @@
         <div class="footer-social" id="footer-social"></div>
       </div>
     </div>
+    <!--ZSEO-NAV--><!--/ZSEO-NAV-->
     <div class="footer-bottom">
       <span>&copy; <span id="footer-year"></span> ZENOOT &middot; Produsen sweater rajut &amp; knitwear di Bandung, Jawa Barat</span>
     </div>
@@ -1594,7 +1599,7 @@ function cardHtml(p) {
     return `
     <div class="product-card" onclick="openProduct('${p.id}')">
       <div class="card-img">
-        ${img ? `<a class="card-link card-img-link" href="/?p=${p.id}" onclick="cardLinkClick(event)" tabindex="-1" aria-hidden="true"><img src="${img}" alt="${p.name}" loading="lazy"/></a>` : `<div class="card-img-ph"><em>${p.name}</em></div>`}
+        ${img ? `<a class="card-link card-img-link" href="${productHref(p)}" onclick="cardLinkClick(event)" tabindex="-1" aria-hidden="true"><img src="${img}" alt="${p.name}" loading="lazy"/></a>` : `<div class="card-img-ph"><em>${p.name}</em></div>`}
         ${disc ? `<span class="badge-disc">-${disc}%</span>` : ''}
         <span class="badge-var">${colors.length} warna</span>
       </div>
@@ -1606,7 +1611,7 @@ function cardHtml(p) {
           </button>
         </div>
         <p class="card-cat">${capitalize(p.gender)} · ${p.category}</p>
-        <h3 class="card-name"><a class="card-link" href="/?p=${p.id}" onclick="cardLinkClick(event)">${p.name}</a></h3>
+        <h3 class="card-name"><a class="card-link" href="${productHref(p)}" onclick="cardLinkClick(event)">${p.name}</a></h3>
         <div class="card-price-row">
           <span class="price-final${disc ? ' price-sale' : ''}">${fRp(minPrice)}</span>${disc ? `<s class="price-orig">${fRp(maxOrig)}</s>` : ''}
           ${disc ? `<button type="button" class="price-voucher-icon" onclick="event.stopPropagation();openPriceDetail('${p.id}')" aria-label="Rincian harga">
@@ -2898,6 +2903,16 @@ function seoCanonical(url) {
   if (!l) { l = document.createElement('link'); l.setAttribute('rel', 'canonical'); document.head.appendChild(l); }
   l.setAttribute('href', url);
 }
+// slug-map.js (dibuat GitHub Actions) memetakan id produk -> slug halaman statis /produk/<slug>/.
+// Hanya id yang ada di peta yang dianggap punya halaman statis (jadi canonical tidak pernah menunjuk ke halaman yang belum ada).
+function seoSlugFor(id) {
+  const m = (typeof window !== 'undefined' && window.ZSLUG) || {};
+  return m[String(id || '').toLowerCase()] || '';
+}
+function productHref(p) {
+  const s = seoSlugFor(p && p.id);
+  return s ? '/produk/' + encodeURIComponent(s) + '/' : '/?p=' + (p ? p.id : '');
+}
 function seoRemoveLd() {
   const old = document.getElementById('ld-product');
   if (old) old.remove();
@@ -2905,7 +2920,8 @@ function seoRemoveLd() {
 function seoSetProduct(p, reviews) {
   if (!p) return;
   try {
-    const url = SEO_SITE + '?p=' + encodeURIComponent(p.id);
+    const slug = seoSlugFor(p.id);
+    const url = slug ? SEO_SITE + 'produk/' + encodeURIComponent(slug) + '/' : SEO_SITE + '?p=' + encodeURIComponent(p.id);
     const vars = (p.variants || []).filter(v => v.is_active !== false && Number(v.price) > 0);
     const prices = vars.map(v => Number(v.price));
     const minPrice = prices.length ? Math.min(...prices) : 0;
@@ -2926,12 +2942,13 @@ function seoSetProduct(p, reviews) {
     if (minPrice) parts.push('Harga mulai ' + fRp(minPrice) + '.');
     if (colors.length) parts.push(colors.length + ' pilihan warna.');
     if (specs.length) parts.push(specs.join(', ') + '.');
-    const metaDesc = seoCut(parts.join(' '), 158);
+    const metaDesc = seoText(p.seo_description) || seoCut(parts.join(' '), 158);
     const longDesc = seoCutSentence(seoText(mdToPlain(p.description).replace(/\u2022\s*/g, '')).replace(/^Deskripsi\s*/i, ''), 300) || metaDesc;
 
-    document.title = name + ' | Zenoot';
+    const pageTitle = seoText(p.seo_title) || (name + ' | Zenoot');
+    document.title = pageTitle;
     seoMeta('meta[name="description"]', metaDesc);
-    seoMeta('meta[property="og:title"]', name + ' | Zenoot');
+    seoMeta('meta[property="og:title"]', pageTitle);
     seoMeta('meta[property="og:description"]', metaDesc);
     seoMeta('meta[property="og:url"]', url);
     if (imgs[0]) seoMeta('meta[property="og:image"]', imgs[0]);
@@ -2948,6 +2965,9 @@ function seoSetProduct(p, reviews) {
     };
     if (imgs.length) product.image = imgs;
     if (p.category) product.category = seoText(p.category);
+    if (p.bahan) product.material = seoText(p.bahan);
+    if (colors.length) product.color = colors.join(', ');
+    if (p.gender === 'wanita' || p.gender === 'pria') product.audience = { '@type': 'PeopleAudience', suggestedGender: p.gender === 'wanita' ? 'female' : 'male' };
     if (vars.length) {
       product.offers = {
         '@type': 'AggregateOffer',
@@ -3011,7 +3031,8 @@ seoResetHome();
 (function() {
   const sid = new URLSearchParams(location.search).get('p');
   if (!sid || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(sid)) return;
-  const purl = SEO_SITE + '?p=' + encodeURIComponent(sid);
+  const early = seoSlugFor(sid);
+  const purl = early ? SEO_SITE + 'produk/' + encodeURIComponent(early) + '/' : SEO_SITE + '?p=' + encodeURIComponent(sid);
   seoCanonical(purl);
   seoMeta('meta[property="og:url"]', purl);
 })();
@@ -3283,11 +3304,16 @@ function renderModalSpecs(p) {
   if (!el) return;
   const rows = [
     ['Bahan', p.bahan],
-    ['Tipe Cutting', p.tipe_cutting],
+    ['Gramasi', Number(p.gramasi_gsm) > 0 ? Number(p.gramasi_gsm) + ' gr/m²' : ''],
     ['Ketebalan', p.ketebalan],
+    ['Lengan', p.lengan],
+    ['Tipe Cutting', p.tipe_cutting],
     ['Motif', p.motif],
+    ['Lingkar Dada', Number(p.lingkar_dada_cm) > 0 ? Number(p.lingkar_dada_cm) + ' cm' : ''],
+    ['Panjang Baju', Number(p.panjang_cm) > 0 ? Number(p.panjang_cm) + ' cm' : ''],
     ['Dipakai Model', p.dipakai_model],
-  ].filter(([,v]) => v && v.trim());
+    ['Perawatan', p.perawatan],
+  ].map(([l, v]) => [l, v == null ? '' : String(v)]).filter(([,v]) => v.trim());
   if (!rows.length) { el.innerHTML = ''; return; }
   el.innerHTML = `
     <p style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:20px 0 4px">Detail</p>
