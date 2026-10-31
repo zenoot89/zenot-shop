@@ -17,7 +17,7 @@ const COLUMNS = [
   'id', 'item_group_id', 'title', 'description', 'availability', 'condition',
   'price', 'sale_price', 'link', 'image_link', 'additional_image_link', 'brand',
   'identifier_exists', 'google_product_category', 'gender', 'age_group',
-  'color', 'size', 'material', 'pattern', 'product_type',
+  'color', 'size', 'material', 'pattern', 'product_type', 'shipping_weight',
 ];
 
 // Satu baris TSV = satu produk: buang tab, baris baru, HTML.
@@ -147,6 +147,23 @@ export function deskripsiAsli(raw, max = 5000) {
   return s;
 }
 
+// Poin keunggulan untuk Google (product_highlight, maks. 10 baris, 150 karakter): dari spesifikasi produk.
+// Hanya fakta yang diisi admin; kolom kosong dilewati.
+export function highlights(p) {
+  const n = (v) => { const x = Number(v); return Number.isFinite(x) && x > 0 ? x : 0; };
+  const out = [];
+  if (p.bahan) out.push(`Bahan ${clean(p.bahan)}${n(p.gramasi_gsm) ? `, gramasi ${n(p.gramasi_gsm)} gr/m²` : ''}`);
+  if (p.ketebalan) out.push(`Ketebalan ${clean(p.ketebalan)}`);
+  if (p.lengan) out.push(`Lengan ${clean(p.lengan).toLowerCase()}`);
+  if (p.tipe_cutting) out.push(`Potongan ${clean(p.tipe_cutting)}`);
+  if (p.motif) out.push(`Motif ${clean(p.motif)}`);
+  if (n(p.lingkar_dada_cm) || n(p.panjang_cm)) {
+    out.push('Ukuran produk: ' + [n(p.lingkar_dada_cm) && `lingkar dada ${n(p.lingkar_dada_cm)} cm`, n(p.panjang_cm) && `panjang ${n(p.panjang_cm)} cm`].filter(Boolean).join(', '));
+  }
+  if (p.perawatan) out.push(`Perawatan: ${clean(p.perawatan)}`);
+  return out.map((t) => clean(t, 150)).filter(Boolean).slice(0, 10);
+}
+
 const xmlEsc = (v) =>
   String(v ?? '')
     .replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/g, '')
@@ -171,6 +188,8 @@ export function buildXml(items) {
         tag('google_product_category', r.google_product_category) + tag('gender', r.gender) +
         tag('age_group', r.age_group) + tag('color', r.color) + tag('size', r.size) +
         tag('material', r.material) + tag('pattern', r.pattern) + tag('product_type', r.product_type) +
+        tag('shipping_weight', r.shipping_weight) +
+        (r.highlights || []).map((h) => tag('product_highlight', h)).join('') +
         '    </item>\n'
       );
     })
@@ -251,9 +270,10 @@ export function buildFeed(products) {
         material: clean(p.bahan),
         pattern: clean(p.motif),
         product_type: clean(p.category),
+        shipping_weight: Number(p.weight_gram) > 0 ? `${Math.round(Number(p.weight_gram))} g` : '',
       };
       lines.push(COLUMNS.map((c) => clean(row[c])).join('\t'));
-      xmlItems.push({ ...row, description: deskripsiAsli(p.description) || row.description });
+      xmlItems.push({ ...row, description: deskripsiAsli(p.description) || row.description, highlights: highlights(p) });
     }
   }
   return { text: lines.join('\n') + '\n', rows: lines.length - 1, skipped, xml: buildXml(xmlItems) };
@@ -263,21 +283,36 @@ async function fetchProducts() {
   const base = process.env.SUPABASE_URL;
   const key = process.env.SUPABASE_ANON_KEY;
   if (!base || !key) throw new Error('SUPABASE_URL / SUPABASE_ANON_KEY belum diisi');
-  const select =
-    'id,name,description,category,is_active,image_url,image_urls,gender,bahan,motif,' +
-    'variants(id,color_name,size,price,original_price,stock,image_url,is_active)';
+  const baseCols = 'id,name,description,category,is_active,image_url,image_urls,gender,bahan,motif,';
+  const variantCols = 'variants(id,color_name,size,price,original_price,stock,image_url,is_active)';
+  // Kolom baru dari 01-migrasi-supabase.sql. Kalau migrasi belum dijalankan, Supabase menjawab 400,
+  // maka feed dibuat dengan kolom lama saja (feed tidak pernah berhenti hanya karena migrasi belum jalan).
+  const newCols = 'ketebalan,tipe_cutting,lengan,gramasi_gsm,lingkar_dada_cm,panjang_cm,perawatan,weight_gram,';
   const pageSize = 500;
-  const all = [];
-  for (let offset = 0; ; offset += pageSize) {
-    const url = `${base}/rest/v1/products?select=${encodeURIComponent(select)}&is_active=eq.true&order=created_at.asc,id.asc&limit=${pageSize}&offset=${offset}`;
-    const res = await fetch(url, { headers: { apikey: key, Authorization: `Bearer ${key}` } });
-    if (!res.ok) throw new Error(`Supabase HTTP ${res.status}: ${(await res.text()).slice(0, 200)}`);
-    const page = await res.json();
-    if (!Array.isArray(page)) throw new Error('Respons Supabase bukan daftar');
-    all.push(...page);
-    if (page.length < pageSize) break;
+  const load = async (select) => {
+    const all = [];
+    for (let offset = 0; ; offset += pageSize) {
+      const url = `${base}/rest/v1/products?select=${encodeURIComponent(select)}&is_active=eq.true&order=created_at.asc,id.asc&limit=${pageSize}&offset=${offset}`;
+      const res = await fetch(url, { headers: { apikey: key, Authorization: `Bearer ${key}` } });
+      if (!res.ok) {
+        const err = new Error(`Supabase HTTP ${res.status}: ${(await res.text()).slice(0, 200)}`);
+        err.status = res.status;
+        throw err;
+      }
+      const page = await res.json();
+      if (!Array.isArray(page)) throw new Error('Respons Supabase bukan daftar');
+      all.push(...page);
+      if (page.length < pageSize) break;
+    }
+    return all;
+  };
+  try {
+    return await load(baseCols + newCols + variantCols);
+  } catch (err) {
+    if (err.status !== 400) throw err;
+    console.warn('Kolom spesifikasi/pengiriman baru belum ada di Supabase (jalankan 01-migrasi-supabase.sql). Feed dibuat tanpa kolom itu.');
+    return await load(baseCols + variantCols);
   }
-  return all;
 }
 
 // Jalankan hanya kalau dipanggil langsung (bukan saat di-import untuk uji).
