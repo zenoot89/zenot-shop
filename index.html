@@ -4085,7 +4085,7 @@ function payInfo(c) {
   if (c === 'other') return { name: 'Metode lain', sub: 'Pilih di halaman pembayaran Midtrans', logo: '' };
   const m = payChoices().find(x => x.snap === c);
   if (!m) return null;
-  return { name: payLabel(m), sub: m.g === 'va' ? 'Bayar lewat ATM, m-banking, atau internet banking' : (m.g === 'qr' ? 'Bayar dengan scan kode QR' : 'Bayar lewat aplikasi'), logo: FOOTER_PAY_DIR + m.f };
+  return { name: payLabel(m), sub: m.g === 'va' ? 'Bayar lewat ATM, m-banking, atau internet banking' : (m.g === 'qr' ? 'Scan dengan e-wallet atau m-banking apa pun' : 'Bayar lewat aplikasi'), logo: FOOTER_PAY_DIR + m.f };
 }
 function openPayMethodSheet() {
   const cur = payChoiceValid(payChoice) ? payChoice : null;
@@ -4095,7 +4095,7 @@ function openPayMethodSheet() {
   const grp = (title, arr) => arr.length ? `<div class="paym-grp">${title}</div>${arr.join('')}` : '';
   let html = '';
   html += grp('E-Wallet', ms.filter(m => m.g === 'ew').map(m => opt(m.snap, logo(m), payLabel(m), 'Bayar lewat aplikasi')));
-  html += grp('QRIS', ms.filter(m => m.g === 'qr').map(m => opt(m.snap, logo(m), payLabel(m), 'Bayar dengan scan kode QR')));
+  html += grp('QRIS', ms.filter(m => m.g === 'qr').map(m => opt(m.snap, logo(m), payLabel(m), 'Scan dengan e-wallet atau m-banking apa pun')));
   html += grp('Virtual Account', ms.filter(m => m.g === 'va').map(m => opt(m.snap, logo(m), payLabel(m), '')));
   const more = [];
   if (ms.length) more.push(opt('other', '<span class="paym-logo paym-emoji">💳</span>', 'Metode lain', 'Pilih bank atau dompet lain di halaman pembayaran Midtrans'));
@@ -4663,7 +4663,7 @@ const FOOTER_PAY_DIR = '';
 // snap = kode metode di Midtrans (enabled_payments). Metode dengan on:true DAN snap terisi tampil sebagai pilihan di checkout.
 // snap:null (mis. BSI, OVO, SeaBank) = belum dipetakan: tetap tampil di logo footer dan bisa dipilih lewat "Metode lain" di halaman Midtrans.
 const FOOTER_PAYMENTS = [
-  { n: 'QRIS',         f: 'qris.png',         w: 328, h: 56, on: false, g: 'qr', snap: 'other_qris' },
+  { n: 'QRIS',         f: 'qris.png',         w: 328, h: 56, on: true,  g: 'qr', snap: 'other_qris' },
   { n: 'BCA',          f: 'bca.png',          w: 180, h: 56, on: false, g: 'va', snap: 'bca_va' },
   { n: 'BRI',          f: 'bri.png',          w: 148, h: 56, on: true, g: 'va', snap: 'bri_va' },
   { n: 'BNI',          f: 'bni.png',          w: 193, h: 56, on: true, g: 'va', snap: 'bni_va' },
