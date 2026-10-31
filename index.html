@@ -127,6 +127,8 @@
     .footer-pay{display:flex;flex-wrap:wrap;align-items:center;gap:12px 18px;margin-top:16px}
     .footer-pay:empty{display:none}
     .footer-pay img{height:14px;width:auto;display:block}
+    /* HP: logo pembayaran tersusun rapi 2 baris x 4 kolom */
+    @media(max-width:560px){.footer-pay{display:grid;grid-template-columns:repeat(4,auto);justify-content:space-between;justify-items:start;align-items:center;gap:16px 0;width:100%;max-width:360px}}
     .footer-pay-chip{padding:5px 10px;border:1px solid var(--border);border-radius:6px;font-size:11.5px;font-weight:600;color:var(--text);background:var(--bg)}
     .footer-col h4{color:var(--ink);font-size:12px;letter-spacing:.1em;text-transform:uppercase;margin-bottom:16px;font-weight:700}
     .footer-col a{display:block;color:var(--sec);font-size:13px;text-decoration:none;margin-bottom:12px}
@@ -4668,9 +4670,9 @@ const FOOTER_PAYMENTS = [
   { n: 'BRI',          f: 'bri.png',          w: 148, h: 56, on: true, g: 'va', snap: 'bri_va' },
   { n: 'BNI',          f: 'bni.png',          w: 193, h: 56, on: true, g: 'va', snap: 'bni_va' },
   { n: 'Mandiri',      f: 'mandiri.png',      w: 192, h: 56, on: true, g: 'va', snap: 'echannel' },
-  { n: 'CIMB Niaga',   f: 'cimb-niaga.png',   w: 384, h: 56, on: true, g: 'va', snap: 'cimb_va' },
+  { n: 'CIMB Niaga',   f: 'cimb.png',          w: 213, h: 56, on: true, g: 'va', snap: 'cimb_va' },
   { n: 'PermataBank',  f: 'permata-bank.png', w: 226, h: 56, on: true, g: 'va', snap: 'permata_va' },
-  { n: 'BSI',          f: 'bsi.png',          w: 151, h: 47, on: true, d: 22, g: 'va', snap: null },
+  { n: 'BSI',          f: 'bsi-logo.png',     w: 70,  h: 47, on: true, d: 22, g: 'va', snap: null },
   { n: 'SeaBank',      f: 'seabank.png',      w: 104, h: 144, on: false, d: 34, g: 'va', snap: null },
   { n: 'GoPay',        f: 'gopay.png',        w: 258, h: 56, on: true, g: 'ew', snap: 'gopay' },
   { n: 'OVO',          f: 'ovo.png',          w: 136, h: 53, on: false, g: 'ew', snap: null },
