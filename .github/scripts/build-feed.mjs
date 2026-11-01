@@ -53,8 +53,8 @@ const slug = (s) =>
     .replace(/^-+|-+$/g, '');
 
 
-const RAPIKAN_TSV = false; // false = deskripsi di feed SAMA dengan di web (diatur hanya di admin web)
-// ====== PERAPIAN DESKRIPSI (opsional, tidak dipakai kalau RAPIKAN_TSV = false) ======
+const RAPIKAN_TSV = true; // true = deskripsi di feed dirapikan jadi kalimat utuh (judul/bullet diberi titik). false = persis seperti di admin.
+// ====== PERAPIAN DESKRIPSI (dipakai kalau RAPIKAN_TSV = true) ======
 // Sumber teks deskripsi di admin berisi judul HURUF BESAR, bullet, dan blok promo reseller. Meta/IG/WA/Google membuang
 // baris baru, jadi semuanya menyatu jadi satu paragraf. Fungsi ini menyusunnya jadi kalimat berlabel ("Spesifikasi: ...")
 // yang tetap enak dibaca walaupun jadi satu paragraf.
@@ -257,7 +257,8 @@ export function buildFeed(products) {
         condition: 'new',
         price: money(onSale ? original : price),
         sale_price: onSale ? money(price) : '',
-        link: `${SITE}/?p=${p.id}`,
+        // Halaman statis SEO (/produk/slug/) kalau slug ada; kalau belum, pakai alamat toko lama.
+        link: p.slug ? `${SITE}/produk/${p.slug}/` : `${SITE}/?p=${p.id}`,
         image_link: main,
         additional_image_link: extra.join(','),
         brand: BRAND,
@@ -273,7 +274,7 @@ export function buildFeed(products) {
         shipping_weight: Number(p.weight_gram) > 0 ? `${Math.round(Number(p.weight_gram))} g` : '',
       };
       lines.push(COLUMNS.map((c) => clean(row[c])).join('\t'));
-      xmlItems.push({ ...row, description: deskripsiAsli(p.description) || row.description, highlights: highlights(p) });
+      xmlItems.push({ ...row, description: (RAPIKAN_TSV ? row.description : deskripsiAsli(p.description)) || row.description, highlights: highlights(p) });
     }
   }
   return { text: lines.join('\n') + '\n', rows: lines.length - 1, skipped, xml: buildXml(xmlItems) };
@@ -287,7 +288,7 @@ async function fetchProducts() {
   const variantCols = 'variants(id,color_name,size,price,original_price,stock,image_url,is_active)';
   // Kolom baru dari 01-migrasi-supabase.sql. Kalau migrasi belum dijalankan, Supabase menjawab 400,
   // maka feed dibuat dengan kolom lama saja (feed tidak pernah berhenti hanya karena migrasi belum jalan).
-  const newCols = 'ketebalan,tipe_cutting,lengan,gramasi_gsm,lingkar_dada_cm,panjang_cm,perawatan,weight_gram,';
+  const newCols = 'slug,ketebalan,tipe_cutting,lengan,gramasi_gsm,lingkar_dada_cm,panjang_cm,perawatan,weight_gram,';
   const pageSize = 500;
   const load = async (select) => {
     const all = [];
