@@ -4097,7 +4097,9 @@ function coCurrentAddress() {
 function coAddrLine(a) {
   return [a.address_detail, a.address_note, a.village, a.district, a.city, a.province].filter(Boolean).join(', ') + (a.postal_code ? ' ' + a.postal_code : '');
 }
-function coQuoteKey(a) { return [a.id, a.city, a.district, a.postal_code || '', cartQtyTotal()].join('|'); }
+// Daftar barang untuk hitung ongkir: server menghitung berat dari berat paket tiap produk (kosong = 300 g per pcs)
+function coItemsPayload() { return cart.map(i => ({ variantId: i.variantId, qty: i.qty })); }
+function coQuoteKey(a) { return [a.id, a.city, a.district, a.postal_code || '', cart.map(i => i.variantId + ':' + i.qty).sort().join(',')].join('|'); }
 function fmtEtd(s) {
   let t = String(s || '').trim().replace(/\bdays?\b/i, 'hari');
   if (/^\d+(\s*-\s*\d+)?$/.test(t)) t += ' hari';
@@ -4181,7 +4183,7 @@ function coRequestQuote(force) {
         const res = await fetch(QUOTE_URL, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
-          body: JSON.stringify({ address_id: addr.id, qty: q })
+          body: JSON.stringify({ address_id: addr.id, items: coItemsPayload(), qty: q })   // qty = jaga-jaga untuk fungsi versi lama
         });
         const data = await res.json().catch(() => ({}));
         if (res.ok && Number.isFinite(Number(data.cost)) && Number(data.cost) > 0) {
