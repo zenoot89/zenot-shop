@@ -224,6 +224,21 @@ def is_heading(t):
     return (len(letters) >= 3 and len(t) <= 40 and not re.search(r'[a-zà-ÿ]', t) and core not in NOT_HEADING)
 
 
+def flat_desc(raw):
+    """Deskripsi jadi satu paragraf untuk JSON-LD: tiap baris (judul/butir) diakhiri tanda baca,
+    supaya judul tidak menempel ke kalimat berikutnya."""
+    out = []
+    for line in plain_desc(raw).split('\n'):
+        t = BULLET.sub('', line.strip()).strip()
+        t = re.sub(r'[•✔✅✓▪●]\s*', '', t).strip()
+        if not t:
+            continue
+        if not re.search(r'[.!?:;]$', t):
+            t += '.'
+        out.append(t)
+    return re.sub(r'\s+', ' ', ' '.join(out)).strip()
+
+
 def render_desc(raw):
     out, para, ul = [], [], []
 
@@ -240,7 +255,7 @@ def render_desc(raw):
         if not t:
             flush()
             continue
-        if is_heading(t):
+        if is_heading(t) or (t.endswith(':') and len(t) <= 40 and not BULLET.match(t)):
             flush()
             h = t.rstrip(':').lower()
             out.append('<h3>%s</h3>' % esc(h[:1].upper() + h[1:]))
@@ -452,7 +467,7 @@ def product_page(p, ctx):
     imgs = imgs_cache[p['id']]
     title = text_of(p.get('seo_title')) or auto_title(c)
     desc = text_of(p.get('seo_description')) or auto_desc(c, color_names, minp)
-    long_desc = cut_sentence(re.sub(r'\s+', ' ', re.sub(r'[•✔✅✓▪●·]\s*', '', plain_desc(p.get('description')))).strip(), 300) or desc
+    long_desc = cut_sentence(flat_desc(p.get('description')), 300) or desc
     path = prod_path[p['id']]
     rate = ratings.get(p['id'])
 
