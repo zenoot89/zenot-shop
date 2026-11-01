@@ -274,7 +274,8 @@ export function buildFeed(products) {
         shipping_weight: Number(p.weight_gram) > 0 ? `${Math.round(Number(p.weight_gram))} g` : '',
       };
       lines.push(COLUMNS.map((c) => clean(row[c])).join('\t'));
-      xmlItems.push({ ...row, description: (RAPIKAN_TSV ? row.description : deskripsiAsli(p.description)) || row.description, highlights: highlights(p) });
+      // Meta/IG/WA: paragraf dan butir tetap seperti di web (hanya feed Google/TSV yang diratakan)
+      xmlItems.push({ ...row, description: deskripsiAsli(p.description) || row.description, highlights: highlights(p) });
     }
   }
   return { text: lines.join('\n') + '\n', rows: lines.length - 1, skipped, xml: buildXml(xmlItems) };
