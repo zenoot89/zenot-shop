@@ -2875,7 +2875,20 @@ function descToHtml(raw) {
     .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
     .replace(/(^|[^*\w])\*(?![\s*])([^*\n]+?)\*(?![*\w])/g, '$1<em>$2</em>')
     .replace(/`([^`\n]+)`/g, '$1')
-    .replace(/\[([^\]\n]+)\]\((?:[^)\n]+)\)/g, '$1');
+    .replace(/\[([^\]\n]+)\]\((?:[^)\n]+)\)/g, '$1')
+    // Baris pendek berakhiran titik dua, atau baris HURUF BESAR, dicetak tebal sebagai sub-judul (sama dengan halaman /produk/slug/).
+    .replace(/^([^\u2022<\n][^\n]*)$/gm, function (m, t) {
+      const s = t.trim();
+      if (!s || s.length > 40) return m;
+      const core = s.replace(/\s*\(.*$/, '').replace(/[?:]$/, '').trim();
+      const letters = s.replace(/[^A-Za-z\u00C0-\u00FF]/g, '');
+      const caps = letters.length >= 3 && !/[a-z\u00E0-\u00FF]/.test(s) &&
+        ['XXL', 'XL', 'ALL SIZE', 'SLIM FIT', 'HAPPY SHOPING', 'HAPPY SHOPPING', 'SIZE'].indexOf(core) < 0;
+      if (!caps && !/:$/.test(s)) return m;
+      const h = s.replace(/:$/, '');
+      const low = caps ? h.toLowerCase() : h;
+      return '<strong>' + low.charAt(0).toUpperCase() + low.slice(1) + '</strong>';
+    });
 }
 function seoText(s) {
   // buang teks placeholder dalam kurung siku, rapikan spasi
