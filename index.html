@@ -920,6 +920,14 @@
     @media(max-width:560px){.footer-grid{grid-template-columns:1fr 1fr;gap:28px 16px}.footer-brand-col,.footer-col-belanja,.footer-grid>.footer-col:last-child{grid-column:1/-1}}
 </style>
 <script src="slug-map.js"></script>
+<!-- Google tag (GA4) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-7FWQWZXVM5"></script>
+<script>
+window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}
+gtag('js',new Date());gtag('config','G-7FWQWZXVM5');
+document.addEventListener('click',function(e){var a=e.target.closest&&e.target.closest('a[href*="wa.me"]');if(a)gtag('event','click_whatsapp',{link_url:a.href.split('?')[0],page_path:location.pathname});},true);
+var _wo=window.open;window.open=function(u){try{if(typeof u==='string'&&u.indexOf('wa.me')>-1)gtag('event','click_whatsapp',{link_url:u.split('?')[0],page_path:location.pathname});}catch(e){}return _wo.apply(window,arguments);};
+</script>
 </head>
 <body class="view-home">
 
@@ -4097,9 +4105,7 @@ function coCurrentAddress() {
 function coAddrLine(a) {
   return [a.address_detail, a.address_note, a.village, a.district, a.city, a.province].filter(Boolean).join(', ') + (a.postal_code ? ' ' + a.postal_code : '');
 }
-// Daftar barang untuk hitung ongkir: server menghitung berat dari berat paket tiap produk (kosong = 300 g per pcs)
-function coItemsPayload() { return cart.map(i => ({ variantId: i.variantId, qty: i.qty })); }
-function coQuoteKey(a) { return [a.id, a.city, a.district, a.postal_code || '', cart.map(i => i.variantId + ':' + i.qty).sort().join(',')].join('|'); }
+function coQuoteKey(a) { return [a.id, a.city, a.district, a.postal_code || '', cartQtyTotal()].join('|'); }
 function fmtEtd(s) {
   let t = String(s || '').trim().replace(/\bdays?\b/i, 'hari');
   if (/^\d+(\s*-\s*\d+)?$/.test(t)) t += ' hari';
@@ -4183,7 +4189,7 @@ function coRequestQuote(force) {
         const res = await fetch(QUOTE_URL, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
-          body: JSON.stringify({ address_id: addr.id, items: coItemsPayload(), qty: q })   // qty = jaga-jaga untuk fungsi versi lama
+          body: JSON.stringify({ address_id: addr.id, qty: q })
         });
         const data = await res.json().catch(() => ({}));
         if (res.ok && Number.isFinite(Number(data.cost)) && Number(data.cost) > 0) {
