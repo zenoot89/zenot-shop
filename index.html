@@ -928,6 +928,12 @@ gtag('js',new Date());gtag('config','G-7FWQWZXVM5');
 document.addEventListener('click',function(e){var a=e.target.closest&&e.target.closest('a[href*="wa.me"]');if(a)gtag('event','click_whatsapp',{link_url:a.href.split('?')[0],page_path:location.pathname});},true);
 var _wo=window.open;window.open=function(u){try{if(typeof u==='string'&&u.indexOf('wa.me')>-1)gtag('event','click_whatsapp',{link_url:u.split('?')[0],page_path:location.pathname});}catch(e){}return _wo.apply(window,arguments);};
 </script>
+<!-- Meta Pixel -->
+<script>
+!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');
+fbq('init','371314431804949');fbq('track','PageView');
+document.addEventListener('click',function(e){var a=e.target.closest&&e.target.closest('a[href*="wa.me"]');if(a)fbq('track','Contact');},true);
+</script>
 </head>
 <body class="view-home">
 
@@ -1391,7 +1397,21 @@ function gaItem(p, v, q){
     return it;
   }catch(e){ return { item_name: (p && p.name) || '' }; }
 }
-function gaSend(name, params){ try{ if (typeof gtag === 'function') gtag('event', name, params); }catch(e){} }
+function fbSend(name, p, x){
+  try{
+    if (typeof fbq !== 'function') return;
+    const items = (p && p.items) || [];
+    const ids = (x && x.fbIds) || items.map(i => i.item_id);
+    const base = { content_type: 'product', content_ids: ids, currency: 'IDR' };
+    if (p && p.value != null) base.value = p.value;
+    if (name === 'view_item') fbq('track', 'ViewContent', Object.assign({}, base, { content_name: items[0] && items[0].item_name }));
+    else if (name === 'add_to_cart') fbq('track', 'AddToCart', Object.assign({}, base, { content_name: items[0] && items[0].item_name }));
+    else if (name === 'begin_checkout') fbq('track', 'InitiateCheckout', Object.assign({}, base, { num_items: items.reduce((s, i) => s + (i.quantity || 1), 0) }));
+    else if (name === 'generate_lead') fbq('track', 'Lead', base);
+    else if (name === 'purchase') fbq('track', 'Purchase', Object.assign({}, base, { num_items: items.reduce((s, i) => s + (i.quantity || 1), 0) }));
+  }catch(e){}
+}
+function gaSend(name, params, extra){ try{ if (typeof gtag === 'function') gtag('event', name, params); }catch(e){} fbSend(name, params, extra); }
 function gaCartItems(){ try{ return cart.map(i => ({ item_id: [gaCode(i.productId), gaSlug(i.color), gaSlug(i.size)].filter(Boolean).join('-').slice(0,50), item_name: i.name, item_variant: [i.color, i.size].filter(Boolean).join(' / '), price: Number(i.price), quantity: i.qty })); }catch(e){ return []; } }
 function gaOrderItems(order){ try{ return (order.items||[]).map(i => ({ item_id: [gaCode(i.productId||i.product_id||((products.find(x=>x.name===i.name)||{}).id)), gaSlug(i.color), gaSlug(i.size)].filter(Boolean).join('-').slice(0,50), item_name: i.name, item_variant: [i.color, i.size].filter(Boolean).join(' / '), price: Number(i.price), quantity: i.qty })); }catch(e){ return []; } }
 // purchase hanya dikirim saat pembayaran online berstatus lunas, sekali per pesanan (dicatat di browser pembeli)
@@ -3105,7 +3125,7 @@ async function openProduct(id, opts) {
   activeProduct = next;
   pdpTab('desc');
   trackEvent('view_product', id);
-  gaSend('view_item', { currency: 'IDR', items: [gaItem(activeProduct, null, 1)] });
+  gaSend('view_item', { currency: 'IDR', items: [gaItem(activeProduct, null, 1)] }, { fbIds: (activeProduct.variants || []).filter(v => v.is_active !== false).map(v => [gaCode(activeProduct.id), gaSlug(v.color_name), gaSlug(v.size)].filter(Boolean).join('-').slice(0,50)) });
   interestRecord(activeProduct);
   activeVariants = activeProduct.variants || [];
   selectedVariant = null;
