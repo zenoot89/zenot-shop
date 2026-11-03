@@ -1376,6 +1376,39 @@ function getAnalyticsSessionId() {
   }
   return id;
 }
+// ===================== GA4 E-COMMERCE =====================
+// ID item sama dengan feed Merchant/Meta (8 karakter ID produk + warna + ukuran), supaya laporan GA4 bisa dicocokkan dengan Merchant Center.
+function gaSlug(s){ return String(s==null?'':s).toLowerCase().normalize('NFKD').replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,''); }
+function gaCode(pid){ return String(pid==null?'':pid).replace(/[^a-zA-Z0-9]/g,'').slice(0,8).toLowerCase(); }
+function gaItem(p, v, q){
+  try{
+    const it = { item_id: v ? [gaCode(p.id), gaSlug(v.color_name), gaSlug(v.size)].filter(Boolean).join('-').slice(0,50) : gaCode(p.id),
+                 item_name: p.name, quantity: q || 1 };
+    const pr = v ? v.price : (p.price != null ? p.price : (p.variants && p.variants.length ? Math.min.apply(null, p.variants.map(x=>x.price)) : null));
+    if (pr != null && isFinite(Number(pr))) it.price = Number(pr);
+    if (v) it.item_variant = [v.color_name, v.size].filter(Boolean).join(' / ');
+    if (p.category) it.item_category = String(p.category);
+    return it;
+  }catch(e){ return { item_name: (p && p.name) || '' }; }
+}
+function gaSend(name, params){ try{ if (typeof gtag === 'function') gtag('event', name, params); }catch(e){} }
+function gaCartItems(){ try{ return cart.map(i => ({ item_id: [gaCode(i.productId), gaSlug(i.color), gaSlug(i.size)].filter(Boolean).join('-').slice(0,50), item_name: i.name, item_variant: [i.color, i.size].filter(Boolean).join(' / '), price: Number(i.price), quantity: i.qty })); }catch(e){ return []; } }
+function gaOrderItems(order){ try{ return (order.items||[]).map(i => ({ item_id: [gaCode(i.productId||i.product_id||((products.find(x=>x.name===i.name)||{}).id)), gaSlug(i.color), gaSlug(i.size)].filter(Boolean).join('-').slice(0,50), item_name: i.name, item_variant: [i.color, i.size].filter(Boolean).join(' / '), price: Number(i.price), quantity: i.qty })); }catch(e){ return []; } }
+// purchase hanya dikirim saat pembayaran online berstatus lunas, sekali per pesanan (dicatat di browser pembeli)
+function gaReportPaidOrders(orders){
+  try{
+    const done = JSON.parse(localStorage.getItem('zenot_ga_paid') || '[]');
+    let changed = false;
+    (orders||[]).forEach(o => {
+      if (o.payment_status === 'paid' && o.id && done.indexOf(o.id) < 0) {
+        gaSend('purchase', { transaction_id: String(o.id), currency: 'IDR', value: Number(o.total)||0, shipping: Number(o.shipping_cost)||0, items: gaOrderItems(o) });
+        done.push(o.id); changed = true;
+      }
+    });
+    if (changed) localStorage.setItem('zenot_ga_paid', JSON.stringify(done.slice(-200)));
+  }catch(e){}
+}
+
 function trackEvent(eventType, productId = null) {
   // Fire-and-forget, jangan sampai gagal catat analytics bikin toko error
   sb.from('analytics_events').insert({
@@ -3072,6 +3105,7 @@ async function openProduct(id, opts) {
   activeProduct = next;
   pdpTab('desc');
   trackEvent('view_product', id);
+  gaSend('view_item', { currency: 'IDR', items: [gaItem(activeProduct, null, 1)] });
   interestRecord(activeProduct);
   activeVariants = activeProduct.variants || [];
   selectedVariant = null;
@@ -3586,6 +3620,7 @@ function updateVariantSheetHead() {
 
 function addToCart(goCart) {
   if (!selectedVariant) return;
+  gaSend('add_to_cart', { currency: 'IDR', value: Number(selectedVariant.price) * qty, items: [gaItem(activeProduct, selectedVariant, qty)] });
   const key = `${activeProduct.id}-${selectedVariant.id}`;
   const ex = cart.find(i=>i.key===key);
   if (ex) { ex.qty = Math.min(ex.qty+qty, selectedVariant.stock); }
@@ -4478,6 +4513,8 @@ async function checkoutWAInner(payOnline, payMethod) {
     }
     return;
   }
+  try{ const _v=Number(order.total)||0, _it=gaCartItems(); gaSend('begin_checkout', { currency:'IDR', value:_v, items:_it });
+       if (!payOnline) gaSend('generate_lead', { currency:'IDR', value:_v, transaction_id:String(order.id||order.order_id||''), method:'whatsapp', items:_it }); }catch(e){}
   buyerHasOrder = true; // pesanan sudah dibuat: voucher member baru tidak berlaku lagi untuk akun ini (dihitung ulang kalau pesanan dibatalkan)
   [voucher, shipVoucher].forEach(v => { if (v) { const k = String(v.code).toUpperCase(); buyerVoucherUse[k] = (buyerVoucherUse[k] || 0) + 1; } });   // satu jatah "per pembeli" terpakai
   renderVoucherPopupList();
@@ -4521,6 +4558,7 @@ function updateCheckoutButton(total) {
 async function loadOrderHistory() {
   if (!buyerUser) return [];
   const { data } = await sb.from('orders').select('*').eq('user_id', buyerUser.id).order('created_at', {ascending:false});
+  gaReportPaidOrders(data);
   return data || [];
 }
 
