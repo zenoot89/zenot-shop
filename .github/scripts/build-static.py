@@ -339,6 +339,17 @@ FONTS = ('<link rel="preconnect" href="https://fonts.googleapis.com"/>'
          '&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet"/>')
 
 
+GA_TAG = '''<!-- Google tag (GA4) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-7FWQWZXVM5"></script>
+<script>
+window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}
+gtag('js',new Date());gtag('config','G-7FWQWZXVM5');
+document.addEventListener('click',function(e){var a=e.target.closest&&e.target.closest('a[href*="wa.me"]');if(a)gtag('event','click_whatsapp',{link_url:a.href.split('?')[0],page_path:location.pathname});},true);
+var _wo=window.open;window.open=function(u){try{if(typeof u==='string'&&u.indexOf('wa.me')>-1)gtag('event','click_whatsapp',{link_url:u.split('?')[0],page_path:location.pathname});}catch(e){}return _wo.apply(window,arguments);};
+</script>
+'''
+
+
 def ld_dump(obj):
     # '<' jadi \\u003c: isi data tidak pernah bisa membentuk tag di dalam blok script (JSON tetap valid)
     return json.dumps(obj, ensure_ascii=False, separators=(',', ':')).replace('<', '\\u003c')
@@ -357,7 +368,7 @@ def shell(title, desc, canonical, body, ld, og_image='', og_alt='', og_type='web
             '<meta property="og:description" content="%s"/>\n<meta property="og:url" content="%s"/>\n'
             '<meta property="og:image" content="%s"/>\n%s'
             '<meta name="twitter:card" content="summary_large_image"/>\n'
-            '%s\n<style>%s</style>\n<script type="application/ld+json">%s</script>\n</head>\n<body>\n%s\n</body>\n</html>\n'
+            '%s\n<style>%s</style>\n<script type="application/ld+json">%s</script>\n' + GA_TAG + '</head>\n<body>\n%s\n</body>\n</html>\n'
             ) % (esc(title), esc(desc), esc(canonical), og_type, esc(title), esc(desc), esc(canonical), esc(og_img),
                  (('<meta property="og:image:alt" content="%s"/>\n' % esc(og_alt)) if og_alt else '') + extra_og,
                  FONTS, CSS, ld_dump(ld), body)
