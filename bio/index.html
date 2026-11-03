@@ -82,7 +82,14 @@
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-7FWQWZXVM5"></script>
 <script>
 window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}
-gtag('js',new Date());gtag('config','G-7FWQWZXVM5');
+gtag('js',new Date());
+var cfg={},ua=navigator.userAgent||'';
+if(!/[?&]utm_source=/.test(location.search)){
+  if(/Instagram/i.test(ua))cfg={campaign_source:'instagram',campaign_medium:'bio'};
+  else if(/FBAN|FBAV|FB_IAB/i.test(ua))cfg={campaign_source:'facebook',campaign_medium:'bio'};
+  else if(/TikTok|musical_ly|Bytedance/i.test(ua))cfg={campaign_source:'tiktok',campaign_medium:'bio'};
+}
+gtag('config','G-7FWQWZXVM5',cfg);
 document.addEventListener('click',function(e){var a=e.target.closest&&e.target.closest('a[href]');if(!a)return;var l=a.querySelector('.label'),t=(l?l.textContent:(a.getAttribute('aria-label')||a.textContent||'')).trim().slice(0,60);gtag('event','click_bio_link',{link_label:t,link_url:a.href.split('?')[0]});if(a.href.indexOf('wa.me')>-1)gtag('event','click_whatsapp',{link_url:a.href.split('?')[0],page_path:location.pathname});},true);
 </script>
 </head>
