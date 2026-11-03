@@ -347,6 +347,12 @@ gtag('js',new Date());gtag('config','G-7FWQWZXVM5');
 document.addEventListener('click',function(e){var a=e.target.closest&&e.target.closest('a[href*="wa.me"]');if(a)gtag('event','click_whatsapp',{link_url:a.href.split('?')[0],page_path:location.pathname});},true);
 var _wo=window.open;window.open=function(u){try{if(typeof u==='string'&&u.indexOf('wa.me')>-1)gtag('event','click_whatsapp',{link_url:u.split('?')[0],page_path:location.pathname});}catch(e){}return _wo.apply(window,arguments);};
 </script>
+<!-- Meta Pixel -->
+<script>
+!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');
+fbq('init','371314431804949');fbq('track','PageView');
+document.addEventListener('click',function(e){var a=e.target.closest&&e.target.closest('a[href*="wa.me"]');if(a)fbq('track','Contact');},true);
+</script>
 '''
 
 
