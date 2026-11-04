@@ -1448,13 +1448,51 @@ function gaReportPaidOrders(orders){
   }catch(e){}
 }
 
+// Sumber kunjungan untuk panel "Sumber Kunjungan" di Seller Center. Urutan: parameter link (?utm_source= / ?src= / ?ref=),
+// browser dalam aplikasi (Instagram/Facebook/TikTok), lalu situs asal (referrer). Disimpan per tab supaya muat ulang
+// atau pindah halaman tidak mengubahnya jadi "langsung".
+function detectVisitSource() {
+  try {
+    const kept = sessionStorage.getItem('zenot_visit_src');
+    if (kept) return kept;
+  } catch (_) {}
+  let s = '';
+  try {
+    const q = new URLSearchParams(location.search);
+    s = String(q.get('utm_source') || q.get('src') || q.get('ref') || '').toLowerCase().trim().replace(/[^a-z0-9_.-]/g, '').slice(0, 30);
+  } catch (_) {}
+  const ua = navigator.userAgent || '';
+  if (!s) {
+    if (/Instagram/i.test(ua)) s = 'instagram';
+    else if (/FBAN|FBAV|FB_IAB/i.test(ua)) s = 'facebook';
+    else if (/TikTok|musical_ly|Bytedance/i.test(ua)) s = 'tiktok';
+  }
+  if (!s && document.referrer) {
+    try {
+      const h = new URL(document.referrer).hostname.toLowerCase().replace(/^www\./, '');
+      if (h && h !== location.hostname.replace(/^www\./, '')) {
+        if (/(^|\.)google\./.test(h)) s = 'google';
+        else if (/instagram\.com$/.test(h)) s = 'instagram';
+        else if (/(^|\.)(facebook|fb)\.com$/.test(h) || h === 'l.facebook.com') s = 'facebook';
+        else if (/tiktok\.com$/.test(h)) s = 'tiktok';
+        else if (/(^|\.)(wa\.me|whatsapp\.com)$/.test(h)) s = 'whatsapp';
+        else if (/bing\.com$/.test(h)) s = 'bing';
+        else s = (h.split('.').slice(-2, -1)[0] || h).slice(0, 30);
+      }
+    } catch (_) {}
+  }
+  if (!s) s = 'langsung';
+  try { sessionStorage.setItem('zenot_visit_src', s); } catch (_) {}
+  return s;
+}
 function trackEvent(eventType, productId = null) {
   // Fire-and-forget, jangan sampai gagal catat analytics bikin toko error
-  sb.from('analytics_events').insert({
-    event_type: eventType,
-    product_id: productId,
-    session_id: getAnalyticsSessionId(),
-  }).then(() => {}, () => {});
+  const row = { event_type: eventType, product_id: productId, session_id: getAnalyticsSessionId() };
+  const src = detectVisitSource();
+  sb.from('analytics_events').insert(Object.assign({ source: src }, row)).then(r => {
+    // Kolom source belum ada di database: catat tanpa sumber, jangan sampai data kunjungan hilang
+    if (r && r.error) sb.from('analytics_events').insert(row).then(() => {}, () => {});
+  }, () => {});
 }
 
 // ===================== STATE =====================
