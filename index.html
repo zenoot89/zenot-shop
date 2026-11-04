@@ -925,8 +925,8 @@
 <script>
 window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}
 gtag('js',new Date());gtag('config','G-7FWQWZXVM5');
-document.addEventListener('click',function(e){var a=e.target.closest&&e.target.closest('a[href*="wa.me"]');if(a)gtag('event','click_whatsapp',{link_url:a.href.split('?')[0],page_path:location.pathname});},true);
-var _wo=window.open;window.open=function(u){try{if(typeof u==='string'&&u.indexOf('wa.me')>-1)gtag('event','click_whatsapp',{link_url:u.split('?')[0],page_path:location.pathname});}catch(e){}return _wo.apply(window,arguments);};
+document.addEventListener('click',function(e){var a=e.target.closest&&e.target.closest('a[href*="wa.me"]');if(a){gtag('event','click_whatsapp',{link_url:a.href.split('?')[0],page_path:location.pathname});if(typeof trackEvent==='function')trackEvent('click_whatsapp');}},true);
+var _wo=window.open;window.open=function(u){try{if(typeof u==='string'&&u.indexOf('wa.me')>-1){gtag('event','click_whatsapp',{link_url:u.split('?')[0],page_path:location.pathname});if(typeof trackEvent==='function')trackEvent('click_whatsapp');}}catch(e){}return _wo.apply(window,arguments);};
 </script>
 <!-- Meta Pixel -->
 <script>
@@ -1430,7 +1430,14 @@ async function gaStoreOrderClient(orderId){
     await sb.rpc('set_order_ga', { p_order_id: String(orderId), p_client_id: cid, p_session_id: sid });
   }catch(e){}
 }
-function gaSend(name, params, extra){ try{ if (typeof gtag === 'function') gtag('event', name, params); }catch(e){} fbSend(name, params, extra); }
+// Peristiwa e-commerce yang juga dicatat ke tabel analytics_events, untuk kartu dan corong di Performa Toko (Seller Center)
+function gaInternal(name){
+  try{
+    if (name === 'add_to_cart') trackEvent('add_to_cart', activeProduct ? activeProduct.id : null);
+    else if (name === 'begin_checkout') trackEvent('begin_checkout');
+  }catch(e){}
+}
+function gaSend(name, params, extra){ try{ if (typeof gtag === 'function') gtag('event', name, params); }catch(e){} fbSend(name, params, extra); gaInternal(name); }
 function gaCartItems(){ try{ return cart.map(i => ({ item_id: [gaCode(i.productId), gaSlug(i.color), gaSlug(i.size)].filter(Boolean).join('-').slice(0,50), item_name: i.name, item_variant: [i.color, i.size].filter(Boolean).join(' / '), price: Number(i.price), quantity: i.qty })); }catch(e){ return []; } }
 function gaOrderItems(order){ try{ return (order.items||[]).map(i => ({ item_id: [gaCode(i.productId||i.product_id||((products.find(x=>x.name===i.name)||{}).id)), gaSlug(i.color), gaSlug(i.size)].filter(Boolean).join('-').slice(0,50), item_name: i.name, item_variant: [i.color, i.size].filter(Boolean).join(' / '), price: Number(i.price), quantity: i.qty })); }catch(e){ return []; } }
 // purchase hanya dikirim saat pembayaran online berstatus lunas, sekali per pesanan (dicatat di browser pembeli)
