@@ -171,7 +171,12 @@ async function render(){
 
   // 1. Belanja di Web
   if (data.web_url){
-    html += cardHTML({icon:ICONS.bag, label:'Belanja di zenoot.web.id', sub:'Katalog lengkap Zenoot', href:normalizeUrl(data.web_url), primary:true});
+    // Bawa asal pengunjung ke toko supaya Performa Toko mencatat "Instagram" (bukan "langsung"). Memakai ?ref= karena referrer dari bio hanya terbaca sebagai zenoot.web.id.
+    const ua0 = navigator.userAgent || '';
+    const from = /Instagram/i.test(ua0) ? 'instagram' : (/FBAN|FBAV|FB_IAB/i.test(ua0) ? 'facebook' : (/TikTok|musical_ly|Bytedance/i.test(ua0) ? 'tiktok' : 'bio'));
+    let shopUrl = normalizeUrl(data.web_url);
+    try { const u = new URL(shopUrl); if (!u.searchParams.has('ref') && !u.searchParams.has('utm_source')) u.searchParams.set('ref', from); shopUrl = u.toString(); } catch (_) {}
+    html += cardHTML({icon:ICONS.bag, label:'Belanja di zenoot.web.id', sub:'Katalog lengkap Zenoot', href:shopUrl, primary:true});
   }
 
   // 2. Marketplace (expandable) — dikelompokkan per kategori (Wanita / Pria)
