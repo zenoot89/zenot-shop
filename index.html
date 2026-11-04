@@ -1411,6 +1411,25 @@ function fbSend(name, p, x){
     else if (name === 'purchase') fbq('track', 'Purchase', Object.assign({}, base, { num_items: items.reduce((s, i) => s + (i.quantity || 1), 0) }));
   }catch(e){}
 }
+function gaGet(field){
+  return new Promise(res => {
+    try{
+      if (typeof gtag !== 'function') return res(null);
+      let done = false;
+      gtag('get', 'G-7FWQWZXVM5', field, v => { done = true; res(v == null ? null : String(v)); });
+      setTimeout(() => { if (!done) res(null); }, 1500);
+    }catch(e){ res(null); }
+  });
+}
+// Simpan ID pengunjung GA di pesanan, supaya server bisa mengirim purchase ke GA4 atas nama pengunjung yang sama (sumber trafiknya terbaca)
+async function gaStoreOrderClient(orderId){
+  try{
+    if (!orderId) return;
+    const [cid, sid] = await Promise.all([gaGet('client_id'), gaGet('session_id')]);
+    if (!cid) return;
+    await sb.rpc('set_order_ga', { p_order_id: String(orderId), p_client_id: cid, p_session_id: sid });
+  }catch(e){}
+}
 function gaSend(name, params, extra){ try{ if (typeof gtag === 'function') gtag('event', name, params); }catch(e){} fbSend(name, params, extra); }
 function gaCartItems(){ try{ return cart.map(i => ({ item_id: [gaCode(i.productId), gaSlug(i.color), gaSlug(i.size)].filter(Boolean).join('-').slice(0,50), item_name: i.name, item_variant: [i.color, i.size].filter(Boolean).join(' / '), price: Number(i.price), quantity: i.qty })); }catch(e){ return []; } }
 function gaOrderItems(order){ try{ return (order.items||[]).map(i => ({ item_id: [gaCode(i.productId||i.product_id||((products.find(x=>x.name===i.name)||{}).id)), gaSlug(i.color), gaSlug(i.size)].filter(Boolean).join('-').slice(0,50), item_name: i.name, item_variant: [i.color, i.size].filter(Boolean).join(' / '), price: Number(i.price), quantity: i.qty })); }catch(e){ return []; } }
@@ -1421,7 +1440,7 @@ function gaReportPaidOrders(orders){
     let changed = false;
     (orders||[]).forEach(o => {
       if (o.payment_status === 'paid' && o.id && done.indexOf(o.id) < 0) {
-        gaSend('purchase', { transaction_id: String(o.id), currency: 'IDR', value: Number(o.total)||0, shipping: Number(o.shipping_cost)||0, items: gaOrderItems(o) });
+        fbSend('purchase', { transaction_id: String(o.id), currency: 'IDR', value: Number(o.total)||0, items: gaOrderItems(o) }); // GA4: purchase dikirim dari server (midtrans-webhook)
         done.push(o.id); changed = true;
       }
     });
@@ -4550,6 +4569,7 @@ async function checkoutWAInner(payOnline, payMethod) {
       orderId = last && last[0] && last[0].id;
     }
     if (!orderId) { showToast('Pesanan dibuat. Buka Akun Saya untuk membayar', 3500); return; }
+    await gaStoreOrderClient(orderId);
     const started = await buyerPayOrder(orderId, null, payMethod);
     if (!started) setTimeout(() => showToast('Pesanan tersimpan. Lanjutkan pembayaran dari Akun Saya > Riwayat Pesanan', 4200), 2800);
     return;
