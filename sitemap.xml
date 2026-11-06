@@ -2,7 +2,7 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
   <url>
     <loc>https://zenoot.web.id/</loc>
-    <lastmod>2026-10-31</lastmod>
+    <lastmod>2026-11-06</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
@@ -14,49 +14,85 @@
   </url>
   <url>
     <loc>https://zenoot.web.id/kategori/anak/</loc>
-    <lastmod>2026-11-03</lastmod>
+    <lastmod>2026-11-06</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://zenoot.web.id/kategori/pria/</loc>
-    <lastmod>2026-11-03</lastmod>
+    <lastmod>2026-11-06</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://zenoot.web.id/kategori/wanita/</loc>
-    <lastmod>2026-11-03</lastmod>
+    <lastmod>2026-11-06</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://zenoot.web.id/kategori/sweater-anak/</loc>
-    <lastmod>2026-11-03</lastmod>
+    <lastmod>2026-11-06</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://zenoot.web.id/kategori/sweater-pria/</loc>
-    <lastmod>2026-11-03</lastmod>
+    <lastmod>2026-11-06</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://zenoot.web.id/kategori/cardigan-wanita/</loc>
-    <lastmod>2026-11-03</lastmod>
+    <lastmod>2026-11-06</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://zenoot.web.id/kategori/polo-knit-wanita/</loc>
-    <lastmod>2026-11-03</lastmod>
+    <lastmod>2026-11-06</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
+    <loc>https://zenoot.web.id/kategori/sweater-wanita/</loc>
+    <lastmod>2026-11-06</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://zenoot.web.id/produk/sweater-rajut-leopard-wanita-korean-style-lengan-panjang/</loc>
+    <lastmod>2026-11-06</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://xvaxwxnvjzrazxgdxsrt.supabase.co/storage/v1/object/public/product-photos/1793944663070-rmkyn.jpg</image:loc>
+    </image:image>
+    <image:image>
+      <image:loc>https://xvaxwxnvjzrazxgdxsrt.supabase.co/storage/v1/object/public/product-photos/1793944662592-1phmk.jpg</image:loc>
+    </image:image>
+    <image:image>
+      <image:loc>https://xvaxwxnvjzrazxgdxsrt.supabase.co/storage/v1/object/public/product-photos/1793944663542-rpe4j.jpg</image:loc>
+    </image:image>
+    <image:image>
+      <image:loc>https://xvaxwxnvjzrazxgdxsrt.supabase.co/storage/v1/object/public/product-photos/1793944664080-tq4u5.jpg</image:loc>
+    </image:image>
+    <image:image>
+      <image:loc>https://xvaxwxnvjzrazxgdxsrt.supabase.co/storage/v1/object/public/product-photos/1793944665145-68w6s.jpg</image:loc>
+    </image:image>
+    <image:image>
+      <image:loc>https://xvaxwxnvjzrazxgdxsrt.supabase.co/storage/v1/object/public/product-photos/1793944665732-oc329.jpg</image:loc>
+    </image:image>
+    <image:image>
+      <image:loc>https://xvaxwxnvjzrazxgdxsrt.supabase.co/storage/v1/object/public/product-photos/variant-1793944670229-wjz70.jpg</image:loc>
+    </image:image>
+    <image:image>
+      <image:loc>https://xvaxwxnvjzrazxgdxsrt.supabase.co/storage/v1/object/public/product-photos/variant-1793944671699-d6l93.jpg</image:loc>
+    </image:image>
+  </url>
+  <url>
     <loc>https://zenoot.web.id/produk/sweater-rajut-half-zip-stripe-pria-knit-turtleneck-casual/</loc>
-    <lastmod>2026-11-03</lastmod>
+    <lastmod>2026-11-06</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
     <image:image>
@@ -86,7 +122,7 @@
   </url>
   <url>
     <loc>https://zenoot.web.id/produk/sweater-rajut-turtleneck-pria/</loc>
-    <lastmod>2026-11-03</lastmod>
+    <lastmod>2026-11-06</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
     <image:image>
@@ -116,7 +152,7 @@
   </url>
   <url>
     <loc>https://zenoot.web.id/produk/starla-cardigan-rajut-wanita-kancing-gold-acrylic/</loc>
-    <lastmod>2026-11-03</lastmod>
+    <lastmod>2026-11-06</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
     <image:image>
@@ -146,7 +182,7 @@
   </url>
   <url>
     <loc>https://zenoot.web.id/produk/sweater-o-neck-anak/</loc>
-    <lastmod>2026-11-03</lastmod>
+    <lastmod>2026-11-06</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
     <image:image>
@@ -176,7 +212,7 @@
   </url>
   <url>
     <loc>https://zenoot.web.id/produk/reiko-polo-knit-wanita-atasan-rajut-lengan-panjang/</loc>
-    <lastmod>2026-11-03</lastmod>
+    <lastmod>2026-11-06</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
     <image:image>
@@ -206,7 +242,7 @@
   </url>
   <url>
     <loc>https://zenoot.web.id/produk/polo-rumy-polo-knit-wanita/</loc>
-    <lastmod>2026-11-03</lastmod>
+    <lastmod>2026-11-06</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
     <image:image>
@@ -236,7 +272,7 @@
   </url>
   <url>
     <loc>https://zenoot.web.id/produk/yuna-polo-strip/</loc>
-    <lastmod>2026-11-03</lastmod>
+    <lastmod>2026-11-06</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
     <image:image>
@@ -251,7 +287,7 @@
   </url>
   <url>
     <loc>https://zenoot.web.id/produk/mayra-cardigan-rajut-komputer-wanita-acrylic-premium/</loc>
-    <lastmod>2026-11-03</lastmod>
+    <lastmod>2026-11-06</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
     <image:image>
@@ -281,7 +317,7 @@
   </url>
   <url>
     <loc>https://zenoot.web.id/produk/calyra-cardigan-rajut-wanita-motif-bunga-premium/</loc>
-    <lastmod>2026-11-03</lastmod>
+    <lastmod>2026-11-06</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
     <image:image>
