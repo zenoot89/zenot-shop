@@ -116,6 +116,10 @@ jobs:
               e = lambda s: html.escape(s, quote=True)
               home = '/?p=' + pid
               canon = '%s/produk/%s/' % (SITE, slugmap[pid]) if pid in slugmap else SITE + home   # halaman statis kalau ada
+              # Tujuan pengalihan: halaman statis /produk/<slug>/ kalau ada. Dulu semua link /p/ dialihkan ke /?p=<id>,
+              # sehingga Google ikut mengindeks alamat ?p= (judul produk A tapi foto produk lain). /?p= tetap dipakai
+              # sebagai cadangan untuk produk yang belum punya halaman statis.
+              dest = '/produk/%s/' % slugmap[pid] if pid in slugmap else home
               return ('<!doctype html>\n<html lang="id">\n<head>\n<meta charset="utf-8">\n'
                   '<meta name="viewport" content="width=device-width,initial-scale=1">\n'
                   '<title>%s | Zenoot</title>\n'
@@ -137,8 +141,8 @@ jobs:
                   '<script>location.replace(%s);</script>\n'
                   '</body>\n</html>\n') % (
                   e(name), e(desc), canon,
-                  e(name), e(desc), SITE, code, e(og_img), home,
-                  e(src or ''), bgv, home, json.dumps(home))
+                  e(name), e(desc), SITE, code, e(og_img), dest,
+                  e(src or ''), bgv, dest, json.dumps(dest))
 
           slugmap = {}
           try:
