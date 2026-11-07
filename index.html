@@ -4638,8 +4638,9 @@ async function coOpen() {
   setCartMode('co');
   coQCache.clear(); coQuote = null; coQState = 'idle'; coQSeq++; coQInflightKey = '';
   try { sessionStorage.removeItem('zenot_resume_checkout'); } catch (_) {}
-  if (!payOnlineEnabled()) payChoice = 'wa';
-  if (!payChoiceValid(payChoice)) payChoice = null;
+  // Setiap kali Checkout dibuka, pembeli memilih metode bayar sendiri: tidak ada yang terpilih otomatis,
+  // juga bukan dari pilihan di kunjungan Checkout sebelumnya dalam sesi yang sama.
+  payChoice = payOnlineEnabled() ? null : 'wa';
   coRender();
   if (buyerUser) {
     await loadBuyerAddresses();
