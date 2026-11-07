@@ -1301,9 +1301,6 @@ document.addEventListener('click',function(e){var a=e.target.closest&&e.target.c
       <div class="summary-row" id="subtotal-row">
         <span>Subtotal Pesanan</span><span id="subtotal-val">Rp 0</span>
       </div>
-      <div class="summary-row" id="shipping-row">
-        <span>🚚 Ongkos Kirim</span><span style="color:var(--muted);font-size:12px;text-align:right">Dihitung di langkah Checkout</span>
-      </div>
       <div class="summary-row hidden" id="ship-voucher-row">
         <span>🎟️ Voucher Ongkir</span><span id="ship-voucher-val" style="text-align:right"></span>
       </div>
@@ -3949,10 +3946,13 @@ function renderVoucherPopupList() {
   const el = document.getElementById('promo-list');
   const vsEl = document.getElementById('vs-list');
   let html;
-  if (!allVouchers.length && !upcomingVouchers.length) {
+  // Voucher yang tidak berlaku untuk akun ini (mis. voucher member baru setelah ada pesanan, atau batas pakai per pembeli habis)
+  // tidak ditampilkan sama sekali, supaya daftar tidak ramai. Pemasangan voucher tetap otomatis seperti sebelumnya.
+  const usable = allVouchers.filter(v => !voucherTidakBerlaku(v));
+  if (!usable.length && !upcomingVouchers.length) {
     html = '<p style="font-size:13px;color:var(--muted)">Belum ada voucher aktif saat ini.</p>';
   } else {
-    html = allVouchers.map(v => voucherCardHTML(v)).join('') + upcomingVouchers.map(v => voucherCardHTML(v, true)).join('');
+    html = usable.map(v => voucherCardHTML(v)).join('') + upcomingVouchers.map(v => voucherCardHTML(v, true)).join('');
   }
   if (el) el.innerHTML = html;
   if (vsEl) vsEl.innerHTML = html;
@@ -4015,7 +4015,7 @@ async function claimVoucher(code) {
 }
 
 function showVoucherPopup() {
-  if (!allVouchers.length) return;
+  if (!allVouchers.some(v => !voucherTidakBerlaku(v)) && !upcomingVouchers.length) return;
   document.getElementById('promo-overlay').classList.add('open');
 }
 function closeVoucherPopup() {
