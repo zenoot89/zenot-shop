@@ -522,6 +522,8 @@
     .co-bar-total{display:flex;flex-direction:column;min-width:0}
     .co-bar-total span{font-size:11.5px;color:var(--muted)}
     .co-bar-total strong{font-size:16px;font-family:'IBM Plex Mono',monospace;font-weight:600;white-space:nowrap}
+    .co-bar-total .co-bar-save{color:#1f6fd1;font-weight:600;margin-top:1px}
+    .co-bar-total .co-bar-save:empty{display:none}
     .co-pay{flex:1;min-width:0;padding:14px 10px;background:var(--ink);color:#fff;border:1.5px solid var(--ink);border-radius:var(--radius-sm);font-size:14px;font-weight:600;font-family:inherit;cursor:pointer}
     .co-pay.warn{background:#fff;color:var(--ink)}
     .co-pay:disabled{opacity:.5;cursor:default}
@@ -530,6 +532,21 @@
     .paym-logo{width:56px;flex-shrink:0;display:flex;align-items:center;justify-content:center}
     .paym-logo img{max-width:100%;max-height:22px;width:auto;height:auto;object-fit:contain}
     .paym-emoji{font-size:20px}
+    .paym-wallets{display:flex;align-items:center;flex-wrap:wrap;gap:6px 12px;margin-top:8px}
+    .paym-wallets img{height:13px;width:auto;max-width:56px;object-fit:contain}
+    .paym-note{font-size:12.5px;color:var(--sec);line-height:1.5;padding:14px 0 2px}
+    .ongkir-sheet-footer button:disabled{opacity:.45;cursor:default}
+    .oa-box{margin:14px 0 6px;padding:12px 14px;border:1px solid var(--border);border-radius:10px;background:#faf9f6;font-size:12.5px;line-height:1.6;color:var(--sec)}
+    .oa-box b{color:var(--ink);font-weight:600}
+    .oa-box.err{border-color:#e0b8b8;background:#fbf1f1;color:#a83232}
+    .order-ship-to{margin-top:8px;font-size:12px;color:var(--sec);line-height:1.5}
+    .order-ship-to b{display:block;color:var(--ink);font-weight:600}
+    .order-actions{margin-top:10px}
+    .order-act-row{display:flex;gap:8px;margin-top:8px}
+    .order-act{flex:1;padding:10px 12px;font-size:12.5px;font-weight:600;font-family:inherit;background:#fff;color:var(--ink);border:1.5px solid var(--border);border-radius:8px;cursor:pointer}
+    .order-act.primary{width:100%;background:var(--ink);color:#fff;border-color:var(--ink);padding:12px;font-size:13.5px}
+    .order-act.danger{color:#a83232;border-color:#e0b8b8}
+    .order-act:disabled{opacity:.5;cursor:default}
     .paym-grp{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding:16px 0 2px}
     .cart-empty{text-align:center;padding:72px 28px 24px}
     .cart-empty svg{width:46px;height:46px;stroke:#c9c1b5;fill:none;stroke-width:1.5;margin-bottom:22px}
@@ -1070,7 +1087,7 @@ document.addEventListener('click',function(e){var a=e.target.closest&&e.target.c
         <div class="footer-social" id="footer-social"></div>
       </div>
     </div>
-    <!--ZSEO-NAV--><nav class="footer-seo" aria-label="Koleksi"><a href="/kategori/sweater-anak/">Sweater Anak</a><a href="/kategori/sweater-pria/">Sweater Pria</a><a href="/kategori/cardigan-wanita/">Cardigan Wanita</a><a href="/kategori/polo-knit-wanita/">Polo Knit Wanita</a><a href="/kategori/sweater-wanita/">Sweater Wanita</a></nav><!--/ZSEO-NAV-->
+    <!--ZSEO-NAV--><nav class="footer-seo" aria-label="Koleksi"><a href="/kategori/sweater-anak/">Sweater Anak</a><a href="/kategori/sweater-pria/">Sweater Pria</a><a href="/kategori/cardigan-wanita/">Cardigan Wanita</a><a href="/kategori/polo-knit-wanita/">Polo Knit Wanita</a></nav><!--/ZSEO-NAV-->
     <div class="footer-bottom">
       <span>&copy; <span id="footer-year"></span> ZENOOT &middot; Produsen sweater rajut &amp; knitwear di Bandung, Jawa Barat</span>
     </div>
@@ -1235,6 +1252,25 @@ document.addEventListener('click',function(e){var a=e.target.closest&&e.target.c
       </button>
     </div>
     <div class="ongkir-sheet-body" id="pay-method-body"></div>
+    <div class="ongkir-sheet-footer" id="pay-method-footer" style="display:none">
+      <button id="pay-method-confirm" onclick="confirmPayOrder()" disabled>Pilih metode pembayaran</button>
+    </div>
+  </div>
+</div>
+
+<!-- SHEET UBAH ALAMAT PESANAN (Pesanan Saya) -->
+<div class="ongkir-sheet-overlay" id="order-addr-overlay" onclick="if(event.target===this)closeOrderAddress()">
+  <div class="ongkir-sheet">
+    <div class="ongkir-sheet-header">
+      <span>Ubah Alamat Pengiriman</span>
+      <button class="ongkir-sheet-close" onclick="closeOrderAddress()" aria-label="Tutup">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="ongkir-sheet-body" id="order-addr-body"></div>
+    <div class="ongkir-sheet-footer">
+      <button id="order-addr-confirm" onclick="confirmOrderAddress()" disabled>Pilih alamat</button>
+    </div>
   </div>
 </div>
 
@@ -1288,7 +1324,7 @@ document.addEventListener('click',function(e){var a=e.target.closest&&e.target.c
     <div class="co-view" id="co-view">
       <div class="co-body" id="co-body"></div>
       <div class="co-bar">
-        <div class="co-bar-total"><span id="co-bar-label">Total harga</span><strong id="co-bar-total">Rp 0</strong></div>
+        <div class="co-bar-total"><span id="co-bar-label">Total harga</span><strong id="co-bar-total">Rp 0</strong><span class="co-bar-save" id="co-bar-save"></span></div>
         <button class="co-pay" id="co-pay-btn" data-act="" onclick="coBarClick()">Bayar Sekarang</button>
       </div>
     </div>
@@ -1533,8 +1569,8 @@ const SHIP_REF_COST = 30000;            // ongkir acuan untuk memilih voucher on
 // ---- Checkout baru: status layar Checkout, pilihan metode bayar, dan penyimpanan keranjang ----
 const PAY_CHOICE_KEY = 'zenot_pay_choice';
 const CART_KEY = 'zenot_cart_v1';
-let payChoice = null;                   // null | 'wa' | 'other' | kode Midtrans (mis. 'bri_va'); diingat untuk belanja berikutnya
-try { payChoice = localStorage.getItem(PAY_CHOICE_KEY) || null; } catch (_) {}
+let payChoice = null;                   // null | 'wa' | 'other' | kode Midtrans (mis. 'bri_va'); TIDAK diingat antar kunjungan: pembeli memilih sendiri setiap checkout
+try { localStorage.removeItem(PAY_CHOICE_KEY); } catch (_) {}   // buang pilihan lama yang dulu tersimpan di browser
 let coAddrId = null;                    // alamat yang dipilih untuk pesanan ini (bawaan: alamat utama)
 let coQuote = null;                     // hasil hitung ongkir dari server: { key, cost, service, etd }
 let coQState = 'idle';                  // idle | loading | ok | error
@@ -2146,6 +2182,7 @@ function trackParcel(btn) {
   if (copying) copying.then(ok => showToast(ok ? 'Resi disalin. Tempel di kolom pelacakan' : 'Salin resi manual lalu tempel di kolom pelacakan'));
 }
 
+const orderRegistry = new Map();   // id pesanan -> data pesanan yang sedang tampil (diisi orderCardHTML)
 function orderCardHTML(o) {
     const date = new Date(o.created_at).toLocaleDateString('id-ID', {day:'numeric',month:'short',year:'numeric'});
     const lines = (o.items||[]).map(i=>`${i.name} (${i.color}, ${i.size}) x${i.qty}`).join('\n');
@@ -2153,43 +2190,22 @@ function orderCardHTML(o) {
       : (o.status === 'dikirim' ? `<div class="order-wait">Resi belum diinput penjual. Hubungi admin kalau belum ada kabar.</div>`
       : (o.status === 'diproses' ? `<div class="order-wait">Pesanan sedang disiapkan penjual. Resi muncul di sini setelah dikirim.</div>` : ''));
 
-    // Panel ubah pesanan — hanya untuk menunggu_pembayaran
-    const ubahPanel = o.status === 'menunggu_pembayaran' ? `
-      <button onclick="toggleUbahPanel('${o.id}')" id="btn-ubah-${o.id}" style="margin-top:10px;padding:8px 14px;font-size:12.5px;background:#f5f5f5;color:var(--ink);border:1px solid var(--border);border-radius:8px;cursor:pointer;width:100%;text-align:left;display:flex;justify-content:space-between;align-items:center">
-        <span>Ubah Pesanan</span><span id="arr-${o.id}" style="font-size:10px">▼</span>
-      </button>
-      <div id="ubah-panel-${o.id}" style="display:none;margin-top:6px;border:1px solid var(--border);border-radius:10px;overflow:hidden">
-        <!-- Ubah Alamat -->
-        <div style="padding:12px 14px;border-bottom:1px solid var(--border)">
-          <div style="font-size:12px;font-weight:600;margin-bottom:8px;color:var(--ink)">✏️ Ubah Alamat Pengiriman</div>
-          <input type="text" id="ba-name-${o.id}" placeholder="Nama penerima" value="${(o.shipping_address||{}).recipient_name||''}" style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:7px;font-size:13px;margin-bottom:6px;box-sizing:border-box">
-          <input type="text" id="ba-phone-${o.id}" placeholder="No. HP" value="${(o.shipping_address||{}).phone||''}" style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:7px;font-size:13px;margin-bottom:6px;box-sizing:border-box">
-          <input type="text" id="ba-addr-${o.id}" placeholder="Alamat lengkap" value="${(o.shipping_address||{}).address||''}" style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:7px;font-size:13px;margin-bottom:6px;box-sizing:border-box">
-          <input type="text" id="ba-city-${o.id}" placeholder="Kota / Kabupaten" value="${(o.shipping_address||{}).city||''}" style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:7px;font-size:13px;margin-bottom:6px;box-sizing:border-box">
-          <input type="text" id="ba-post-${o.id}" placeholder="Kode pos" value="${(o.shipping_address||{}).postal_code||''}" style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:7px;font-size:13px;margin-bottom:8px;box-sizing:border-box">
-          <button onclick="buyerSaveAlamat('${o.id}')" style="width:100%;padding:9px;background:var(--ink);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer">Simpan Alamat</button>
-        </div>
-        <!-- Ubah Warna/Variasi -->
-        <div style="padding:12px 14px;border-bottom:1px solid var(--border)">
-          <div style="font-size:12px;font-weight:600;margin-bottom:8px;color:var(--ink)">🎨 Ubah Warna / Variasi</div>
-          ${(o.items||[]).map((item,idx) => `
-            <div style="margin-bottom:8px">
-              <div style="font-size:11.5px;color:var(--muted);margin-bottom:4px">${item.name}</div>
-              <input type="text" id="bv-color-${o.id}-${idx}" placeholder="Warna" value="${item.color||''}" style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:7px;font-size:13px;margin-bottom:4px;box-sizing:border-box">
-              <input type="text" id="bv-size-${o.id}-${idx}" placeholder="Ukuran" value="${item.size||''}" style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:7px;font-size:13px;box-sizing:border-box">
-            </div>`).join('')}
-          <button onclick="buyerSaveVariasi('${o.id}',${(o.items||[]).length})" style="width:100%;padding:9px;background:var(--ink);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer">Simpan Variasi</button>
-        </div>
-        <!-- Batalkan -->
-        <div style="padding:12px 14px">
-          <div style="font-size:12px;color:var(--muted);margin-bottom:8px">Pesanan yang dibatalkan tidak dapat dikembalikan.</div>
-          <button onclick="buyerCancelOrder('${o.id}')" style="width:100%;padding:9px;background:#fff;color:#a83232;border:1.5px solid #e0b8b8;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer">Batalkan Pesanan</button>
+    // Pesanan yang masih menunggu pembayaran: Bayar Sekarang (selalu membuka pilihan metode, jadi ini juga cara ganti metode),
+    // Ubah Alamat (pilih dari alamat tersimpan, hanya untuk pesanan online), dan Batalkan.
+    orderRegistry.set(o.id, o);
+    const unpaid = o.status === 'menunggu_pembayaran' && o.payment_status !== 'paid';
+    const canPay = payOnlineEnabled() && unpaid;
+    const canChangeAddr = canPay && !!o.midtrans_order_id;   // pesanan lewat WhatsApp (belum pernah memulai bayar online) alamatnya diurus lewat admin
+    const aksiBlock = unpaid ? `
+      <div class="order-actions">
+        ${canPay ? `<button class="order-act primary" onclick="openOrderPay('${o.id}')">Bayar Sekarang</button>` : ''}
+        <div class="order-act-row">
+          ${canChangeAddr ? `<button class="order-act" onclick="openOrderAddress('${o.id}')">Ubah Alamat</button>` : ''}
+          <button class="order-act danger" onclick="buyerCancelOrder('${o.id}')">Batalkan Pesanan</button>
         </div>
       </div>` : '';
-
-    // Tombol bayar online — hanya untuk pesanan yang menunggu pembayaran dan belum lunas
-    const bayarBtn = (payOnlineEnabled() && o.status === 'menunggu_pembayaran' && o.payment_status !== 'paid') ? `
-      <button onclick="buyerPayOrder('${o.id}', this)" style="margin-top:10px;width:100%;padding:11px;background:var(--ink);color:#fff;border:none;border-radius:8px;font-size:13.5px;font-weight:600;cursor:pointer">Bayar Sekarang</button>` : '';
+    const sa = o.shipping_address || {};
+    const shipTo = (sa.recipient_name || sa.address_detail) ? `<div class="order-ship-to"><b>${orderEsc(sa.recipient_name || '')}${sa.phone ? ' | ' + orderEsc(sa.phone) : ''}</b>${orderEsc(coAddrLine(sa))}</div>` : '';
 
     return `
     <div class="order-item">
@@ -2199,9 +2215,9 @@ function orderCardHTML(o) {
       </div>
       <div class="order-item-lines">${lines}</div>
       <div class="order-item-total">${fRp(o.total)}</div>
+      ${o.status === 'dibatalkan' ? '' : shipTo}
       ${resiBlock}
-      ${bayarBtn}
-      ${ubahPanel}
+      ${aksiBlock}
     </div>`;
 
 }
@@ -4231,7 +4247,8 @@ function coCurrentAddress() {
 function coAddrLine(a) {
   return [a.address_detail, a.address_note, a.village, a.district, a.city, a.province].filter(Boolean).join(', ') + (a.postal_code ? ' ' + a.postal_code : '');
 }
-function coQuoteKey(a) { return [a.id, a.city, a.district, a.postal_code || '', cartQtyTotal()].join('|'); }
+function cartSig() { return cart.map(i => i.variantId + ':' + i.qty).sort().join(','); }   // isi keranjang: berat paket dihitung server per produk
+function coQuoteKey(a) { return [a.id, a.city, a.district, a.postal_code || '', cartSig()].join('|'); }
 function fmtEtd(s) {
   let t = String(s || '').trim().replace(/\bdays?\b/i, 'hari');
   if (/^\d+(\s*-\s*\d+)?$/.test(t)) t += ' hari';
@@ -4262,30 +4279,179 @@ function payInfo(c) {
   if (!m) return null;
   return { name: payLabel(m), sub: m.g === 'va' ? 'Bayar lewat ATM, m-banking, atau internet banking' : (m.g === 'qr' ? 'Scan dengan e-wallet atau m-banking apa pun' : 'Bayar lewat aplikasi'), logo: FOOTER_PAY_DIR + m.f };
 }
-function openPayMethodSheet() {
-  const cur = payChoiceValid(payChoice) ? payChoice : null;
+let payOrderCtx = null;   // null = memilih metode untuk checkout; { orderId, sel } = memilih metode untuk pesanan yang sudah dibuat (Pesanan Saya)
+const QRIS_WALLETS = ['gopay.png', 'ovo.png', 'dana.png', 'shopeepay.png'];   // logo di bawah pilihan QRIS (tampil bila QRIS aktif)
+function openPayMethodSheet() { payOrderCtx = null; renderPayMethodSheet(); }
+function renderPayMethodSheet() {
+  const inOrder = !!payOrderCtx;
+  const cur = inOrder ? payOrderCtx.sel : (payChoiceValid(payChoice) ? payChoice : null);
   const ms = payChoices();
-  const opt = (id, logoHtml, title, sub) => `<button class="paym-opt${cur === id ? ' sel' : ''}" onclick="selectPayMethod('${id}')">${logoHtml}<span class="paym-opt-main"><div class="paym-opt-title">${title}</div>${sub ? `<div class="paym-opt-sub">${sub}</div>` : ''}</span><span class="paym-radio"></span></button>`;
+  const walletsHtml = `<span class="paym-wallets">${QRIS_WALLETS.map(f => `<img src="${FOOTER_PAY_DIR}${f}" alt="">`).join('')}</span>`;
+  const opt = (id, logoHtml, title, sub, extra) => `<button class="paym-opt${cur === id ? ' sel' : ''}" onclick="selectPayMethod('${id}')">${logoHtml}<span class="paym-opt-main"><div class="paym-opt-title">${title}</div>${sub ? `<div class="paym-opt-sub">${sub}</div>` : ''}${extra || ''}</span><span class="paym-radio"></span></button>`;
   const logo = m => `<span class="paym-logo"><img src="${FOOTER_PAY_DIR}${m.f}" alt=""></span>`;
   const grp = (title, arr) => arr.length ? `<div class="paym-grp">${title}</div>${arr.join('')}` : '';
   let html = '';
+  if (inOrder) {
+    const o = orderRegistry.get(payOrderCtx.orderId);
+    html += `<p class="paym-note">Pesanan ${orderEsc(o ? o.order_number || '' : '')}${o ? ' &middot; <b>' + fRp(o.total) + '</b>' : ''}. Pilih metode pembayaran. Pembayaran sebelumnya untuk pesanan ini otomatis dibatalkan.</p>`;
+  }
   html += grp('E-Wallet', ms.filter(m => m.g === 'ew').map(m => opt(m.snap, logo(m), payLabel(m), 'Bayar lewat aplikasi')));
-  html += grp('QRIS', ms.filter(m => m.g === 'qr').map(m => opt(m.snap, logo(m), payLabel(m), 'Scan dengan e-wallet atau m-banking apa pun')));
+  html += grp('QRIS', ms.filter(m => m.g === 'qr').map(m => opt(m.snap, logo(m), payLabel(m), 'Scan dengan e-wallet atau m-banking apa pun', walletsHtml)));
   html += grp('Virtual Account', ms.filter(m => m.g === 'va').map(m => opt(m.snap, logo(m), payLabel(m), '')));
   const more = [];
   if (ms.length) more.push(opt('other', '<span class="paym-logo paym-emoji">💳</span>', 'Metode lain', 'Pilih bank atau dompet lain di halaman pembayaran Midtrans'));
-  more.push(opt('wa', '<span class="paym-logo paym-emoji">💬</span>', 'Pesan via WhatsApp', 'Konfirmasi pesanan dan pembayaran lewat chat admin'));
+  if (!inOrder) more.push(opt('wa', '<span class="paym-logo paym-emoji">💬</span>', 'Pesan via WhatsApp', 'Konfirmasi pesanan dan pembayaran lewat chat admin'));
   html += grp(ms.length ? 'Lainnya' : 'Metode', more);
-  document.getElementById('pay-method-body').innerHTML = html;
+  const bodyEl = document.getElementById('pay-method-body');
+  const prev = bodyEl.scrollTop;
+  bodyEl.innerHTML = html;
+  bodyEl.scrollTop = prev;
+  const foot = document.getElementById('pay-method-footer');
+  const btn = document.getElementById('pay-method-confirm');
+  foot.style.display = inOrder ? '' : 'none';
+  if (inOrder) {
+    btn.disabled = !payOrderCtx.sel;
+    btn.textContent = payOrderCtx.sel ? 'Bayar Sekarang' : 'Pilih metode pembayaran';
+  }
   document.getElementById('pay-method-overlay').classList.add('open');
 }
-function closePayMethodSheet() { document.getElementById('pay-method-overlay').classList.remove('open'); }
+function closePayMethodSheet() { payOrderCtx = null; document.getElementById('pay-method-overlay').classList.remove('open'); }
+function payOrderChoiceValid(c) { return !!c && payOnlineEnabled() && (c === 'other' || payChoices().some(m => m.snap === c)); }
 function selectPayMethod(id) {
+  if (payOrderCtx) {
+    if (!payOrderChoiceValid(id)) return;
+    payOrderCtx.sel = id;
+    renderPayMethodSheet();
+    return;
+  }
   if (!payChoiceValid(id)) return;
   payChoice = id;
-  try { localStorage.setItem(PAY_CHOICE_KEY, id); } catch (_) {}
   closePayMethodSheet();
   if (coActive()) coRequestQuote();
+}
+// Pesanan yang sudah dibuat (Pesanan Saya): pilih metode lalu bayar. Transaksi Midtrans sebelumnya dibatalkan server.
+function openOrderPay(orderId) {
+  if (!orderRegistry.has(orderId)) { showToast('Muat ulang daftar pesanan dulu'); return; }
+  payOrderCtx = { orderId, sel: null };
+  renderPayMethodSheet();
+}
+async function confirmPayOrder() {
+  if (!payOrderCtx || !payOrderCtx.sel) return;
+  const { orderId, sel } = payOrderCtx;
+  const btn = document.getElementById('pay-method-confirm');
+  const started = await buyerPayOrder(orderId, btn, sel === 'other' ? null : sel);
+  if (started) closePayMethodSheet();
+}
+
+// ---- Ubah alamat pesanan yang belum dibayar (Pesanan Saya) ----
+// Pembeli memilih salah satu alamat TERSIMPAN; ongkir baru dihitung server (ongkir-quote) dan ditampilkan sebelum disimpan.
+// Penyimpanan dikerjakan server (midtrans-create dengan address_id + update_only): alamat disalin ke pesanan, ongkir dan total
+// dihitung ulang, transaksi Midtrans lama dibatalkan. Browser tidak lagi mengubah alamat pesanan langsung.
+let orderAddrCtx = null;   // { orderId, sel, state: idle|loading|ok|error, quote, err, code, seq, busy }
+async function openOrderAddress(orderId) {
+  const o = orderRegistry.get(orderId);
+  if (!o) { showToast('Muat ulang daftar pesanan dulu'); return; }
+  orderAddrCtx = { orderId, sel: null, state: 'idle', quote: null, err: '', code: '', seq: 0, busy: false };
+  document.getElementById('order-addr-body').innerHTML = '<p class="paym-note">Memuat alamat...</p>';
+  document.getElementById('order-addr-overlay').classList.add('open');
+  await loadBuyerAddresses();
+  if (orderAddrCtx && orderAddrCtx.orderId === orderId) renderOrderAddress();
+}
+function closeOrderAddress() {
+  if (orderAddrCtx) orderAddrCtx.seq++;
+  orderAddrCtx = null;
+  document.getElementById('order-addr-overlay').classList.remove('open');
+}
+function orderShipDiscount(o, cost) {
+  if (!o.ship_voucher_code) return 0;
+  const v = allVouchers.find(x => String(x.code).toUpperCase() === String(o.ship_voucher_code).toUpperCase());
+  return v ? discAmountFor(v, cost) : null;   // null = voucher tidak ada di daftar, potongan dihitung server saat disimpan
+}
+function renderOrderAddress() {
+  const c = orderAddrCtx; if (!c) return;
+  const o = orderRegistry.get(c.orderId); if (!o) return;
+  const esc = chatEsc;
+  const curId = (o.shipping_address || {}).id || '';
+  let html = '';
+  if (!buyerAddresses.length) {
+    html += '<p class="paym-note">Belum ada alamat tersimpan. Tambahkan alamat baru dulu.</p>';
+  } else {
+    html += '<p class="paym-note">Pilih alamat pengiriman baru. Ongkir dihitung ulang dan pembayaran sebelumnya untuk pesanan ini dibatalkan, jadi kamu memilih metode bayar lagi.</p>';
+    html += buyerAddresses.map(a => `<button class="paym-opt${c.sel === a.id ? ' sel' : ''}" onclick="selectOrderAddress('${a.id}')"><span class="paym-opt-main"><div class="paym-opt-title">${esc(a.recipient_name)} <span class="co-phone">${esc(a.phone)}</span>${a.id === curId ? ' <span class="co-phone">&middot; alamat saat ini</span>' : ''}</div><div class="paym-opt-sub">${esc(coAddrLine(a))}</div></span><span class="paym-radio"></span></button>`).join('');
+  }
+  html += '<button class="co-link" onclick="orderAddrAddNew()">+ Tambah alamat baru</button>';
+  if (c.state === 'loading') html += '<div class="oa-box">Menghitung ongkir...</div>';
+  else if (c.state === 'error') html += `<div class="oa-box err">${esc(c.err)}${c.code === 'ongkir_alamat' ? ' Pilih alamat lain atau perbaiki kota dan kecamatan di Kelola Alamat.' : ''}</div>`;
+  else if (c.state === 'ok' && c.quote) {
+    const cost = c.quote.cost;
+    const sd = orderShipDiscount(o, cost);
+    let lines = `Ongkir ke alamat ini: <b>${fRp(cost)}</b> (${esc(c.quote.service || 'Pengiriman')}${c.quote.etd ? ', estimasi ' + esc(fmtEtd(c.quote.etd)) : ''})`;
+    if (sd === null) lines += '<br>Total baru dihitung saat disimpan.';
+    else {
+      if (sd > 0) lines += `<br>Voucher ongkir: -${fRp(sd)}`;
+      const newTotal = Math.max(0, Number(o.subtotal) - (Number(o.discount) || 0)) + cost - sd;
+      lines += `<br>Total pesanan: <b>${fRp(newTotal)}</b>${newTotal !== Number(o.total) ? ` <s>${fRp(o.total)}</s>` : ''}`;
+    }
+    html += `<div class="oa-box">${lines}</div>`;
+  }
+  document.getElementById('order-addr-body').innerHTML = html;
+  const btn = document.getElementById('order-addr-confirm');
+  btn.disabled = !(c.state === 'ok' && c.sel) || c.busy;
+  btn.textContent = c.busy ? 'Menyimpan...' : (c.state === 'ok' && c.sel ? 'Simpan Alamat' : 'Pilih alamat');
+}
+async function selectOrderAddress(addrId) {
+  const c = orderAddrCtx; if (!c || c.busy) return;
+  const o = orderRegistry.get(c.orderId); if (!o) return;
+  c.sel = addrId; c.state = 'loading'; c.quote = null; c.err = ''; c.code = '';
+  const seq = ++c.seq;
+  renderOrderAddress();
+  let quote = null, err = '', code = '';
+  try {
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) { err = 'Sesi habis, silakan masuk lagi'; code = 'sesi'; }
+    else {
+      const res = await fetch(QUOTE_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
+        body: JSON.stringify({ address_id: addrId, items: (o.items || []).map(i => ({ variantId: i.variantId, qty: i.qty })) })
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && Number.isFinite(Number(data.cost)) && Number(data.cost) > 0) quote = { cost: Math.round(Number(data.cost)), service: String(data.service || ''), etd: String(data.etd || '') };
+      else { err = data.error || 'Ongkir belum bisa dihitung, coba lagi'; code = data.code || ''; }
+    }
+  } catch (e) { err = 'Koneksi bermasalah, coba lagi'; }
+  if (!orderAddrCtx || orderAddrCtx.seq !== seq) return;   // sudah memilih alamat lain / sheet ditutup
+  if (quote) { c.quote = quote; c.state = 'ok'; } else { c.state = 'error'; c.err = err; c.code = code; }
+  renderOrderAddress();
+}
+function orderAddrAddNew() { closeOrderAddress(); closeSidePanel(); openAddressForm(); }
+async function confirmOrderAddress() {
+  const c = orderAddrCtx;
+  if (!c || c.state !== 'ok' || !c.sel || c.busy) return;
+  const orderId = c.orderId;
+  c.busy = true; renderOrderAddress();
+  let ok = false;
+  try {
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) { showToast('Sesi habis, silakan masuk lagi', 3000); }
+    else {
+      const res = await fetch(`${SUPABASE_URL}/functions/v1/midtrans-create`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
+        body: JSON.stringify({ order_id: orderId, address_id: c.sel, update_only: true })
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data.updated) {
+        ok = true;
+        showToast('Alamat diubah. Ongkir ' + fRp(data.shipping_cost) + ', total ' + fRp(data.total) + '. Pilih metode bayar lagi.', 3800);
+      } else {
+        showToast(data.error || 'Gagal mengubah alamat, coba lagi', 4000);
+        if (['sudah_dibayar', 'pesanan_berubah', 'pesanan_kedaluwarsa'].includes(data.code)) ok = true;   // data pesanan sudah berubah: tutup dan muat ulang
+      }
+    }
+  } catch (e) { showToast('Koneksi bermasalah, coba lagi', 3000); }
+  if (orderAddrCtx && orderAddrCtx.orderId === orderId) { orderAddrCtx.busy = false; if (ok) closeOrderAddress(); else renderOrderAddress(); }
+  if (ok) refreshOrdersView();
 }
 
 // ---- Ongkir (pratinjau dari server) ----
@@ -4315,7 +4481,7 @@ function coRequestQuote(force) {
         const res = await fetch(QUOTE_URL, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
-          body: JSON.stringify({ address_id: addr.id, qty: q })
+          body: JSON.stringify({ address_id: addr.id, items: cart.map(i => ({ variantId: i.variantId, qty: i.qty })), qty: q })
         });
         const data = await res.json().catch(() => ({}));
         if (res.ok && Number.isFinite(Number(data.cost)) && Number(data.cost) > 0) {
@@ -4436,6 +4602,8 @@ function coRender() {
   body.scrollTop = prev;
 
   totEl.textContent = fRp(T.total);
+  const saveEl = document.getElementById('co-bar-save');
+  if (saveEl) saveEl.textContent = saved > 0 ? 'Hemat ' + fRp(saved) : '';
   if (lblEl) lblEl.textContent = (online && !T.costKnown) ? 'Belum termasuk ongkir' : 'Total harga';
   const st = coBtnState(addr, online);
   btn.textContent = st.t;
@@ -4614,7 +4782,7 @@ async function checkoutWAInner(payOnline, payMethod) {
   if (payOnline) {
     // Pesanan sudah dibuat: kosongkan keranjang supaya tidak membuat pesanan ganda.
     // Kalau pembayaran gagal dibuka, pesanan tetap bisa dibayar dari Akun Saya > Riwayat Pesanan.
-    cart = []; voucher = null; shipVoucher = null; updateCartUI();
+    cart = []; voucher = null; shipVoucher = null; payChoice = null; updateCartUI();
     let orderId = order.id || order.order_id;
     if (!orderId) {
       const { data: last } = await sb.from('orders').select('id').eq('user_id', buyerUser.id).eq('status', 'menunggu_pembayaran').order('created_at', { ascending: false }).limit(1);
@@ -4663,44 +4831,7 @@ async function buyerCancelOrder(orderId) {
   refreshOrdersView();
 }
 
-function toggleUbahPanel(orderId) {
-  const panel = document.getElementById(`ubah-panel-${orderId}`);
-  const arr = document.getElementById(`arr-${orderId}`);
-  if (!panel) return;
-  const isOpen = panel.style.display !== 'none';
-  panel.style.display = isOpen ? 'none' : 'block';
-  if (arr) arr.textContent = isOpen ? '▼' : '▲';
-}
-
-async function buyerSaveAlamat(orderId) {
-  const o = (await sb.from('orders').select('shipping_address').eq('id', orderId).single()).data;
-  const newAddr = {
-    ...(o?.shipping_address || {}),
-    recipient_name: document.getElementById(`ba-name-${orderId}`).value.trim(),
-    phone:          document.getElementById(`ba-phone-${orderId}`).value.trim(),
-    address:        document.getElementById(`ba-addr-${orderId}`).value.trim(),
-    city:           document.getElementById(`ba-city-${orderId}`).value.trim(),
-    postal_code:    document.getElementById(`ba-post-${orderId}`).value.trim(),
-  };
-  const { error } = await sb.from('orders').update({ shipping_address: newAddr }).eq('id', orderId).eq('user_id', buyerUser.id);
-  if (error) { showToast('Gagal simpan alamat'); return; }
-  showToast('Alamat berhasil diubah ✓');
-  refreshOrdersView();
-}
-
-async function buyerSaveVariasi(orderId, itemCount) {
-  const { data: ord } = await sb.from('orders').select('items').eq('id', orderId).single();
-  if (!ord) return;
-  const newItems = ord.items.map((item, idx) => ({
-    ...item,
-    color: document.getElementById(`bv-color-${orderId}-${idx}`)?.value.trim() || item.color,
-    size:  document.getElementById(`bv-size-${orderId}-${idx}`)?.value.trim()  || item.size,
-  }));
-  const { error } = await sb.from('orders').update({ items: newItems }).eq('id', orderId).eq('user_id', buyerUser.id);
-  if (error) { showToast('Gagal simpan variasi'); return; }
-  showToast('Variasi berhasil diubah ✓');
-  refreshOrdersView();
-}
+// (Ubah Alamat dan Ubah Variasi bentuk lama sudah diganti: alamat dipilih dari alamat tersimpan dan diproses server, lihat openOrderAddress)
 
 // ===================== BAYAR ONLINE (Midtrans) =====================
 function payOnlineEnabled() {
@@ -4725,7 +4856,12 @@ async function buyerPayOrder(orderId, btn, payMethod) {
       body: JSON.stringify(payMethod ? { order_id: orderId, payment_method: payMethod } : { order_id: orderId })
     });
     const data = await res.json().catch(() => ({}));
-    if (!res.ok || !data.redirect_url) { showToast(data.error || 'Gagal menyiapkan pembayaran, coba lagi', 4000); return false; }
+    if (!res.ok || !data.redirect_url) {
+      showToast(data.error || 'Gagal menyiapkan pembayaran, coba lagi', 4000);
+      // Data pesanan sudah berubah (sudah dibayar / diubah di tempat lain / kedaluwarsa): tutup pilihan metode dan muat ulang daftar
+      if (['sudah_dibayar', 'pesanan_berubah', 'pesanan_kedaluwarsa'].includes(data.code)) { closePayMethodSheet(); refreshOrdersView(); }
+      return false;
+    }
     // Hanya mau membuka halaman bayar resmi Midtrans
     if (!/^https:\/\/app(\.sandbox)?\.midtrans\.com\//.test(data.redirect_url)) { showToast('Alamat pembayaran tidak valid', 3000); return false; }
     // Ongkir dihitung ulang server dari alamat kirim: beri tahu pembeli kalau totalnya berubah sebelum pindah ke halaman bayar
@@ -4843,7 +4979,7 @@ const FOOTER_PAY_DIR = '';
 // snap = kode metode di Midtrans (enabled_payments). Metode dengan on:true DAN snap terisi tampil sebagai pilihan di checkout.
 // snap:null (mis. BSI, OVO, SeaBank) = belum dipetakan: tetap tampil di logo footer dan bisa dipilih lewat "Metode lain" di halaman Midtrans.
 const FOOTER_PAYMENTS = [
-  { n: 'QRIS',         f: 'qris.png',         w: 328, h: 56, on: true,  g: 'qr', snap: 'other_qris' },
+  { n: 'QRIS',         f: 'qris.png',         w: 328, h: 56, on: false, g: 'qr', snap: 'other_qris' },   // ubah on:true setelah QRIS Dinamis GoPay aktif di Midtrans
   { n: 'BCA',          f: 'bca.png',          w: 180, h: 56, on: false, g: 'va', snap: 'bca_va' },
   { n: 'BRI',          f: 'bri.png',          w: 148, h: 56, on: true, g: 'va', snap: 'bri_va' },
   { n: 'BNI',          f: 'bni.png',          w: 193, h: 56, on: true, g: 'va', snap: 'bni_va' },
