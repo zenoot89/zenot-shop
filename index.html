@@ -3578,9 +3578,14 @@ function warmShortLink(id) {
 
 function shareProduct() {
   if (!activeProduct) return;
-  const url = shortLinkState[activeProduct.id] === true
-    ? shortLinkOf(activeProduct.id)
-    : SEO_SITE + '?p=' + encodeURIComponent(activeProduct.id);
+  // Prioritas: halaman statis SEO /produk/<slug>/ (yang diindeks Google). Link pendek /p/ dan
+  // ?p= hanya cadangan untuk produk yang halaman statisnya belum dibuat GitHub Actions.
+  const seoSlug = seoSlugFor(activeProduct.id);
+  const url = seoSlug
+    ? SEO_SITE + 'produk/' + encodeURIComponent(seoSlug) + '/'
+    : (shortLinkState[activeProduct.id] === true
+        ? shortLinkOf(activeProduct.id)
+        : SEO_SITE + '?p=' + encodeURIComponent(activeProduct.id));
   const shareData = { title: activeProduct.name, text: `${activeProduct.name} - Zenoot`, url };
   if (navigator.share) {
     navigator.share(shareData).catch(()=>{});
