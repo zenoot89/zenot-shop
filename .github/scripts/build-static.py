@@ -387,7 +387,7 @@ def site_header(nav_nodes):
 
 
 def site_footer(foot_nodes):
-    shop = ''.join('<a href="/kategori/%s/">%s</a>' % (esc(n['slug']), esc(' '.join(reversed(n['path']))))
+    shop = ''.join('<a href="/kategori/%s/">%s</a>' % (esc(n['slug']), esc(node_h1(n)))
                    for n in foot_nodes[:10])
     return ('<footer><div class="ft"><div><h4>Zenoot</h4><p>Rajutan yang tetap nyaman dipakai seharian, dari kerja '
             'sampai jalan-jalan.</p></div><div><h4>Belanja</h4><a href="/">Semua produk</a>%s</div>'
@@ -444,8 +444,41 @@ def build_nodes(products, categories):
     return nodes, prod_path
 
 
+# Judul kategori: kata umum (kata yang diketik pembeli) di depan.
+# Kunci = jalur kategori huruf kecil; isi = (judul halaman H1, Judul Google maks 60 karakter).
+# Kategori yang tidak terdaftar di sini memakai rumus otomatis di kat_title().
+KAT_SEO = {
+    ('wanita', 'sweater'): ('Sweater Rajut Wanita', 'Sweater Rajut Wanita Korean Style | Zenoot'),
+    ('wanita', 'cardigan'): ('Cardigan Rajut Wanita', 'Cardigan Rajut Wanita Basic dan Motif | Zenoot'),
+    ('wanita', 'polo knit'): ('Polo Knit Wanita', 'Polo Knit Wanita Lengan Panjang | Zenoot'),
+    ('pria', 'sweater'): ('Sweater Rajut Pria', 'Sweater Rajut Pria Turtleneck dan Half Zip | Zenoot'),
+    ('anak', 'sweater'): ('Sweater Rajut Anak', 'Sweater Rajut Anak O Neck | Zenoot'),
+}
+KAT_ORDER = {'sweater': 0, 'cardigan': 1}
+
+
 def node_h1(n):
-    return ('Koleksi Rajut ' + n['path'][0]) if len(n['path']) == 1 else ' '.join(reversed(n['path']))
+    key = tuple(x.lower() for x in n['path'])
+    if key in KAT_SEO:
+        return KAT_SEO[key][0]
+    return ('Pakaian Rajut ' + n['path'][0]) if len(n['path']) == 1 else ' '.join(reversed(n['path']))
+
+
+def kat_title(n, children):
+    """Judul Google halaman kategori, maksimal 60 karakter."""
+    key = tuple(x.lower() for x in n['path'])
+    if key in KAT_SEO:
+        return KAT_SEO[key][1]
+    h1 = node_h1(n)
+    if len(n['path']) == 1:
+        names = [m['path'][-1] for m in sorted(children, key=lambda m: (KAT_ORDER.get(m['path'][-1].lower(), 2), m['path']))][:3]
+        while names:
+            t = '%s - %s | %s' % (h1, ', '.join(names), BRAND)
+            if len(t) <= 60:
+                return t
+            names.pop()
+        return '%s | %s' % (h1, BRAND)
+    return '%s | %s Bandung' % (h1, BRAND)
 
 
 # ---------------------------------------------------------------- halaman produk
@@ -616,11 +649,11 @@ def category_page(n, ctx):
     url = '%s/kategori/%s/' % (SITE, n['slug'])
     prods = sorted(n['products'], key=lambda p: str(p.get('created_at') or ''), reverse=True)
     prices = [min(num(v['price']) for v in active_variants(p)) for p in prods]
-    title = '%s | Zenoot Bandung' % h1 if len(n['path']) == 1 else '%s | Koleksi Rajut Zenoot Bandung' % h1
-    desc = cut_words('%s dari Zenoot Bandung: %d model rajut, mulai %s. Bahan nyaman dipakai seharian, dikirim ke seluruh Indonesia.'
-                     % (h1, len(prods), rp(min(prices))), 158)
     children = [m for k, m in nodes.items() if len(k) == len(n['path']) + 1 and k[:len(n['path'])] == n['path']]
     siblings = [m for k, m in nodes.items() if len(k) == len(n['path']) and k != n['path'] and k[:-1] == n['path'][:-1]]
+    title = kat_title(n, children)
+    desc = cut_words('%s dari Zenoot Bandung: %d model rajut, mulai %s. Bahan nyaman dipakai seharian, dikirim ke seluruh Indonesia.'
+                     % (h1, len(prods), rp(min(prices))), 158)
     chips = ''
     related = children or siblings
     if related:
@@ -641,7 +674,7 @@ def category_page(n, ctx):
         {'@type': 'BreadcrumbList', 'itemListElement': crumbs_ld}]}
     first = imgs_cache[prods[0]['id']]
     intro = ('Pilih %d model %s dari Zenoot, brand rajut dari Bandung. Semua produk dikirim ke seluruh Indonesia.'
-             % (len(prods), h1.replace('Koleksi Rajut ', 'rajut ').lower() if len(n['path']) == 1 else h1))
+             % (len(prods), h1.lower()))
     body = (site_header(ctx['nav_nodes']) + '<main class="wrap"><nav class="crumbs" aria-label="Breadcrumb">%s</nav>'
             '<h1>%s</h1><p class="note" style="margin-bottom:6px">%s</p>%s<div class="grid" style="margin-top:14px">%s</div></main>'
             % ('<span class="sep">›</span>'.join(crumbs_html), esc(h1), esc(intro), chips,
