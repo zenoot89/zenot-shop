@@ -1071,6 +1071,7 @@ document.addEventListener('click',function(e){var a=e.target.closest&&e.target.c
       <div class="footer-col">
         <h4>Informasi</h4>
         <a href="tentang-kami.html">Tentang Kami</a>
+        <a href="kontak.html">Kontak</a>
         <a href="privacy.html">Kebijakan &amp; Privasi</a>
       </div>
       <div class="footer-col">
@@ -4984,7 +4985,9 @@ function renderFooterExtras() {
     soc.innerHTML = Object.keys(icons)
       .filter(k => /^https:\/\//.test(FOOTER_SOCIAL[k] || ''))
       .map(k => `<a href="${chatEsc(FOOTER_SOCIAL[k])}" target="_blank" rel="noopener" aria-label="${labels[k]}">${icons[k]}</a>`)
-      .join('');
+      .join('') +
+      // Tombol ke halaman /bio/ (semua kontak: WhatsApp, Shopee, TikTok Shop, Lazada, toko fisik)
+      `<a href="/bio/" aria-label="Semua kontak Zenoot" title="Semua kontak Zenoot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></a>`;
   }
   const pay = document.getElementById('footer-pay');
   if (pay) pay.innerHTML = FOOTER_PAYMENTS.filter(m => m.on).map(m => `<img src="${FOOTER_PAY_DIR}${m.f}" alt="${chatEsc(m.n)}" title="${chatEsc(m.n)}" width="${m.w}" height="${m.h}" style="height:${m.d || 14}px" loading="lazy" decoding="async" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'footer-pay-chip',textContent:this.alt}))">`).join('');
