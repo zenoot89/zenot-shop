@@ -156,6 +156,9 @@
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
     <image:image>
+      <image:loc>https://xvaxwxnvjzrazxgdxsrt.supabase.co/storage/v1/object/public/product-photos/1787662232124-62puq.jpg</image:loc>
+    </image:image>
+    <image:image>
       <image:loc>https://xvaxwxnvjzrazxgdxsrt.supabase.co/storage/v1/object/public/product-photos/1787662230566-2q3u3.jpg</image:loc>
     </image:image>
     <image:image>
@@ -166,9 +169,6 @@
     </image:image>
     <image:image>
       <image:loc>https://xvaxwxnvjzrazxgdxsrt.supabase.co/storage/v1/object/public/product-photos/1787662231879-aqf7m.jpg</image:loc>
-    </image:image>
-    <image:image>
-      <image:loc>https://xvaxwxnvjzrazxgdxsrt.supabase.co/storage/v1/object/public/product-photos/1787662232124-62puq.jpg</image:loc>
     </image:image>
     <image:image>
       <image:loc>https://xvaxwxnvjzrazxgdxsrt.supabase.co/storage/v1/object/public/product-photos/1787662232438-qqs3b.jpg</image:loc>
@@ -261,13 +261,13 @@
       <image:loc>https://xvaxwxnvjzrazxgdxsrt.supabase.co/storage/v1/object/public/product-photos/1786077802235-0zjsi.jpg</image:loc>
     </image:image>
     <image:image>
+      <image:loc>https://xvaxwxnvjzrazxgdxsrt.supabase.co/storage/v1/object/public/product-photos/variant-1793420444756-m26h7.jpg</image:loc>
+    </image:image>
+    <image:image>
       <image:loc>https://xvaxwxnvjzrazxgdxsrt.supabase.co/storage/v1/object/public/product-photos/variant-1786077802899-df8fe.jpg</image:loc>
     </image:image>
     <image:image>
       <image:loc>https://xvaxwxnvjzrazxgdxsrt.supabase.co/storage/v1/object/public/product-photos/variant-1786077803184-mya5e.jpg</image:loc>
-    </image:image>
-    <image:image>
-      <image:loc>https://xvaxwxnvjzrazxgdxsrt.supabase.co/storage/v1/object/public/product-photos/variant-1786077803517-zv9uq.jpg</image:loc>
     </image:image>
   </url>
   <url>
