@@ -750,11 +750,24 @@ def slug_map_js(slugs):
 NAV_RE = re.compile(r'<!--ZSEO-NAV-->.*?<!--/ZSEO-NAV-->', re.S)
 
 
+FB_ORDER = ['pria', 'anak', 'wanita']
+FB_LABEL = {'sweater': 'Sweater Rajut', 'cardigan': 'Cardigan Rajut'}
+
+
 def home_nav_html(nodes):
-    items = sorted((n for n in nodes.values() if len(n['path']) >= 2), key=lambda n: (n['path'][0], n['path'][1:]))
-    items = items or sorted((n for n in nodes.values() if len(n['path']) == 1), key=lambda n: n['path'])
-    links = ''.join('<a href="/kategori/%s/">%s</a>' % (esc(n['slug']), esc(node_h1(n))) for n in items[:12])
-    return '<!--ZSEO-NAV--><nav class="footer-seo" aria-label="Koleksi">%s</nav><!--/ZSEO-NAV-->' % links
+    """Menu Belanja di footer beranda: satu set link statis ke halaman kategori (Pria, Anak, Wanita + isinya).
+    Teks tampilan singkat; judul lengkap (kata kunci) ada di atribut title."""
+    tops = sorted((n for n in nodes.values() if len(n['path']) == 1),
+                  key=lambda n: (FB_ORDER.index(n['path'][0].lower()) if n['path'][0].lower() in FB_ORDER else len(FB_ORDER), n['path']))
+    groups = []
+    for t in tops:
+        kids = sorted((n for n in nodes.values() if len(n['path']) == 2 and n['path'][0] == t['path'][0]),
+                      key=lambda n: n['path'])
+        links = ''.join('<a href="/kategori/%s/" title="%s">%s</a>' % (
+            esc(k['slug']), esc(node_h1(k)), esc(FB_LABEL.get(k['path'][1].lower(), k['path'][1]))) for k in kids)
+        groups.append('<div class="fb-group"><a href="/kategori/%s/" class="fb-head" title="%s">%s</a>%s</div>' % (
+            esc(t['slug']), esc(node_h1(t)), esc(t['path'][0]), links))
+    return '<!--ZSEO-NAV--><div class="fb-grid">%s</div><!--/ZSEO-NAV-->' % ''.join(groups)
 
 
 def update_home_nav(nodes):
