@@ -1066,7 +1066,7 @@ document.addEventListener('click',function(e){var a=e.target.closest&&e.target.c
       </div>
       <div class="footer-col footer-col-belanja">
         <h4>Belanja</h4>
-        <div id="footer-belanja-links"><a href="#" onclick="return false">Memuat...</a></div>
+        <!--ZSEO-NAV--><div class="fb-grid"><div class="fb-group"><a href="/kategori/pria/" class="fb-head" title="Pakaian Rajut Pria">Pria</a><a href="/kategori/sweater-pria/" title="Sweater Rajut Pria">Sweater Rajut</a></div><div class="fb-group"><a href="/kategori/anak/" class="fb-head" title="Pakaian Rajut Anak">Anak</a><a href="/kategori/sweater-anak/" title="Sweater Rajut Anak">Sweater Rajut</a></div><div class="fb-group"><a href="/kategori/wanita/" class="fb-head" title="Pakaian Rajut Wanita">Wanita</a><a href="/kategori/cardigan-wanita/" title="Cardigan Rajut Wanita">Cardigan Rajut</a><a href="/kategori/polo-knit-wanita/" title="Polo Knit Wanita">Polo Knit</a><a href="/kategori/sweater-wanita/" title="Sweater Rajut Wanita">Sweater Rajut</a></div></div><!--/ZSEO-NAV-->
       </div>
       <div class="footer-col">
         <h4>Informasi</h4>
@@ -1087,7 +1087,6 @@ document.addEventListener('click',function(e){var a=e.target.closest&&e.target.c
         <div class="footer-social" id="footer-social"></div>
       </div>
     </div>
-    <!--ZSEO-NAV--><nav class="footer-seo" aria-label="Koleksi"><a href="/kategori/sweater-anak/">Sweater Rajut Anak</a><a href="/kategori/sweater-pria/">Sweater Rajut Pria</a><a href="/kategori/cardigan-wanita/">Cardigan Rajut Wanita</a><a href="/kategori/polo-knit-wanita/">Polo Knit Wanita</a><a href="/kategori/sweater-wanita/">Sweater Rajut Wanita</a></nav><!--/ZSEO-NAV-->
     <div class="footer-bottom">
       <span>&copy; <span id="footer-year"></span> ZENOOT &middot; Produsen sweater rajut &amp; knitwear di Bandung, Jawa Barat</span>
     </div>
@@ -1936,39 +1935,8 @@ function renderDrawerCategories() {
   renderFooterBelanja();
 }
 
-// Footer "Belanja": 1 baris gender (Pria · Anak · Wanita), di bawahnya kategori dari Seller Center
-// yang MEMANG ada produk aktifnya. Kategori kosong otomatis tidak tampil; nambah produk baru -> muncul sendiri.
-function renderFooterBelanja() {
-  const el = document.getElementById('footer-belanja-links');
-  if (!el) return;
-  const topCats = allCategories.filter(c => !c.parent_id);
-  if (!topCats.length) { el.innerHTML = `<a href="#" onclick="return false">Semua Produk</a>`; return; }
-  const ORDER = ['pria','anak','wanita'];
-  const rank = c => { const i = ORDER.indexOf(c.name.toLowerCase()); return i === -1 ? ORDER.length : i; };
-  const genders = [...topCats].sort((a, b) => rank(a) - rank(b) || a.name.localeCompare(b.name));
-  const catsFor = leavesWithProducts;
-  el.innerHTML = `<div class="fb-grid">` + genders.map(g => {
-    const k = g.name.toLowerCase();
-    const cats = catsFor(k);
-    return `<div class="fb-group">` +
-      `<a href="#" class="fb-head" data-fb-gender="${chatEsc(k)}" data-fb-cat="all">${chatEsc(capitalize(g.name))}</a>` +
-      (cats.length
-        ? cats.map(c => `<a href="#" data-fb-gender="${chatEsc(k)}" data-fb-cat="${chatEsc(c.name)}">${chatEsc(c.name)}</a>`).join('')
-        : `<span class="fb-empty">Belum ada produk</span>`) +
-      `</div>`;
-  }).join('') + `</div>`;
-}
-document.addEventListener('click', e => {
-  const a = e.target.closest('#footer-belanja-links a[data-fb-cat]');
-  if (!a) return;
-  e.preventDefault();
-  const gender = a.dataset.fbGender, cat = a.dataset.fbCat;
-  catalogAll = false;
-  if (cat === 'all') setFilterGender(gender, 'all');
-  else setFilterGender(gender, cat, null, null, cat.toLowerCase().replace(/\s+/g, '-'));
-  showControls();
-  document.getElementById('controls').scrollIntoView({behavior:'smooth'});
-});
+// Footer "Belanja" dibuat statis oleh .github/scripts/build-static.py (blok ZSEO-NAV), bukan dari JavaScript.
+function renderFooterBelanja() {}
 
 // ===================== SIDE PANEL (Wishlist / Akun) =====================
 function openSidePanel(title, bodyHtml) {
