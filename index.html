@@ -2183,9 +2183,11 @@ const orderRegistry = new Map();   // id pesanan -> data pesanan yang sedang tam
 function orderCardHTML(o) {
     const date = new Date(o.created_at).toLocaleDateString('id-ID', {day:'numeric',month:'short',year:'numeric'});
     const lines = (o.items||[]).map(i=>`${i.name} (${i.color}, ${i.size}) x${i.qty}`).join('\n');
+    // Tanpa nomor resi kurir, pembeli melihat kurir pilihannya dan nomor pesanan sebagai referensi (resi buatan sendiri tidak bisa dilacak di situs kurir).
+    const kurirNama = o.courier || o.shipping_service || '';
     const resiBlock = (o.resi && o.status !== 'dibatalkan') ? trackingBlockHTML(o)
-      : (o.status === 'dikirim' ? `<div class="order-wait">Resi belum diinput penjual. Hubungi admin kalau belum ada kabar.</div>`
-      : (o.status === 'diproses' ? `<div class="order-wait">Pesanan sedang disiapkan penjual. Resi muncul di sini setelah dikirim.</div>` : ''));
+      : (o.status === 'dikirim' ? `<div class="order-wait">Pesananmu sudah dikirim${kurirNama ? ' lewat ' + orderEsc(kurirNama) : ''}. Nomor pesanan <b>${orderEsc(o.order_number || '')}</b> bisa kamu sebutkan kalau butuh bantuan soal pengiriman.</div>`
+      : (o.status === 'diproses' ? `<div class="order-wait">Pembayaran diterima. Pesananmu sedang disiapkan penjual.</div>` : ''));
 
     // Pesanan yang masih menunggu pembayaran: Bayar Sekarang (selalu membuka pilihan metode, jadi ini juga cara ganti metode),
     // Ubah Alamat (pilih dari alamat tersimpan, hanya untuk pesanan online), dan Batalkan.
