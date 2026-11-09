@@ -212,25 +212,24 @@
     /* ===== VOUCHER PROMO POPUP ===== */
     .promo-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:710;align-items:center;justify-content:center;padding:20px}
     .promo-overlay.open{display:flex}
-    .promo-box{background:var(--surface);border-radius:var(--radius);padding:28px 24px;width:100%;max-width:380px;max-height:85vh;overflow-y:auto;position:relative}
-    .promo-close{position:absolute;top:14px;right:14px;background:none;border:none;font-size:20px;cursor:pointer;color:var(--muted)}
-    .promo-title{font-family:'Source Serif 4',serif;font-size:20px;font-weight:600;margin-bottom:4px}
-    .promo-sub{font-size:13px;color:var(--sec);margin-bottom:20px}
-    .promo-card{--vc:#ee4d2d;--vc-tint:#fff4f1;--vc-line:#fbc9bd;--cut:var(--bg);position:relative;display:flex;align-items:stretch;background:var(--vc-tint);border:1px solid var(--vc-line);border-radius:4px;min-height:84px;width:100%;margin-bottom:12px;overflow:hidden}
-    .promo-box .promo-card{--cut:var(--surface)}
-    .promo-card::before{content:'';position:absolute;left:-4px;top:0;bottom:0;width:8px;background:radial-gradient(circle at 4px 50%,var(--cut) 0 3.5px,transparent 4px) 0 0/8px 12px repeat-y;pointer-events:none}
-    .promo-card-main{flex:1;min-width:0;padding:10px 10px 10px 16px;display:flex;flex-direction:column;justify-content:center;gap:2px}
-    .promo-card-name{font-size:15px;font-weight:600;color:var(--vc);line-height:1.25}
-    .promo-card-desc{font-size:13px;color:var(--vc);line-height:1.3}
-    .promo-card-exp{font-size:11px;color:var(--sec);margin-top:2px}
-    .promo-card-exp.soon{color:var(--vc)}
-    .promo-card-action{position:relative;flex:0 0 92px;display:flex;align-items:center;justify-content:center;border-left:1.5px dashed var(--vc-line);padding:0 10px}
-    .promo-card-action::before,.promo-card-action::after{content:'';position:absolute;left:-7px;width:12px;height:12px;border-radius:50%;background:var(--cut)}
-    .promo-card-action::before{top:-6px}
-    .promo-card-action::after{bottom:-6px}
-    .promo-claim-btn{background:var(--vc);color:#fff;border:1px solid var(--vc);border-radius:3px;padding:7px 14px;font-size:12px;font-weight:600;font-family:inherit;cursor:pointer;white-space:nowrap}
-    .promo-claim-btn.claimed{background:transparent;color:var(--vc);cursor:default}
-    .promo-claim-btn:disabled:not(.claimed){background:#e8e5e0;border-color:#e8e5e0;color:var(--muted);cursor:default}
+    .promo-box{background:var(--surface);width:100%;max-width:380px;max-height:85vh;position:relative;border-radius:6px;overflow:hidden;display:flex;flex-direction:column}
+    .promo-close{position:absolute;top:12px;right:12px;width:34px;height:34px;border-radius:50%;border:none;background:rgba(17,17,20,.08);color:var(--muted);font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:1}
+    .promo-top{flex:0 0 auto;background:var(--bg);padding:44px 24px 26px;text-align:center;border-bottom:1px solid var(--border)}
+    .promo-kicker{font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:14px}
+    .promo-title{font-family:'Source Serif 4',serif;font-size:28px;line-height:1.15;font-weight:600;color:var(--ink);margin-bottom:8px}
+    .promo-sub{font-size:13.5px;line-height:1.55;color:var(--muted);margin:0}
+    .promo-body{flex:1 1 auto;overflow-y:auto;padding:4px 24px 22px}
+    .promo-card{display:flex;align-items:center;gap:14px;width:100%;padding:18px 0;border-bottom:1px solid var(--border)}
+    .promo-card:last-child{border-bottom:none}
+    .promo-card-main{flex:1;min-width:0}
+    .promo-card-name{font-family:'Source Serif 4',serif;font-size:17px;font-weight:600;color:var(--ink);line-height:1.25;margin:0}
+    .promo-card-desc{font-size:13px;color:var(--sec);line-height:1.45;margin:4px 0 0}
+    .promo-card-exp{font-size:12px;color:var(--muted);margin:3px 0 0}
+    .promo-card-exp.soon{color:var(--ink);font-weight:600}
+    .promo-card-action{flex:0 0 auto}
+    .promo-claim-btn{background:var(--ink);color:#fff;border:1px solid var(--ink);border-radius:0;padding:10px 16px;font-size:12px;font-weight:600;letter-spacing:.04em;font-family:inherit;cursor:pointer;white-space:nowrap}
+    .promo-claim-btn.claimed{background:transparent;color:var(--ink);border-color:var(--border);cursor:default}
+    .promo-claim-btn:disabled:not(.claimed){background:transparent;color:var(--muted);border-color:var(--border);cursor:default}
 
     /* ===== POPUP VOUCHER MEMBER BARU ===== */
     .welcome-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:260;align-items:center;justify-content:center;padding:20px}
@@ -1218,10 +1217,13 @@ document.addEventListener('click',function(e){var a=e.target.closest&&e.target.c
 <!-- VOUCHER PROMO POPUP -->
 <div class="promo-overlay" id="promo-overlay">
   <div class="promo-box">
-    <button class="promo-close" onclick="closeVoucherPopup()">✕</button>
-    <p class="promo-title">Voucher Tersedia 🎉</p>
-    <p class="promo-sub">Otomatis kepakai kalau belanjaanmu memenuhi syarat.</p>
-    <div id="promo-list"></div>
+    <button class="promo-close" onclick="closeVoucherPopup()" aria-label="Tutup">✕</button>
+    <div class="promo-top">
+      <div class="promo-kicker">Voucher</div>
+      <p class="promo-title">Voucher Tersedia</p>
+      <p class="promo-sub">Otomatis terpakai kalau belanjaanmu memenuhi syarat.</p>
+    </div>
+    <div class="promo-body"><div id="promo-list"></div></div>
   </div>
 </div>
 
@@ -1302,10 +1304,10 @@ document.addEventListener('click',function(e){var a=e.target.closest&&e.target.c
         <span>Subtotal Pesanan</span><span id="subtotal-val">Rp 0</span>
       </div>
       <div class="summary-row hidden" id="ship-voucher-row">
-        <span>🎟️ Voucher Ongkir</span><span id="ship-voucher-val" style="text-align:right"></span>
+        <span>Voucher Ongkir</span><span id="ship-voucher-val" style="text-align:right"></span>
       </div>
       <div class="summary-row hidden" id="cart-voucher-row" onclick="showVoucherPopup()" style="cursor:pointer;align-items:center">
-        <span>🎟️ Voucher</span><span id="cart-voucher-summary" style="color:var(--ink);display:flex;align-items:center;gap:4px"></span>
+        <span>Voucher</span><span id="cart-voucher-summary" style="color:var(--ink);display:flex;align-items:center;gap:4px"></span>
       </div>
       <div class="discount-row hidden" id="discount-row">
         <span>Diskon voucher</span><span id="discount-val"></span>
@@ -3425,7 +3427,7 @@ function updateVoucherBadge() {
   if (!eligible.length) { badge.classList.add('hidden'); badge.innerHTML = ''; return; }
   const v = eligible[0];
   const discText = v.discount_type === 'percent' ? `-${v.discount_value}%` : `-${fRp(v.discount_value)}`;
-  badge.innerHTML = `🎟️ Voucher ${v.code} (${discText})`;
+  badge.innerHTML = `Voucher ${v.code} (${discText})`;
   badge.classList.remove('hidden');
 }
 
@@ -4125,7 +4127,7 @@ async function onBuyerSignedIn() {
   }
   renderVoucherPopupList();
   updateCartUI();
-  if (ok) showToast('Voucher member baru berhasil diklaim 🎉', 2600);
+  if (ok) showToast('Voucher member baru berhasil diklaim', 2600);
   else if (lastErr) showToast(lastErr, 3000);
 }
 
@@ -4153,7 +4155,7 @@ async function autoClaimNewMemberRun(showMsg) {
     }
     renderVoucherPopupList();
     updateCartUI();
-    if (ok && showMsg) showToast('Voucher member baru berhasil diklaim 🎉', 2600);
+    if (ok && showMsg) showToast('Voucher member baru berhasil diklaim', 2600);
     return ok > 0;
   } catch (_) {
     return false;
@@ -4800,12 +4802,26 @@ async function loadOrderHistory() {
   return data || [];
 }
 
+// Pembatalan dikerjakan server (order-cancel): pembayaran Midtrans yang masih menunggu (nomor VA atau QR) ikut dimatikan,
+// baru status pesanan diubah. Kalau ternyata pembayaran sudah masuk, pesanan tidak dibatalkan.
 async function buyerCancelOrder(orderId) {
   if (!confirm('Yakin mau batalkan pesanan ini?')) return;
-  const { error } = await sb.from('orders').update({ status: 'dibatalkan' }).eq('id', orderId).eq('user_id', buyerUser.id).eq('status', 'menunggu_pembayaran');
-  if (error) { showToast('Gagal membatalkan pesanan'); return; }
-  showToast('Pesanan dibatalkan');
-  refreshOrdersView();
+  try {
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) { showToast('Sesi habis, silakan masuk lagi', 3000); return; }
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/order-cancel`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
+      body: JSON.stringify({ order_id: orderId })
+    });
+    const data = await res.json().catch(() => ({}));
+    if (res.ok && data.cancelled) showToast('Pesanan dibatalkan');
+    else showToast(data.error || 'Gagal membatalkan pesanan, coba lagi', 4500);
+  } catch (e) {
+    showToast('Koneksi bermasalah, coba lagi', 3000);
+    return;
+  }
+  refreshOrdersView();   // juga saat ditolak (mis. sudah dibayar): daftar pesanan menampilkan keadaan terbaru
 }
 
 // (Ubah Alamat dan Ubah Variasi bentuk lama sudah diganti: alamat dipilih dari alamat tersimpan dan diproses server, lihat openOrderAddress)
