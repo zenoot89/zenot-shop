@@ -81,6 +81,29 @@ def num_text(v):
     return str(int(f)) if f == int(f) else str(f)
 
 
+SIZE_ORDER = ['XXS', 'XS', 'S', 'M', 'L', 'XL', 'XXL', '2XL', 'XXXL', '3XL', '4XL', '5XL']
+
+
+def size_rows(p, sizes):
+    """Baris panduan ukuran: [ukuran, panjang atasan, lingkar dada, panjang lengan] dari kolom size_chart,
+    atau (produk lama) dari tiga kolom lama untuk satu set angka. Sama dengan renderSizeGuide di toko."""
+    chart = p.get('size_chart') if isinstance(p.get('size_chart'), dict) else {}
+    act = [s for s in dict.fromkeys(str(v.get('size') or '').strip() for v in active_variants(p)) if s]
+    rows = []
+    for sz in act:
+        c = chart.get(sz)
+        if isinstance(c, dict):
+            r = [sz, num(c.get('panjang')), num(c.get('dada')), num(c.get('lengan'))]
+            if r[1] or r[2] or r[3]:
+                rows.append(r)
+    if not rows:
+        old = [num(p.get('panjang_cm')), num(p.get('lingkar_dada_cm')), num(p.get('panjang_lengan_cm'))]
+        if any(old):
+            rows = [[act[0] if len(act) == 1 else 'Ukuran produk'] + old]
+    rows.sort(key=lambda r: SIZE_ORDER.index(r[0].upper()) if r[0].upper() in SIZE_ORDER else 99)
+    return rows
+
+
 def text_of(v):
     s = re.sub(r'\[[^\]]*\]', '', str(v if v is not None else ''))
     return re.sub(r'\s+', ' ', s).strip()
@@ -563,12 +586,16 @@ def product_page(p, ctx):
         props.append({'@type': 'PropertyValue', 'name': 'Lengan', 'value': c['lengan']})
     if c['gramasi']:
         props.append({'@type': 'PropertyValue', 'name': 'Gramasi', 'value': c['gramasi'], 'unitText': 'gr/m²'})
-    if num(p.get('lingkar_dada_cm')):
-        props.append({'@type': 'PropertyValue', 'name': 'Lingkar dada', 'value': num(p['lingkar_dada_cm']), 'unitCode': 'CMT'})
-    if num(p.get('panjang_cm')):
-        props.append({'@type': 'PropertyValue', 'name': 'Panjang baju', 'value': num(p['panjang_cm']), 'unitCode': 'CMT'})
-    if num(p.get('panjang_lengan_cm')):
-        props.append({'@type': 'PropertyValue', 'name': 'Panjang lengan', 'value': num(p['panjang_lengan_cm']), 'unitCode': 'CMT'})
+    crows = size_rows(p, [])
+    for k, nm in ((2, 'Lingkar dada'), (1, 'Panjang baju'), (3, 'Panjang lengan')):
+        vals = [r[k] for r in crows if r[k]]
+        if vals:
+            pv = {'@type': 'PropertyValue', 'name': nm, 'unitCode': 'CMT'}
+            if min(vals) == max(vals):
+                pv['value'] = min(vals)
+            else:
+                pv['minValue'], pv['maxValue'] = min(vals), max(vals)
+            props.append(pv)
     if c['ketebalan']:
         props.append({'@type': 'PropertyValue', 'name': 'Ketebalan', 'value': c['ketebalan']})
     if text_of(p.get('motif')):
@@ -599,14 +626,16 @@ def product_page(p, ctx):
     specs = [(k, v) for k, v in specs if v]
     spec_html = ('<section class="box"><h2>Spesifikasi %s</h2><table>%s</table></section>' % (
         esc(name), ''.join('<tr><th>%s</th><td>%s</td></tr>' % (esc(k), esc(v)) for k, v in specs))) if specs else ''
-    ukur = [(k, num_text(p.get(f))) for k, f in (('Panjang Atasan (cm)', 'panjang_cm'), ('Lingkar Dada (cm)', 'lingkar_dada_cm'),
-                                                  ('Panjang Lengan (cm)', 'panjang_lengan_cm')) if num(p.get(f))]
-    if ukur:  # panduan ukuran: satu sumber dari kolom spesifikasi, sama dengan tabel di toko
+    chart = size_rows(p, sizes)
+    use = [k for k in (1, 2, 3) if any(r[k] for r in chart)]
+    if chart:  # panduan ukuran: satu sumber (kolom size_chart), sama dengan tabel di toko
+        heads = ('Panjang Atasan (cm)', 'Lingkar Dada (cm)', 'Panjang Lengan (cm)')
         spec_html = ('<section class="box"><h2>Panduan ukuran %s</h2><div class="sg"><table><thead><tr><th>Ukuran</th>%s</tr></thead>'
-                     '<tbody><tr><td>%s</td>%s</tr></tbody></table></div>'
+                     '<tbody>%s</tbody></table></div>'
                      '<p class="note" style="margin-top:10px">Ukuran produk, diukur dari bajunya.</p></section>' % (
-                         esc(name), ''.join('<th>%s</th>' % esc(k) for k, _ in ukur),
-                         esc(sizes[0] if len(sizes) == 1 else 'Ukuran produk'), ''.join('<td>%s</td>' % esc(v) for _, v in ukur))) + spec_html
+                         esc(name), ''.join('<th>%s</th>' % esc(heads[k - 1]) for k in use),
+                         ''.join('<tr><td>%s</td>%s</tr>' % (esc(r[0]), ''.join('<td>%s</td>' % (num_text(r[k]) if r[k] else '-') for k in use))
+                                 for r in chart))) + spec_html
     desc_body = render_desc(p.get('description'))
     desc_html = '<section class="box desc"><h2>Deskripsi %s</h2>%s</section>' % (esc(name), desc_body) if desc_body else ''
     var_rows = ''.join('<tr><td>%s</td><td>%s</td><td>%s</td><td>%s</td></tr>' % (

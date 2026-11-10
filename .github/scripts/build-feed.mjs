@@ -157,8 +157,19 @@ export function highlights(p) {
   if (p.lengan) out.push(`Lengan ${clean(p.lengan).toLowerCase()}`);
   if (p.tipe_cutting) out.push(`Potongan ${clean(p.tipe_cutting)}`);
   if (p.motif) out.push(`Motif ${clean(p.motif)}`);
-  if (n(p.lingkar_dada_cm) || n(p.panjang_cm) || n(p.panjang_lengan_cm)) {
-    out.push('Ukuran produk: ' + [n(p.lingkar_dada_cm) && `lingkar dada ${n(p.lingkar_dada_cm)} cm`, n(p.panjang_cm) && `panjang ${n(p.panjang_cm)} cm`, n(p.panjang_lengan_cm) && `panjang lengan ${n(p.panjang_lengan_cm)} cm`].filter(Boolean).join(', '));
+  // Ukuran produk: dari size_chart (rentang kalau beberapa ukuran), produk lama dari tiga kolom lama.
+  const chart = p.size_chart && typeof p.size_chart === 'object' ? Object.values(p.size_chart) : [];
+  const dada = chart.map((c) => n(c && c.dada)).filter(Boolean);
+  const pjg = chart.map((c) => n(c && c.panjang)).filter(Boolean);
+  const lgn = chart.map((c) => n(c && c.lengan)).filter(Boolean);
+  if (!dada.length && !pjg.length && !lgn.length) {
+    if (n(p.lingkar_dada_cm)) dada.push(n(p.lingkar_dada_cm));
+    if (n(p.panjang_cm)) pjg.push(n(p.panjang_cm));
+    if (n(p.panjang_lengan_cm)) lgn.push(n(p.panjang_lengan_cm));
+  }
+  const rentang = (a) => (Math.min(...a) === Math.max(...a) ? `${Math.min(...a)}` : `${Math.min(...a)}-${Math.max(...a)}`);
+  if (dada.length || pjg.length || lgn.length) {
+    out.push('Ukuran produk: ' + [dada.length && `lingkar dada ${rentang(dada)} cm`, pjg.length && `panjang ${rentang(pjg)} cm`, lgn.length && `panjang lengan ${rentang(lgn)} cm`].filter(Boolean).join(', '));
   }
   if (p.perawatan) out.push(`Perawatan: ${clean(p.perawatan)}`);
   return out.map((t) => clean(t, 150)).filter(Boolean).slice(0, 10);
@@ -289,7 +300,7 @@ async function fetchProducts() {
   const variantCols = 'variants(id,color_name,size,price,original_price,stock,image_url,is_active)';
   // Kolom baru dari 01-migrasi-supabase.sql. Kalau migrasi belum dijalankan, Supabase menjawab 400,
   // maka feed dibuat dengan kolom lama saja (feed tidak pernah berhenti hanya karena migrasi belum jalan).
-  const newCols = 'slug,ketebalan,tipe_cutting,lengan,gramasi_gsm,lingkar_dada_cm,panjang_cm,panjang_lengan_cm,perawatan,weight_gram,';
+  const newCols = 'slug,ketebalan,tipe_cutting,lengan,gramasi_gsm,lingkar_dada_cm,panjang_cm,panjang_lengan_cm,size_chart,perawatan,weight_gram,';
   const pageSize = 500;
   const load = async (select) => {
     const all = [];
