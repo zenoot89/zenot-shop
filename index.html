@@ -5040,7 +5040,7 @@ const FOOTER_PAY_DIR = '';
 // snap = kode metode di Midtrans (enabled_payments). Metode dengan on:true DAN snap terisi tampil sebagai pilihan di checkout.
 // snap:null (mis. BSI, OVO, SeaBank) = belum dipetakan: tetap tampil di logo footer dan bisa dipilih lewat "Metode lain" di halaman Midtrans.
 const FOOTER_PAYMENTS = [
-  { n: 'QRIS',         f: 'qris.png',         w: 328, h: 56, on: true, g: 'qr', snap: 'other_qris' },
+  { n: 'QRIS',         f: 'qris.png',         w: 328, h: 56, on: true, g: 'qr', snap: 'other_qris' },   // server (midtrans-create) mengarahkan other_qris ke channel gopay: QRIS Dinamis GoPay, kode QR bisa dipindai e-wallet/m-banking apa pun
   { n: 'BCA',          f: 'bca.png',          w: 180, h: 56, on: false, g: 'va', snap: 'bca_va' },
   { n: 'BRI',          f: 'bri.png',          w: 148, h: 56, on: true, g: 'va', snap: 'bri_va' },
   { n: 'BNI',          f: 'bni.png',          w: 193, h: 56, on: true, g: 'va', snap: 'bni_va' },
@@ -5049,7 +5049,7 @@ const FOOTER_PAYMENTS = [
   { n: 'PermataBank',  f: 'permata-bank.png', w: 226, h: 56, on: true, g: 'va', snap: 'permata_va' },
   { n: 'BSI',          f: 'bsi-logo.png',     w: 70,  h: 47, on: true, d: 22, g: 'va', snap: null },
   { n: 'SeaBank',      f: 'seabank.png',      w: 104, h: 144, on: true, d: 34, g: 'va', snap: null },
-  { n: 'Danamon',      f: 'danamon.png',      w: 147, h: 56, on: true, g: 'va', snap: 'other_va', label: 'Danamon / SeaBank Virtual Account' },   // Danamon dan SeaBank lewat satu pintu Midtrans (other_va), jadi satu pilihan di checkout
+  { n: 'Danamon',      f: 'danamon.png',      w: 147, h: 56, on: true, g: 'va', snap: null },   // footer saja: other_va belum muncul di halaman Midtrans; bisa dipilih lewat 'Metode lain' kalau sudah aktif   // Danamon dan SeaBank lewat satu pintu Midtrans (other_va), jadi satu pilihan di checkout
   { n: 'GoPay',        f: 'gopay.png',        w: 258, h: 56, on: true, g: 'ew', snap: 'gopay' },
   { n: 'OVO',          f: 'ovo.png',          w: 136, h: 53, on: false, g: 'ew', snap: null },
   { n: 'DANA',         f: 'dana.png',         w: 175, h: 54, on: false, g: 'ew', snap: 'dana' },
