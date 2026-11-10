@@ -216,6 +216,31 @@ def image_list(p, vars_):
 # ---------------------------------------------------------------- deskripsi -> HTML
 NOT_HEADING = {'XXL', 'XL', 'ALL SIZE', 'SLIM FIT', 'HAPPY SHOPING', 'HAPPY SHOPPING', 'SIZE'}
 BULLET = re.compile(r'^\s*[•✔✅✓▪●·*\-]\s+')
+# Tabel ukuran di deskripsi: baris berformat | kolom | kolom |
+TABLE_LINE = re.compile(r'^\s*\|.*\|\s*$')
+
+
+def parse_table(lines):
+    """Baris tabel -> (judul kolom, baris isi). Baris pemisah |---| dibuang. None kalau kurang dari judul + 1 baris."""
+    rows = []
+    for l in lines:
+        cells = [c.strip() for c in l.strip().strip('|').split('|')]
+        if all(c == '' or re.match(r'^:?-{2,}:?$', c) for c in cells):
+            continue
+        rows.append(cells)
+    if len(rows) < 2:
+        return None
+    return rows[0], rows[1:]
+
+
+def table_html(lines):
+    t = parse_table(lines)
+    if not t:
+        return ''
+    head, body = t
+    return ('<div class="sg"><table><thead><tr>%s</tr></thead><tbody>%s</tbody></table></div>' % (
+        ''.join('<th>%s</th>' % esc(h) for h in head),
+        ''.join('<tr>%s</tr>' % ''.join('<td>%s</td>' % esc(r[i] if i < len(r) else '') for i in range(len(head))) for r in body)))
 
 
 def is_heading(t):
@@ -229,6 +254,10 @@ def flat_desc(raw):
     supaya judul tidak menempel ke kalimat berikutnya."""
     out = []
     for line in plain_desc(raw).split('\n'):
+        if TABLE_LINE.match(line):
+            if out and out[-1].endswith(':') and len(out[-1]) <= 41:
+                out.pop()  # judul tabel ("Panduan Ukuran:") ikut dibuang
+            continue
         t = BULLET.sub('', line.strip()).strip()
         t = re.sub(r'[•✔✅✓▪●]\s*', '', t).strip()
         if not t:
@@ -240,10 +269,17 @@ def flat_desc(raw):
 
 
 def render_desc(raw):
-    out, para, ul = [], [], []
+    out, para, ul, tbl = [], [], [], []
 
     def flush():
-        nonlocal para, ul
+        nonlocal para, ul, tbl
+        if tbl:
+            h = table_html(tbl)
+            if h:
+                out.append(h)
+            else:  # bukan tabel sungguhan: tampilkan sebagai teks biasa
+                out.append('<p>' + '<br>'.join(esc(x.strip()) for x in tbl) + '</p>')
+            tbl = []
         if para:
             out.append('<p>' + '<br>'.join(esc(x) for x in para) + '</p>')
         if ul:
@@ -252,6 +288,13 @@ def render_desc(raw):
 
     for line in plain_desc(raw).split('\n'):
         t = line.strip()
+        if TABLE_LINE.match(line):
+            if para or ul:
+                flush()
+            tbl.append(line)
+            continue
+        if tbl:
+            flush()
         if not t:
             flush()
             continue
@@ -316,6 +359,11 @@ th{font-weight:600;color:var(--muted);width:38%}
 .vt th{width:auto}
 .desc p,.desc ul{margin:0 0 12px;font-weight:400;color:var(--sec)}
 .desc ul{padding-left:20px}
+.sg{overflow-x:auto;margin:0 0 14px;border:1px solid var(--border);border-radius:10px;background:var(--surface)}
+.sg table{font-size:13.5px;text-align:center}
+.sg th{width:auto;background:rgba(17,17,20,.05);color:var(--ink);font-weight:600;text-align:center}
+.sg td:first-child,.sg th:first-child{text-align:left;white-space:nowrap}
+.sg tbody tr:last-child td{border-bottom:0}
 .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
 @media(min-width:760px){.grid{grid-template-columns:repeat(4,1fr)}}
 .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;text-decoration:none;display:block}
