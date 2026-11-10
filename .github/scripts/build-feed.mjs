@@ -71,8 +71,43 @@ function judulKapital(t) {
     .replace(/\bXl\b/g, 'XL');
 }
 
+// Tabel ukuran di deskripsi (| Ukuran | Panjang Atasan (cm) | ... |) jadi kalimat butir supaya terbaca di Meta dan Google:
+// "• All Size: Panjang Atasan 54 cm, Lingkar Dada 104 cm". Baris yang bukan tabel dibiarkan.
+export function tabelKeTeks(raw) {
+  const lines = String(raw ?? '').replace(/\r\n?/g, '\n').split('\n');
+  const out = [];
+  let tbl = [];
+  const flush = () => {
+    if (!tbl.length) return;
+    const rows = tbl
+      .map((l) => l.trim().replace(/^\||\|$/g, '').split('|').map((c) => c.trim()))
+      .filter((r) => !r.every((c) => c === '' || /^:?-{2,}:?$/.test(c)));
+    if (rows.length >= 2) {
+      const head = rows[0];
+      for (const r of rows.slice(1)) {
+        const bagian = [];
+        for (let i = 1; i < head.length; i++) {
+          if (!r[i] || /^[-–—]+$/.test(r[i])) continue;
+          const m = head[i].match(/\(([^)]*)\)\s*$/);
+          bagian.push(`${head[i].replace(/\s*\([^)]*\)\s*$/, '')} ${r[i]}${m ? ' ' + m[1] : ''}`.trim());
+        }
+        out.push(`• ${r[0] ? r[0] + ': ' : ''}${bagian.join(', ')}`.replace(/[:\s]+$/, ''));
+      }
+    } else {
+      out.push(...tbl);
+    }
+    tbl = [];
+  };
+  for (const line of lines) {
+    if (/^\s*\|.*\|\s*$/.test(line)) tbl.push(line);
+    else { flush(); out.push(line); }
+  }
+  flush();
+  return out.join('\n');
+}
+
 export function rapikanDeskripsi(raw) {
-  let t = String(raw ?? '')
+  let t = tabelKeTeks(raw)
     .replace(/<\s*br\s*\/?>|<\/p>|<\/li>/gi, '\n')
     .replace(/<[^>]*>/g, ' ')
     .replace(/\r\n?/g, '\n')
@@ -133,7 +168,7 @@ export function rapikanDeskripsi(raw) {
 
 // Deskripsi persis seperti di web: baris baru & bullet dipertahankan (hanya HTML dibuang). Dipakai untuk feed XML.
 export function deskripsiAsli(raw, max = 5000) {
-  let s = String(raw ?? '')
+  let s = tabelKeTeks(raw)
     .replace(/<\s*br\s*\/?>|<\/p>|<\/li>/gi, '\n')
     .replace(/<[^>]*>/g, '')
     .replace(/\r\n?/g, '\n')
