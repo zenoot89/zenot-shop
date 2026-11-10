@@ -71,43 +71,8 @@ function judulKapital(t) {
     .replace(/\bXl\b/g, 'XL');
 }
 
-// Tabel ukuran di deskripsi (| Ukuran | Panjang Atasan (cm) | ... |) jadi kalimat butir supaya terbaca di Meta dan Google:
-// "• All Size: Panjang Atasan 54 cm, Lingkar Dada 104 cm". Baris yang bukan tabel dibiarkan.
-export function tabelKeTeks(raw) {
-  const lines = String(raw ?? '').replace(/\r\n?/g, '\n').split('\n');
-  const out = [];
-  let tbl = [];
-  const flush = () => {
-    if (!tbl.length) return;
-    const rows = tbl
-      .map((l) => l.trim().replace(/^\||\|$/g, '').split('|').map((c) => c.trim()))
-      .filter((r) => !r.every((c) => c === '' || /^:?-{2,}:?$/.test(c)));
-    if (rows.length >= 2) {
-      const head = rows[0];
-      for (const r of rows.slice(1)) {
-        const bagian = [];
-        for (let i = 1; i < head.length; i++) {
-          if (!r[i] || /^[-–—]+$/.test(r[i])) continue;
-          const m = head[i].match(/\(([^)]*)\)\s*$/);
-          bagian.push(`${head[i].replace(/\s*\([^)]*\)\s*$/, '')} ${r[i]}${m ? ' ' + m[1] : ''}`.trim());
-        }
-        out.push(`• ${r[0] ? r[0] + ': ' : ''}${bagian.join(', ')}`.replace(/[:\s]+$/, ''));
-      }
-    } else {
-      out.push(...tbl);
-    }
-    tbl = [];
-  };
-  for (const line of lines) {
-    if (/^\s*\|.*\|\s*$/.test(line)) tbl.push(line);
-    else { flush(); out.push(line); }
-  }
-  flush();
-  return out.join('\n');
-}
-
 export function rapikanDeskripsi(raw) {
-  let t = tabelKeTeks(raw)
+  let t = String(raw ?? '').replace(/^[ \t]*\|.*\|[ \t]*$/gm, '')
     .replace(/<\s*br\s*\/?>|<\/p>|<\/li>/gi, '\n')
     .replace(/<[^>]*>/g, ' ')
     .replace(/\r\n?/g, '\n')
@@ -168,7 +133,7 @@ export function rapikanDeskripsi(raw) {
 
 // Deskripsi persis seperti di web: baris baru & bullet dipertahankan (hanya HTML dibuang). Dipakai untuk feed XML.
 export function deskripsiAsli(raw, max = 5000) {
-  let s = tabelKeTeks(raw)
+  let s = String(raw ?? '').replace(/^[ \t]*\|.*\|[ \t]*$/gm, '')
     .replace(/<\s*br\s*\/?>|<\/p>|<\/li>/gi, '\n')
     .replace(/<[^>]*>/g, '')
     .replace(/\r\n?/g, '\n')
@@ -192,8 +157,8 @@ export function highlights(p) {
   if (p.lengan) out.push(`Lengan ${clean(p.lengan).toLowerCase()}`);
   if (p.tipe_cutting) out.push(`Potongan ${clean(p.tipe_cutting)}`);
   if (p.motif) out.push(`Motif ${clean(p.motif)}`);
-  if (n(p.lingkar_dada_cm) || n(p.panjang_cm)) {
-    out.push('Ukuran produk: ' + [n(p.lingkar_dada_cm) && `lingkar dada ${n(p.lingkar_dada_cm)} cm`, n(p.panjang_cm) && `panjang ${n(p.panjang_cm)} cm`].filter(Boolean).join(', '));
+  if (n(p.lingkar_dada_cm) || n(p.panjang_cm) || n(p.panjang_lengan_cm)) {
+    out.push('Ukuran produk: ' + [n(p.lingkar_dada_cm) && `lingkar dada ${n(p.lingkar_dada_cm)} cm`, n(p.panjang_cm) && `panjang ${n(p.panjang_cm)} cm`, n(p.panjang_lengan_cm) && `panjang lengan ${n(p.panjang_lengan_cm)} cm`].filter(Boolean).join(', '));
   }
   if (p.perawatan) out.push(`Perawatan: ${clean(p.perawatan)}`);
   return out.map((t) => clean(t, 150)).filter(Boolean).slice(0, 10);
@@ -324,7 +289,7 @@ async function fetchProducts() {
   const variantCols = 'variants(id,color_name,size,price,original_price,stock,image_url,is_active)';
   // Kolom baru dari 01-migrasi-supabase.sql. Kalau migrasi belum dijalankan, Supabase menjawab 400,
   // maka feed dibuat dengan kolom lama saja (feed tidak pernah berhenti hanya karena migrasi belum jalan).
-  const newCols = 'slug,ketebalan,tipe_cutting,lengan,gramasi_gsm,lingkar_dada_cm,panjang_cm,perawatan,weight_gram,';
+  const newCols = 'slug,ketebalan,tipe_cutting,lengan,gramasi_gsm,lingkar_dada_cm,panjang_cm,panjang_lengan_cm,perawatan,weight_gram,';
   const pageSize = 500;
   const load = async (select) => {
     const all = [];

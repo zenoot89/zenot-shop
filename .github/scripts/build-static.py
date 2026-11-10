@@ -95,6 +95,7 @@ def plain_desc(raw):
     s = str(raw or '').replace('\r', '')
     s = re.sub(r'(^|\n)\s*#{1,6}\s*', r'\1', s)
     s = re.sub(r'\*\*|__|`', '', s)
+    s = re.sub(r'(?m)^[ \t]*\|.*\|[ \t]*$', '', s)  # sisa tabel lama di deskripsi tidak dipakai (ukuran dari kolom spesifikasi)
     return s.strip()
 
 
@@ -216,31 +217,6 @@ def image_list(p, vars_):
 # ---------------------------------------------------------------- deskripsi -> HTML
 NOT_HEADING = {'XXL', 'XL', 'ALL SIZE', 'SLIM FIT', 'HAPPY SHOPING', 'HAPPY SHOPPING', 'SIZE'}
 BULLET = re.compile(r'^\s*[•✔✅✓▪●·*\-]\s+')
-# Tabel ukuran di deskripsi: baris berformat | kolom | kolom |
-TABLE_LINE = re.compile(r'^\s*\|.*\|\s*$')
-
-
-def parse_table(lines):
-    """Baris tabel -> (judul kolom, baris isi). Baris pemisah |---| dibuang. None kalau kurang dari judul + 1 baris."""
-    rows = []
-    for l in lines:
-        cells = [c.strip() for c in l.strip().strip('|').split('|')]
-        if all(c == '' or re.match(r'^:?-{2,}:?$', c) for c in cells):
-            continue
-        rows.append(cells)
-    if len(rows) < 2:
-        return None
-    return rows[0], rows[1:]
-
-
-def table_html(lines):
-    t = parse_table(lines)
-    if not t:
-        return ''
-    head, body = t
-    return ('<div class="sg"><table><thead><tr>%s</tr></thead><tbody>%s</tbody></table></div>' % (
-        ''.join('<th>%s</th>' % esc(h) for h in head),
-        ''.join('<tr>%s</tr>' % ''.join('<td>%s</td>' % esc(r[i] if i < len(r) else '') for i in range(len(head))) for r in body)))
 
 
 def is_heading(t):
@@ -254,10 +230,6 @@ def flat_desc(raw):
     supaya judul tidak menempel ke kalimat berikutnya."""
     out = []
     for line in plain_desc(raw).split('\n'):
-        if TABLE_LINE.match(line):
-            if out and out[-1].endswith(':') and len(out[-1]) <= 41:
-                out.pop()  # judul tabel ("Panduan Ukuran:") ikut dibuang
-            continue
         t = BULLET.sub('', line.strip()).strip()
         t = re.sub(r'[•✔✅✓▪●]\s*', '', t).strip()
         if not t:
@@ -269,17 +241,10 @@ def flat_desc(raw):
 
 
 def render_desc(raw):
-    out, para, ul, tbl = [], [], [], []
+    out, para, ul = [], [], []
 
     def flush():
-        nonlocal para, ul, tbl
-        if tbl:
-            h = table_html(tbl)
-            if h:
-                out.append(h)
-            else:  # bukan tabel sungguhan: tampilkan sebagai teks biasa
-                out.append('<p>' + '<br>'.join(esc(x.strip()) for x in tbl) + '</p>')
-            tbl = []
+        nonlocal para, ul
         if para:
             out.append('<p>' + '<br>'.join(esc(x) for x in para) + '</p>')
         if ul:
@@ -288,13 +253,6 @@ def render_desc(raw):
 
     for line in plain_desc(raw).split('\n'):
         t = line.strip()
-        if TABLE_LINE.match(line):
-            if para or ul:
-                flush()
-            tbl.append(line)
-            continue
-        if tbl:
-            flush()
         if not t:
             flush()
             continue
@@ -359,7 +317,7 @@ th{font-weight:600;color:var(--muted);width:38%}
 .vt th{width:auto}
 .desc p,.desc ul{margin:0 0 12px;font-weight:400;color:var(--sec)}
 .desc ul{padding-left:20px}
-.sg{overflow-x:auto;margin:0 0 14px;border:1px solid var(--border);border-radius:10px;background:var(--surface)}
+.sg{overflow-x:auto;border:1px solid var(--border);border-radius:10px;background:var(--surface)}
 .sg table{font-size:13.5px;text-align:center}
 .sg th{width:auto;background:rgba(17,17,20,.05);color:var(--ink);font-weight:600;text-align:center}
 .sg td:first-child,.sg th:first-child{text-align:left;white-space:nowrap}
@@ -609,6 +567,8 @@ def product_page(p, ctx):
         props.append({'@type': 'PropertyValue', 'name': 'Lingkar dada', 'value': num(p['lingkar_dada_cm']), 'unitCode': 'CMT'})
     if num(p.get('panjang_cm')):
         props.append({'@type': 'PropertyValue', 'name': 'Panjang baju', 'value': num(p['panjang_cm']), 'unitCode': 'CMT'})
+    if num(p.get('panjang_lengan_cm')):
+        props.append({'@type': 'PropertyValue', 'name': 'Panjang lengan', 'value': num(p['panjang_lengan_cm']), 'unitCode': 'CMT'})
     if c['ketebalan']:
         props.append({'@type': 'PropertyValue', 'name': 'Ketebalan', 'value': c['ketebalan']})
     if text_of(p.get('motif')):
@@ -634,15 +594,19 @@ def product_page(p, ctx):
     specs = [('Bahan', c['bahan']), ('Gramasi', ('%d gr/m²' % c['gramasi']) if c['gramasi'] else ''),
              ('Ketebalan', c['ketebalan']), ('Lengan', c['lengan']), ('Tipe cutting', text_of(p.get('tipe_cutting'))),
              ('Motif', text_of(p.get('motif'))), ('Ukuran', ', '.join(sizes)),
-             ('Lingkar dada', ('%s cm' % num_text(p['lingkar_dada_cm'])) if num(p.get('lingkar_dada_cm')) else ''),
-             ('Panjang baju', ('%s cm' % num_text(p['panjang_cm'])) if num(p.get('panjang_cm')) else ''),
              ('Dipakai model', text_of(p.get('dipakai_model'))), ('Perawatan', text_of(p.get('perawatan'))),
              ('Untuk', c['gender']), ('Kategori', c['cat'])]
     specs = [(k, v) for k, v in specs if v]
-    spec_html = ('<section class="box"><h2>Spesifikasi %s</h2><table>%s</table>%s</section>' % (
-        esc(name), ''.join('<tr><th>%s</th><td>%s</td></tr>' % (esc(k), esc(v)) for k, v in specs),
-        '<p class="note" style="margin-top:10px">Lingkar dada dan panjang adalah ukuran produk, bukan ukuran badan.</p>'
-        if num(p.get('lingkar_dada_cm')) or num(p.get('panjang_cm')) else '')) if specs else ''
+    spec_html = ('<section class="box"><h2>Spesifikasi %s</h2><table>%s</table></section>' % (
+        esc(name), ''.join('<tr><th>%s</th><td>%s</td></tr>' % (esc(k), esc(v)) for k, v in specs))) if specs else ''
+    ukur = [(k, num_text(p.get(f))) for k, f in (('Panjang Atasan (cm)', 'panjang_cm'), ('Lingkar Dada (cm)', 'lingkar_dada_cm'),
+                                                  ('Panjang Lengan (cm)', 'panjang_lengan_cm')) if num(p.get(f))]
+    if ukur:  # panduan ukuran: satu sumber dari kolom spesifikasi, sama dengan tabel di toko
+        spec_html = ('<section class="box"><h2>Panduan ukuran %s</h2><div class="sg"><table><thead><tr><th>Ukuran</th>%s</tr></thead>'
+                     '<tbody><tr><td>%s</td>%s</tr></tbody></table></div>'
+                     '<p class="note" style="margin-top:10px">Ukuran produk, diukur dari bajunya.</p></section>' % (
+                         esc(name), ''.join('<th>%s</th>' % esc(k) for k, _ in ukur),
+                         esc(sizes[0] if len(sizes) == 1 else 'Ukuran produk'), ''.join('<td>%s</td>' % esc(v) for _, v in ukur))) + spec_html
     desc_body = render_desc(p.get('description'))
     desc_html = '<section class="box desc"><h2>Deskripsi %s</h2>%s</section>' % (esc(name), desc_body) if desc_body else ''
     var_rows = ''.join('<tr><td>%s</td><td>%s</td><td>%s</td><td>%s</td></tr>' % (
