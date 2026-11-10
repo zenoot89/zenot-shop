@@ -379,6 +379,8 @@
     .size-guide td{padding:11px 8px;border-top:1px solid var(--border)}
     .size-guide th:first-child,.size-guide td:first-child{text-align:left;padding-left:14px;white-space:nowrap}
     .size-guide-note{font-size:11px;color:var(--muted);margin:6px 0 0}
+    .size-guide-title{font-size:13px;font-weight:700;margin:14px 0 0}
+    .size-guide tr.is-sel td{font-weight:700;background:rgba(17,17,20,.05)}
     .desc-title{font-size:15px;font-weight:700;letter-spacing:.02em;margin:26px 0 10px;color:var(--ink)}
     .desc-title.with-line{margin-top:28px;padding-top:22px;border-top:1px solid var(--border)}
     a.drawer-sub-item{text-decoration:none;box-sizing:border-box;line-height:normal}
@@ -3392,6 +3394,7 @@ function selectSize(el, variantId) {
   selectedVariant = activeVariants.find(v=>v.id===variantId);
   document.querySelectorAll('.modal-size-btn').forEach(b=>b.classList.remove('active'));
   el.classList.add('active');
+  markSizeGuide(selectedVariant.size);
   setVariantButtons(true);
   document.getElementById('stok-label').textContent = `Stok: ${selectedVariant.stock} pcs`;
   // jumlah tidak boleh melebihi stok varian yang baru dipilih
@@ -3467,18 +3470,34 @@ function updateVoucherBadge() {
 }
 
 // Panduan ukuran (satu sumber: kolom Panjang Atasan, Lingkar Dada, Panjang Lengan di tab Spesifikasi Seller Center).
+const SIZE_ORDER = ['XXS', 'XS', 'S', 'M', 'L', 'XL', 'XXL', '2XL', 'XXXL', '3XL', '4XL', '5XL'];
 function renderSizeGuide(p) {
   const el = document.getElementById('modal-size-guide');
   if (!el) return;
   const n = v => { const x = Number(v); return Number.isFinite(x) && x > 0 ? x : 0; };
-  const cols = [['Panjang Atasan (cm)', n(p.panjang_cm)], ['Lingkar Dada (cm)', n(p.lingkar_dada_cm)], ['Panjang Lengan (cm)', n(p.panjang_lengan_cm)]].filter(c => c[1]);
-  if (!cols.length) { el.innerHTML = ''; return; }
-  const sizes = [...new Set((p.variants || []).filter(v => v.is_active !== false).map(v => String(v.size || '').trim()).filter(Boolean))];
-  const label = sizes.length === 1 ? sizes[0] : 'Ukuran produk';
-  el.innerHTML = '<div class="size-guide"><div class="size-guide-scroll"><table><thead><tr><th>Ukuran</th>' +
-    cols.map(c => '<th>' + c[0] + '</th>').join('') + '</tr></thead><tbody><tr><td>' + chatEsc(label) + '</td>' +
-    cols.map(c => '<td>' + c[1] + '</td>').join('') + '</tr></tbody></table></div></div>' +
-    '<p class="size-guide-note">Ukuran produk, diukur dari bajunya.</p>';
+  const act = [...new Set((p.variants || []).filter(v => v.is_active !== false).map(v => String(v.size || '').trim()).filter(Boolean))];
+  const chart = p.size_chart && typeof p.size_chart === 'object' ? p.size_chart : {};
+  // baris: [ukuran, panjang atasan, lingkar dada, panjang lengan]
+  let rows = act.filter(sz => chart[sz])
+    .map(sz => [sz, n(chart[sz].panjang), n(chart[sz].dada), n(chart[sz].lengan)]).filter(r => r[1] || r[2] || r[3]);
+  if (!rows.length) { // produk lama: satu set angka di kolom lama
+    const old = [n(p.panjang_cm), n(p.lingkar_dada_cm), n(p.panjang_lengan_cm)];
+    if (old.some(Boolean)) rows = [[act.length === 1 ? act[0] : 'Ukuran produk'].concat(old)];
+  }
+  if (!rows.length) { el.innerHTML = ''; return; }
+  const ord = s => { const i = SIZE_ORDER.indexOf(String(s).toUpperCase()); return i < 0 ? 99 : i; };
+  rows.sort((a, b) => ord(a[0]) - ord(b[0]));
+  const heads = ['Panjang Atasan (cm)', 'Lingkar Dada (cm)', 'Panjang Lengan (cm)'];
+  const use = [1, 2, 3].filter(k => rows.some(r => r[k]));
+  el.innerHTML = '<div class="size-guide-title">Panduan Ukuran</div><div class="size-guide"><div class="size-guide-scroll"><table><thead><tr><th>Ukuran</th>' +
+    use.map(k => '<th>' + heads[k - 1] + '</th>').join('') + '</tr></thead><tbody>' +
+    rows.map(r => '<tr data-size="' + chatEsc(r[0]) + '"><td>' + chatEsc(r[0]) + '</td>' + use.map(k => '<td>' + (r[k] || '-') + '</td>').join('') + '</tr>').join('') +
+    '</tbody></table></div></div><p class="size-guide-note">Ukuran produk, diukur dari bajunya.</p>';
+  markSizeGuide(selectedVariant && selectedVariant.size);
+}
+// Baris ukuran yang sedang dipilih pembeli ditebalkan.
+function markSizeGuide(size) {
+  document.querySelectorAll('#modal-size-guide tr[data-size]').forEach(tr => tr.classList.toggle('is-sel', size != null && tr.dataset.size === String(size)));
 }
 
 function renderModalSpecs(p) {
@@ -3689,7 +3708,7 @@ function renderPdpPay() {
   const el = document.getElementById('pdp-pay');
   if (!el || el.dataset.done) return;
   el.dataset.done = '1';
-  el.innerHTML = FOOTER_PAYMENTS.filter(m => m.on).map(m => `<img src="${FOOTER_PAY_DIR}${m.f}" alt="${chatEsc(m.n)}" title="${chatEsc(m.n)}" width="${m.w}" height="${m.h}" loading="lazy" decoding="async">`).join('');
+  el.innerHTML = FOOTER_PAYMENTS.filter(m => m.on).map(m => m.f ? `<img src="${FOOTER_PAY_DIR}${m.f}" alt="${chatEsc(m.n)}" title="${chatEsc(m.n)}" width="${m.w}" height="${m.h}" loading="lazy" decoding="async">` : `<span class="footer-pay-chip">${chatEsc(m.n)}</span>`).join('');
 }
 
 function openVariantSheet(mode) {
@@ -4314,7 +4333,7 @@ function renderPayMethodSheet() {
   const ms = payChoices();
   const walletsHtml = `<span class="paym-wallets">${QRIS_WALLETS.map(f => `<img src="${FOOTER_PAY_DIR}${f}" alt="">`).join('')}</span>`;
   const opt = (id, logoHtml, title, sub, extra) => `<button class="paym-opt${cur === id ? ' sel' : ''}" onclick="selectPayMethod('${id}')">${logoHtml}<span class="paym-opt-main"><div class="paym-opt-title">${title}</div>${sub ? `<div class="paym-opt-sub">${sub}</div>` : ''}${extra || ''}</span><span class="paym-radio"></span></button>`;
-  const logo = m => `<span class="paym-logo"><img src="${FOOTER_PAY_DIR}${m.f}" alt=""></span>`;
+  const logo = m => m.f ? `<span class="paym-logo"><img src="${FOOTER_PAY_DIR}${m.f}" alt=""></span>` : `<span class="paym-logo"><b style="font-size:12px">${chatEsc(m.n)}</b></span>`;
   const grp = (title, arr) => arr.length ? `<div class="paym-grp">${title}</div>${arr.join('')}` : '';
   let html = '';
   if (inOrder) {
@@ -5020,7 +5039,7 @@ const FOOTER_PAY_DIR = '';
 // snap = kode metode di Midtrans (enabled_payments). Metode dengan on:true DAN snap terisi tampil sebagai pilihan di checkout.
 // snap:null (mis. BSI, OVO, SeaBank) = belum dipetakan: tetap tampil di logo footer dan bisa dipilih lewat "Metode lain" di halaman Midtrans.
 const FOOTER_PAYMENTS = [
-  { n: 'QRIS',         f: 'qris.png',         w: 328, h: 56, on: false, g: 'qr', snap: 'other_qris' },   // ubah on:true setelah QRIS Dinamis GoPay aktif di Midtrans
+  { n: 'QRIS',         f: 'qris.png',         w: 328, h: 56, on: true, g: 'qr', snap: null },   // tampil di footer; belum jadi pilihan checkout (kode Midtrans belum dipastikan)
   { n: 'BCA',          f: 'bca.png',          w: 180, h: 56, on: false, g: 'va', snap: 'bca_va' },
   { n: 'BRI',          f: 'bri.png',          w: 148, h: 56, on: true, g: 'va', snap: 'bri_va' },
   { n: 'BNI',          f: 'bni.png',          w: 193, h: 56, on: true, g: 'va', snap: 'bni_va' },
@@ -5028,7 +5047,8 @@ const FOOTER_PAYMENTS = [
   { n: 'CIMB Niaga',   f: 'cimb.png',          w: 213, h: 56, on: true, g: 'va', snap: 'cimb_va' },
   { n: 'PermataBank',  f: 'permata-bank.png', w: 226, h: 56, on: true, g: 'va', snap: 'permata_va' },
   { n: 'BSI',          f: 'bsi-logo.png',     w: 70,  h: 47, on: true, d: 22, g: 'va', snap: null },
-  { n: 'SeaBank',      f: 'seabank.png',      w: 104, h: 144, on: false, d: 34, g: 'va', snap: null },
+  { n: 'SeaBank',      f: 'seabank.png',      w: 104, h: 144, on: true, d: 34, g: 'va', snap: null },
+  { n: 'Danamon',      f: null,               w: 0,   h: 0,   on: true, g: 'va', snap: null },   // belum ada file logo: tampil sebagai teks. Kalau nanti ada danamon.png, isi f: 'danamon.png' beserta w/h
   { n: 'GoPay',        f: 'gopay.png',        w: 258, h: 56, on: true, g: 'ew', snap: 'gopay' },
   { n: 'OVO',          f: 'ovo.png',          w: 136, h: 53, on: false, g: 'ew', snap: null },
   { n: 'DANA',         f: 'dana.png',         w: 175, h: 54, on: false, g: 'ew', snap: 'dana' },
@@ -5054,7 +5074,7 @@ function renderFooterExtras() {
       `<a href="/bio/" aria-label="Semua kontak Zenoot" title="Semua kontak Zenoot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></a>`;
   }
   const pay = document.getElementById('footer-pay');
-  if (pay) pay.innerHTML = FOOTER_PAYMENTS.filter(m => m.on).map(m => `<img src="${FOOTER_PAY_DIR}${m.f}" alt="${chatEsc(m.n)}" title="${chatEsc(m.n)}" width="${m.w}" height="${m.h}" style="height:${m.d || 14}px" loading="lazy" decoding="async" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'footer-pay-chip',textContent:this.alt}))">`).join('');
+  if (pay) pay.innerHTML = FOOTER_PAYMENTS.filter(m => m.on).map(m => !m.f ? `<span class="footer-pay-chip">${chatEsc(m.n)}</span>` : `<img src="${FOOTER_PAY_DIR}${m.f}" alt="${chatEsc(m.n)}" title="${chatEsc(m.n)}" width="${m.w}" height="${m.h}" style="height:${m.d || 14}px" loading="lazy" decoding="async" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'footer-pay-chip',textContent:this.alt}))">`).join('');
 }
 
 // ===================== CHAT (pembeli + tamu) =====================
