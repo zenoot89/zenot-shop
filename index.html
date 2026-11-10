@@ -372,15 +372,13 @@
     .variant-sheet[data-mode="both"] #btn-add-cart{background:none;color:var(--accent);border:1.5px solid var(--accent)}
     .variant-sheet[data-mode="both"] #btn-add-cart:hover:not(:disabled){background:none}
     .modal-specs{margin-top:6px}
-    .size-guide{margin:14px 0;border:1px solid var(--border);border-radius:10px;overflow:hidden;background:#fff}
+    .size-guide{margin:10px 0 0;border:1px solid var(--border);border-radius:10px;overflow:hidden;background:#fff}
     .size-guide-scroll{overflow-x:auto}
     .size-guide table{width:100%;border-collapse:collapse;font-size:13px;text-align:center}
     .size-guide th{background:rgba(17,17,20,.05);font-weight:700;padding:10px 8px;line-height:1.3}
     .size-guide td{padding:11px 8px;border-top:1px solid var(--border)}
     .size-guide th:first-child,.size-guide td:first-child{text-align:left;padding-left:14px;white-space:nowrap}
-    .size-guide.is-collapsed .sg-extra{display:none}
-    .size-guide.is-collapsed.is-open .sg-extra{display:table-row}
-    .size-guide-more{display:block;width:100%;border:0;border-top:1px solid var(--border);background:none;padding:11px;font:inherit;font-size:13px;cursor:pointer;color:var(--sec)}
+    .size-guide-note{font-size:11px;color:var(--muted);margin:6px 0 0}
     a.drawer-sub-item{text-decoration:none;box-sizing:border-box;line-height:normal}
     a.home-gender{display:block;text-decoration:none}
     .modal-size-note{font-size:13px;color:var(--ink)}
@@ -1157,6 +1155,7 @@ document.addEventListener('click',function(e){var a=e.target.closest&&e.target.c
             <div class="modal-colors" id="modal-colors"></div>
             <p class="modal-sec-label">Ukuran</p>
             <div class="modal-sizes" id="modal-sizes"></div>
+            <div id="modal-size-guide"></div>
             <div class="pdp-qty-row">
               <div class="modal-qty">
                 <button class="qty-btn" onclick="changeQty(-1)" aria-label="Kurangi">−</button>
@@ -3010,50 +3009,6 @@ function mdToPlain(s) {
     .replace(/`([^`\n]+)`/g, '$1')
     .replace(/\[([^\]\n]+)\]\((?:[^)\n]+)\)/g, '$1');
 }
-// Tabel ukuran di deskripsi: baris berformat | kolom | kolom |. Baris pertama = judul kolom, baris pemisah |---|---| boleh ada.
-const SIZE_ROW = /^[ \t]*\|.*\|[ \t]*$/;
-function sizeTableHtml(lines) {
-  const e = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-  const rows = lines.map(l => l.trim().replace(/^\||\|$/g, '').split('|').map(c => c.trim()))
-    .filter(r => !r.every(c => c === '' || /^:?-{2,}:?$/.test(c)));
-  if (rows.length < 2) return '';
-  const head = rows[0], body = rows.slice(1), MAXV = 3;
-  const more = body.length > MAXV;
-  return '<div class="size-guide' + (more ? ' is-collapsed' : '') + '"><div class="size-guide-scroll"><table><thead><tr>' +
-    head.map(h => '<th>' + e(h) + '</th>').join('') + '</tr></thead><tbody>' +
-    body.map((r, i) => '<tr' + (i >= MAXV ? ' class="sg-extra"' : '') + '>' +
-      head.map((_, k) => '<td>' + e(r[k] == null ? '' : r[k]) + '</td>').join('') + '</tr>').join('') +
-    '</tbody></table></div>' +
-    (more ? '<button type="button" class="size-guide-more" onclick="toggleSizeGuide(this)">Lihat Selengkapnya</button>' : '') + '</div>';
-}
-function toggleSizeGuide(btn) {
-  const box = btn.closest('.size-guide');
-  const open = box.classList.toggle('is-open');
-  btn.textContent = open ? 'Sembunyikan' : 'Lihat Selengkapnya';
-}
-// Deskripsi lengkap: teks biasa lewat descToHtml, blok tabel ukuran jadi tabel bergaya Shopee.
-function descBlocksHtml(raw) {
-  const lines = String(raw == null ? '' : raw).replace(/\r/g, '').split('\n');
-  const out = [];
-  let buf = [], tbl = [];
-  const flushText = () => {
-    const t = buf.join('\n').replace(/^\n+|\n+$/g, '');
-    buf = [];
-    if (t.trim()) out.push('<p style="font-size:14px;color:var(--ink);line-height:1.75;white-space:pre-line">' + descToHtml(t) + '</p>');
-  };
-  const flushTbl = () => {
-    const h = sizeTableHtml(tbl);
-    if (h) out.push(h); else buf.push(...tbl);
-    tbl = [];
-  };
-  for (const line of lines) {
-    if (SIZE_ROW.test(line)) { if (!tbl.length) flushText(); tbl.push(line); }
-    else { if (tbl.length) flushTbl(); buf.push(line); }
-  }
-  if (tbl.length) flushTbl();
-  flushText();
-  return out.join('');
-}
 // Versi tampilan: markdown jadi teks rapi (judul dan **tebal** dicetak tebal, butir jadi titik); HTML di-escape.
 function descToHtml(raw) {
   const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
@@ -3272,12 +3227,14 @@ async function openProduct(id, opts) {
   document.getElementById('stok-label').textContent = 'Stok: pilih varian dulu';
   updateStickyTotal();
   renderModalSpecs(activeProduct);
+  renderSizeGuide(activeProduct);
   renderModalRelated(activeProduct);
 
   // Deskripsi
   const descEl = document.getElementById('modal-description');
   if (activeProduct.description) {
-    descEl.innerHTML = descBlocksHtml(activeProduct.description);
+    descEl.innerHTML = `
+      <p style="font-size:14px;color:var(--ink);line-height:1.75;white-space:pre-line">${descToHtml(String(activeProduct.description == null ? '' : activeProduct.description).replace(/^[ \t]*\|.*\|[ \t]*$/gm, ''))}</p>`;
   } else {
     descEl.innerHTML = '';
   }
@@ -3504,6 +3461,21 @@ function updateVoucherBadge() {
   badge.classList.remove('hidden');
 }
 
+// Panduan ukuran (satu sumber: kolom Panjang Atasan, Lingkar Dada, Panjang Lengan di tab Spesifikasi Seller Center).
+function renderSizeGuide(p) {
+  const el = document.getElementById('modal-size-guide');
+  if (!el) return;
+  const n = v => { const x = Number(v); return Number.isFinite(x) && x > 0 ? x : 0; };
+  const cols = [['Panjang Atasan (cm)', n(p.panjang_cm)], ['Lingkar Dada (cm)', n(p.lingkar_dada_cm)], ['Panjang Lengan (cm)', n(p.panjang_lengan_cm)]].filter(c => c[1]);
+  if (!cols.length) { el.innerHTML = ''; return; }
+  const sizes = [...new Set((p.variants || []).filter(v => v.is_active !== false).map(v => String(v.size || '').trim()).filter(Boolean))];
+  const label = sizes.length === 1 ? sizes[0] : 'Ukuran produk';
+  el.innerHTML = '<div class="size-guide"><div class="size-guide-scroll"><table><thead><tr><th>Ukuran</th>' +
+    cols.map(c => '<th>' + c[0] + '</th>').join('') + '</tr></thead><tbody><tr><td>' + chatEsc(label) + '</td>' +
+    cols.map(c => '<td>' + c[1] + '</td>').join('') + '</tr></tbody></table></div></div>' +
+    '<p class="size-guide-note">Ukuran produk, diukur dari bajunya.</p>';
+}
+
 function renderModalSpecs(p) {
   const el = document.getElementById('modal-specs');
   if (!el) return;
@@ -3514,8 +3486,6 @@ function renderModalSpecs(p) {
     ['Lengan', p.lengan],
     ['Tipe Cutting', p.tipe_cutting],
     ['Motif', p.motif],
-    ['Lingkar Dada', Number(p.lingkar_dada_cm) > 0 ? Number(p.lingkar_dada_cm) + ' cm' : ''],
-    ['Panjang Baju', Number(p.panjang_cm) > 0 ? Number(p.panjang_cm) + ' cm' : ''],
     ['Dipakai Model', p.dipakai_model],
     ['Perawatan', p.perawatan],
   ].map(([l, v]) => [l, v == null ? '' : String(v)]).filter(([,v]) => v.trim());
