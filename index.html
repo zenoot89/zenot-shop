@@ -379,6 +379,8 @@
     .size-guide td{padding:11px 8px;border-top:1px solid var(--border)}
     .size-guide th:first-child,.size-guide td:first-child{text-align:left;padding-left:14px;white-space:nowrap}
     .size-guide-note{font-size:11px;color:var(--muted);margin:6px 0 0}
+    .desc-title{font-size:15px;font-weight:700;letter-spacing:.02em;margin:26px 0 10px;color:var(--ink)}
+    .desc-title.with-line{margin-top:28px;padding-top:22px;border-top:1px solid var(--border)}
     a.drawer-sub-item{text-decoration:none;box-sizing:border-box;line-height:normal}
     a.home-gender{display:block;text-decoration:none}
     .modal-size-note{font-size:13px;color:var(--ink)}
@@ -3232,9 +3234,12 @@ async function openProduct(id, opts) {
 
   // Deskripsi
   const descEl = document.getElementById('modal-description');
-  if (activeProduct.description) {
+  const descClean = String(activeProduct.description == null ? '' : activeProduct.description).replace(/^[ \t]*\|.*\|[ \t]*$/gm, '');
+  if (descClean.trim()) {
+    const hasSpecs = !!(document.getElementById('modal-specs') || {}).innerHTML?.trim();
     descEl.innerHTML = `
-      <p style="font-size:14px;color:var(--ink);line-height:1.75;white-space:pre-line">${descToHtml(String(activeProduct.description == null ? '' : activeProduct.description).replace(/^[ \t]*\|.*\|[ \t]*$/gm, ''))}</p>`;
+      <h3 class="desc-title${hasSpecs ? ' with-line' : ''}">Deskripsi Produk</h3>
+      <p style="font-size:14px;color:var(--ink);line-height:1.75;white-space:pre-line">${descToHtml(descClean)}</p>`;
   } else {
     descEl.innerHTML = '';
   }
