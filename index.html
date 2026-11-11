@@ -5339,7 +5339,7 @@ const FOOTER_PAY_DIR = '';
 // snap = kode metode di Midtrans (enabled_payments). Metode dengan on:true DAN snap terisi tampil sebagai pilihan di checkout.
 // snap:null (mis. BSI, OVO, SeaBank) = belum dipetakan: tetap tampil di logo footer dan bisa dipilih lewat "Metode lain" di halaman Midtrans.
 const FOOTER_PAYMENTS = [
-  { n: 'QRIS',         f: 'qris.png',         w: 328, h: 56, on: true, g: 'qr', snap: 'other_qris', sub: 'Scan dengan e-wallet atau m-banking apa pun. Dari HP yang sama: ketuk Simpan QR, lalu pilih gambar dari galeri di menu scan aplikasi.' },   // QRIS: server (midtrans-create) membuat QR lewat Core API (acquirer GoPay), toko menampilkan kartu QR sendiri; kalau gagal, halaman Snap (other_qris, lalu gopay)
+  { n: 'QRIS',         f: 'qris.png',         w: 328, h: 56, on: true, g: 'qr', snap: 'other_qris', sub: 'Scan dengan e-wallet atau m-banking apa pun. Dari HP yang sama: simpan gambar QR (tombol Download atau Simpan QR), lalu pilih dari galeri di menu scan aplikasi.' },   // QRIS: server (midtrans-create) membuat QR lewat Core API (acquirer GoPay), toko menampilkan kartu QR sendiri; kalau gagal, halaman Snap (other_qris, lalu gopay)
   { n: 'BCA',          f: 'bca.png',          w: 180, h: 56, on: false, g: 'va', snap: 'bca_va' },
   { n: 'BRI',          f: 'bri.png',          w: 148, h: 56, on: true, g: 'va', snap: 'bri_va' },
   { n: 'BNI',          f: 'bni.png',          w: 193, h: 56, on: true, g: 'va', snap: 'bni_va' },
