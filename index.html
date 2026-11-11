@@ -4323,7 +4323,7 @@ function payInfo(c) {
   if (c === 'other') return { name: 'Metode lain', sub: 'Pilih di halaman pembayaran Midtrans', logo: '' };
   const m = payChoices().find(x => x.snap === c);
   if (!m) return null;
-  return { name: payLabel(m), sub: m.g === 'va' ? 'Bayar lewat ATM, m-banking, atau internet banking' : (m.g === 'qr' ? 'Scan dengan e-wallet atau m-banking apa pun' : 'Bayar lewat aplikasi'), logo: FOOTER_PAY_DIR + m.f };
+  return { name: payLabel(m), sub: m.sub ? m.sub : m.g === 'va' ? 'Bayar lewat ATM, m-banking, atau internet banking' : (m.g === 'qr' ? 'Scan dengan e-wallet atau m-banking apa pun' : 'Bayar lewat aplikasi'), logo: FOOTER_PAY_DIR + m.f };
 }
 let payOrderCtx = null;   // null = memilih metode untuk checkout; { orderId, sel } = memilih metode untuk pesanan yang sudah dibuat (Pesanan Saya)
 const QRIS_WALLETS = ['gopay.png', 'ovo.png', 'dana.png', 'shopeepay.png'];   // logo di bawah pilihan QRIS (tampil bila QRIS aktif)
@@ -4342,8 +4342,8 @@ function renderPayMethodSheet() {
     html += `<p class="paym-note">Pesanan ${orderEsc(o ? o.order_number || '' : '')}${o ? ' &middot; <b>' + fRp(o.total) + '</b>' : ''}. Pilih metode pembayaran. Pembayaran sebelumnya untuk pesanan ini otomatis dibatalkan.</p>`;
   }
   html += grp('E-Wallet', ms.filter(m => m.g === 'ew').map(m => opt(m.snap, logo(m), payLabel(m), 'Bayar lewat aplikasi')));
-  html += grp('QRIS', ms.filter(m => m.g === 'qr').map(m => opt(m.snap, logo(m), payLabel(m), 'Scan dengan e-wallet atau m-banking apa pun', walletsHtml)));
-  html += grp('Virtual Account', ms.filter(m => m.g === 'va').map(m => opt(m.snap, logo(m), payLabel(m), '')));
+  html += grp('QRIS', ms.filter(m => m.g === 'qr').map(m => opt(m.snap, logo(m), payLabel(m), m.sub || 'Scan dengan e-wallet atau m-banking apa pun', walletsHtml)));
+  html += grp('Virtual Account', ms.filter(m => m.g === 'va').map(m => opt(m.snap, logo(m), payLabel(m), m.sub || '')));
   const more = [];
   if (ms.length) more.push(opt('other', '<span class="paym-logo paym-emoji">💳</span>', 'Metode lain', 'Pilih bank atau dompet lain di halaman pembayaran Midtrans'));
   if (!inOrder) more.push(opt('wa', '<span class="paym-logo paym-emoji">💬</span>', 'Pesan via WhatsApp', 'Konfirmasi pesanan dan pembayaran lewat chat admin'));
@@ -5040,16 +5040,16 @@ const FOOTER_PAY_DIR = '';
 // snap = kode metode di Midtrans (enabled_payments). Metode dengan on:true DAN snap terisi tampil sebagai pilihan di checkout.
 // snap:null (mis. BSI, OVO, SeaBank) = belum dipetakan: tetap tampil di logo footer dan bisa dipilih lewat "Metode lain" di halaman Midtrans.
 const FOOTER_PAYMENTS = [
-  { n: 'QRIS',         f: 'qris.png',         w: 328, h: 56, on: true, g: 'qr', snap: 'other_qris' },   // server (midtrans-create) mengarahkan other_qris ke channel gopay: QRIS Dinamis GoPay, kode QR bisa dipindai e-wallet/m-banking apa pun
+  { n: 'QRIS',         f: 'qris.png',         w: 328, h: 56, on: true, g: 'qr', snap: 'other_qris', sub: 'Scan dengan e-wallet atau m-banking apa pun. Bayar dari HP yang sama? Simpan gambar QR lalu buka di aplikasi.' },   // QRIS generik Midtrans (other_qris, penerbit GoPay). Server (midtrans-create) memakai gopay hanya kalau other_qris ditolak Midtrans
   { n: 'BCA',          f: 'bca.png',          w: 180, h: 56, on: false, g: 'va', snap: 'bca_va' },
   { n: 'BRI',          f: 'bri.png',          w: 148, h: 56, on: true, g: 'va', snap: 'bri_va' },
   { n: 'BNI',          f: 'bni.png',          w: 193, h: 56, on: true, g: 'va', snap: 'bni_va' },
   { n: 'Mandiri',      f: 'mandiri.png',      w: 192, h: 56, on: true, g: 'va', snap: 'echannel' },
   { n: 'CIMB Niaga',   f: 'cimb.png',          w: 213, h: 56, on: true, g: 'va', snap: 'cimb_va' },
   { n: 'PermataBank',  f: 'permata-bank.png', w: 226, h: 56, on: true, g: 'va', snap: 'permata_va' },
-  { n: 'BSI',          f: 'bsi-logo.png',     w: 70,  h: 47, on: true, d: 22, g: 'va', snap: null },
+  { n: 'BSI',          f: 'bsi-logo.png',     w: 70,  h: 47, on: true, d: 22, g: 'va', snap: 'bsi_va', sub: 'Bayar lewat aplikasi BYOND by BSI' },
   { n: 'SeaBank',      f: 'seabank.png',      w: 104, h: 144, on: true, d: 34, g: 'va', snap: null },
-  { n: 'Danamon',      f: 'danamon.png',      w: 147, h: 56, on: true, g: 'va', snap: null },   // footer saja: other_va belum muncul di halaman Midtrans; bisa dipilih lewat 'Metode lain' kalau sudah aktif   // Danamon dan SeaBank lewat satu pintu Midtrans (other_va), jadi satu pilihan di checkout
+  { n: 'Danamon',      f: 'danamon.png',      w: 147, h: 56, on: true, g: 'va', snap: 'danamon_va' },
   { n: 'GoPay',        f: 'gopay.png',        w: 258, h: 56, on: true, g: 'ew', snap: 'gopay' },
   { n: 'OVO',          f: 'ovo.png',          w: 136, h: 53, on: false, g: 'ew', snap: null },
   { n: 'DANA',         f: 'dana.png',         w: 175, h: 54, on: false, g: 'ew', snap: 'dana' },
