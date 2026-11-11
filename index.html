@@ -549,6 +549,17 @@
     .paym-wallets{display:flex;align-items:center;flex-wrap:wrap;gap:6px 12px;margin-top:8px}
     .paym-wallets img{height:13px;width:auto;max-width:56px;object-fit:contain}
     .paym-note{font-size:12.5px;color:var(--sec);line-height:1.5;padding:14px 0 2px}
+    .qris-img{display:block;width:100%;max-width:360px;height:auto;margin:16px auto 10px;border-radius:6px;border:1px solid var(--border)}
+    .qris-status{text-align:center;font-size:13px;font-weight:600;margin:4px 0 12px;color:var(--ink)}
+    .qris-help{margin:0 0 10px;padding-left:18px;font-size:12.5px;line-height:1.55;color:var(--sec)}
+    .qris-help li{margin-bottom:4px}
+    .qris-foot-note{font-size:11.5px;color:var(--muted);line-height:1.5;margin:0 0 16px}
+    .qris-foot{display:flex;flex-direction:column;gap:8px}
+    .ongkir-sheet-footer.qris-foot button.ghost{background:#fff;color:var(--ink);border:1.5px solid var(--border)}
+    .qris-paid{text-align:center;padding:34px 8px 22px}
+    .qris-paid-mark{width:56px;height:56px;line-height:56px;border-radius:50%;background:var(--ink);color:#fff;font-size:28px;margin:0 auto 14px}
+    .qris-paid h3{font-size:17px;margin:0 0 8px}
+    .qris-paid p{font-size:13px;color:var(--sec);line-height:1.55;margin:0}
     .ongkir-sheet-footer button:disabled{opacity:.45;cursor:default}
     .oa-box{margin:14px 0 6px;padding:12px 14px;border:1px solid var(--border);border-radius:10px;background:#faf9f6;font-size:12.5px;line-height:1.6;color:var(--sec)}
     .oa-box b{color:var(--ink);font-weight:600}
@@ -1272,6 +1283,24 @@ document.addEventListener('click',function(e){var a=e.target.closest&&e.target.c
     <div class="ongkir-sheet-body" id="pay-method-body"></div>
     <div class="ongkir-sheet-footer" id="pay-method-footer" style="display:none">
       <button id="pay-method-confirm" onclick="confirmPayOrder()" disabled>Pilih metode pembayaran</button>
+    </div>
+  </div>
+</div>
+
+<!-- SHEET PEMBAYARAN QRIS (kartu QR buatan toko) -->
+<div class="ongkir-sheet-overlay" id="qris-overlay" onclick="if(event.target===this)closeQrisSheet()">
+  <div class="ongkir-sheet">
+    <div class="ongkir-sheet-header">
+      <span>Pembayaran QRIS</span>
+      <button class="ongkir-sheet-close" onclick="closeQrisSheet()" aria-label="Tutup">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="ongkir-sheet-body" id="qris-body"></div>
+    <div class="ongkir-sheet-footer qris-foot">
+      <button id="qris-save" onclick="qrisSave()" style="display:none">Simpan QR</button>
+      <button id="qris-check" class="ghost" onclick="qrisCheckNow(true)" style="display:none">Cek status pembayaran</button>
+      <button id="qris-done" onclick="closeQrisSheet()" style="display:none">Tutup</button>
     </div>
   </div>
 </div>
@@ -4334,7 +4363,7 @@ function renderPayMethodSheet() {
   const ms = payChoices();
   const walletsHtml = `<span class="paym-wallets">${QRIS_WALLETS.map(f => `<img src="${FOOTER_PAY_DIR}${f}" alt="">`).join('')}</span>`;
   const opt = (id, logoHtml, title, sub, extra) => `<button class="paym-opt${cur === id ? ' sel' : ''}" onclick="selectPayMethod('${id}')">${logoHtml}<span class="paym-opt-main"><div class="paym-opt-title">${title}</div>${sub ? `<div class="paym-opt-sub">${sub}</div>` : ''}${extra || ''}</span><span class="paym-radio"></span></button>`;
-  const logo = m => m.f ? `<span class="paym-logo"><img src="${FOOTER_PAY_DIR}${m.f}" alt=""></span>` : `<span class="paym-logo"><b style="font-size:12px">${chatEsc(m.n)}</b></span>`;
+  const logo = m => m.f ? `<span class="paym-logo"><img src="${FOOTER_PAY_DIR}${m.f}" alt="" style="max-height:${Math.max(22, Number(m.d) || 22)}px"></span>` : `<span class="paym-logo"><b style="font-size:12px">${chatEsc(m.n)}</b></span>`;
   const grp = (title, arr) => arr.length ? `<div class="paym-grp">${title}</div>${arr.join('')}` : '';
   let html = '';
   if (inOrder) {
@@ -4917,18 +4946,26 @@ async function buyerPayOrder(orderId, btn, payMethod) {
       body: JSON.stringify(payMethod ? { order_id: orderId, payment_method: payMethod } : { order_id: orderId })
     });
     const data = await res.json().catch(() => ({}));
-    if (!res.ok || !data.redirect_url) {
+    const hasQris = !!(data.qris && typeof data.qris.qr_string === 'string' && /^0002/.test(data.qris.qr_string));
+    if (!res.ok || (!data.redirect_url && !hasQris)) {
       showToast(data.error || 'Gagal menyiapkan pembayaran, coba lagi', 4000);
       // Data pesanan sudah berubah (sudah dibayar / diubah di tempat lain / kedaluwarsa): tutup pilihan metode dan muat ulang daftar
       if (['sudah_dibayar', 'pesanan_berubah', 'pesanan_kedaluwarsa'].includes(data.code)) { closePayMethodSheet(); refreshOrdersView(); }
       return false;
     }
-    // Hanya mau membuka halaman bayar resmi Midtrans
-    if (!/^https:\/\/app(\.sandbox)?\.midtrans\.com\//.test(data.redirect_url)) { showToast('Alamat pembayaran tidak valid', 3000); return false; }
+    // Hanya mau membuka halaman bayar resmi Midtrans (kecuali QRIS buatan toko, tanpa pindah halaman)
+    if (!hasQris && !/^https:\/\/app(\.sandbox)?\.midtrans\.com\//.test(data.redirect_url)) { showToast('Alamat pembayaran tidak valid', 3000); return false; }
     // Ongkir dihitung ulang server dari alamat kirim: beri tahu pembeli kalau totalnya berubah sebelum pindah ke halaman bayar
     if (data.shipping_adjusted && Number.isFinite(Number(data.total))) {
       showToast('Ongkos kirim ke alamatmu ' + fRp(data.shipping_cost) + '. Total ' + fRp(data.total), 2600);
       await new Promise(r => setTimeout(r, 2300));
+    }
+    // QRIS: kartu QR ditampilkan di sini (server sudah membuat transaksinya)
+    if (hasQris) {
+      const exp = Date.parse(String(data.qris.expires_at || ''));
+      started = true;
+      openQrisSheet({ orderId, orderNumber: data.qris.order_number || '', qr: data.qris.qr_string, amount: Number(data.total) || Number(data.qris.amount) || 0, expiresAt: Number.isFinite(exp) ? exp : Date.now() + 15 * 60 * 1000 });
+      return true;
     }
     try { sessionStorage.setItem('zenot_pay_started', '1'); } catch (_) {}
     started = true;
@@ -4951,6 +4988,224 @@ window.addEventListener('pageshow', e => {
     }
   } catch (_) {}
 });
+
+// ===================== HALAMAN QRIS (kartu QR buatan toko) =====================
+// Pembayaran QRIS dibuat server lewat Core API Midtrans (bukan halaman Snap). Server mengirim kode QR mentah (qr_string);
+// toko menggambar kartunya sendiri (logo QRIS kiri atas, logo Zenoot kanan atas, nominal, QR, batas waktu) dan menunggu
+// webhook mengubah status pesanan. Kalau server tidak bisa membuat QR sendiri, ia memakai halaman Snap seperti biasa.
+let qrisCtx = null;      // { orderId, orderNumber, qr, amount, expiresAt, dataUrl, blob, poll, state, checking }
+let _qrLibPromise = null;
+const QRIS_FONT = "'Inter', -apple-system, 'Helvetica Neue', Arial, sans-serif";
+
+function loadQrLib() {
+  if (window.qrcode) return Promise.resolve();
+  if (_qrLibPromise) return _qrLibPromise;
+  _qrLibPromise = new Promise((resolve, reject) => {
+    const s = document.createElement('script');
+    s.src = 'qrcode.js';
+    s.onload = () => (window.qrcode ? resolve() : reject(new Error('qrcode kosong')));
+    s.onerror = () => reject(new Error('qrcode gagal dimuat'));
+    document.head.appendChild(s);
+  }).catch(e => { _qrLibPromise = null; throw e; });
+  return _qrLibPromise;
+}
+function qrisLoadImg(src) {
+  return new Promise(res => { const i = new Image(); i.onload = () => res(i); i.onerror = () => res(null); i.src = src; });
+}
+// "11 Nov 2026, 21.15 WIB"
+function qrisFmtExpiry(ms) {
+  try {
+    const p = {};
+    new Intl.DateTimeFormat('id-ID', { timeZone: 'Asia/Jakarta', day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' })
+      .formatToParts(new Date(ms)).forEach(x => { p[x.type] = x.value; });
+    return `${p.day} ${p.month} ${p.year}, ${p.hour}.${p.minute} WIB`;
+  } catch (_) { return new Date(ms).toLocaleString('id-ID'); }
+}
+
+// Menggambar kartu 1200x1500 (abu, hitam, putih). d = { qr, amount, orderNumber, expiresAt, imgQris, imgLogo }
+function drawQrisCard(canvas, d) {
+  const W = 1200, H = 1500;
+  canvas.width = W; canvas.height = H;
+  const c = canvas.getContext('2d');
+  const fitW = (img, h) => Math.round(img.width * h / img.height);
+  c.fillStyle = '#f2f2f2'; c.fillRect(0, 0, W, H);
+
+  // Logo: QRIS di kiri atas, Zenoot Knitwear di kanan atas
+  const LH = 88;
+  c.textBaseline = 'alphabetic';
+  if (d.imgQris) c.drawImage(d.imgQris, 64, 64, fitW(d.imgQris, LH), LH);
+  else { c.fillStyle = '#111'; c.textAlign = 'left'; c.font = `700 64px ${QRIS_FONT}`; c.fillText('QRIS', 64, 130); }
+  if (d.imgLogo) { const w = fitW(d.imgLogo, LH); c.drawImage(d.imgLogo, W - 64 - w, 64, w, LH); }
+  else { c.fillStyle = '#111'; c.textAlign = 'right'; c.font = `700 52px ${QRIS_FONT}`; c.fillText('ZENOOT KNITWEAR', W - 64, 130); }
+
+  // Judul, nama toko, nominal, nomor pesanan
+  c.textAlign = 'center';
+  c.fillStyle = '#111'; c.font = `600 54px ${QRIS_FONT}`; c.fillText('Pembayaran QRIS', W / 2, 270);
+  c.fillStyle = '#6b6b6b'; c.font = `400 36px ${QRIS_FONT}`; c.fillText('Toko: ZENOOT', W / 2, 330);
+  c.fillStyle = '#111'; c.font = `700 100px ${QRIS_FONT}`;
+  c.fillText('Rp ' + Math.round(Number(d.amount) || 0).toLocaleString('id-ID'), W / 2, 450);
+  if (d.orderNumber) { c.fillStyle = '#6b6b6b'; c.font = `400 28px ${QRIS_FONT}`; c.fillText('No. Pesanan ' + d.orderNumber, W / 2, 508); }
+
+  // Kotak putih berisi QR
+  const bx = 210, by = 560, bs = 780;
+  c.fillStyle = '#ffffff';
+  c.beginPath();
+  if (c.roundRect) c.roundRect(bx, by, bs, bs, 40); else c.rect(bx, by, bs, bs);
+  c.fill();
+  c.strokeStyle = '#d6d6d6'; c.lineWidth = 2; c.stroke();
+  const qr = qrcode(0, 'M');
+  qr.addData(String(d.qr), 'Byte');
+  qr.make();
+  const n = qr.getModuleCount();
+  const cell = Math.floor((bs - 80) / n);
+  const qs = cell * n;
+  const ox = bx + Math.floor((bs - qs) / 2), oy = by + Math.floor((bs - qs) / 2);
+  c.fillStyle = '#111';
+  for (let r = 0; r < n; r++) for (let k = 0; k < n; k++) if (qr.isDark(r, k)) c.fillRect(ox + k * cell, oy + r * cell, cell, cell);
+
+  // Batas waktu
+  c.fillStyle = '#111'; c.fillRect(0, 1380, W, 120);
+  c.fillStyle = '#ffffff'; c.textAlign = 'center'; c.font = `600 38px ${QRIS_FONT}`;
+  c.fillText('QR berlaku sampai: ' + qrisFmtExpiry(d.expiresAt), W / 2, 1452);
+  return canvas;
+}
+
+function qrisSetBody(html) { const b = document.getElementById('qris-body'); if (b) b.innerHTML = html; }
+function qrisSetFooter(save, check, done) {
+  const s = document.getElementById('qris-save'), k = document.getElementById('qris-check'), d = document.getElementById('qris-done');
+  if (s) s.style.display = save ? '' : 'none';
+  if (k) k.style.display = check ? '' : 'none';
+  if (d) d.style.display = done ? '' : 'none';
+}
+
+// q = { orderId, orderNumber, qr, amount, expiresAt (ms) }
+async function openQrisSheet(q) {
+  try { closeCart(); } catch (_) {}
+  stopQrisPoll();
+  qrisCtx = { orderId: q.orderId, orderNumber: q.orderNumber || '', qr: q.qr, amount: q.amount, expiresAt: q.expiresAt, dataUrl: '', blob: null, poll: null, state: 'loading', checking: false };
+  qrisSetBody('<p class="paym-note" style="text-align:center">Menyiapkan kode QR...</p>');
+  qrisSetFooter(false, false);
+  document.getElementById('qris-overlay').classList.add('open');
+  const ctx = qrisCtx;
+  try {
+    await loadQrLib();
+    try { if (document.fonts && document.fonts.load) { await Promise.race([document.fonts.load(`600 40px ${QRIS_FONT}`), new Promise(r => setTimeout(r, 1200))]); } } catch (_) {}
+    const [imgQris, imgLogo] = await Promise.all([qrisLoadImg(FOOTER_PAY_DIR + 'qris.png'), qrisLoadImg('zenoot-shop-logo-black.png')]);
+    const canvas = document.createElement('canvas');
+    drawQrisCard(canvas, { qr: ctx.qr, amount: ctx.amount, orderNumber: ctx.orderNumber, expiresAt: ctx.expiresAt, imgQris, imgLogo });
+    ctx.dataUrl = canvas.toDataURL('image/png');
+    ctx.blob = await new Promise(res => canvas.toBlob(res, 'image/png'));
+  } catch (e) {
+    if (qrisCtx !== ctx) return;
+    ctx.state = 'error';
+    qrisSetBody('<div class="oa-box err">Kode QR belum bisa ditampilkan. Tutup halaman ini, lalu coba lagi dari Akun Saya &gt; Riwayat Pesanan.</div>');
+    qrisSetFooter(false, false, true);
+    return;
+  }
+  if (qrisCtx !== ctx) return;   // ditutup selagi menyiapkan
+  ctx.state = 'waiting';
+  qrisRenderWaiting();
+  qrisSetFooter(true, true);
+  startQrisPoll();
+}
+function qrisRenderWaiting() {
+  const c = qrisCtx; if (!c) return;
+  qrisSetBody(`
+    <img class="qris-img" src="${c.dataUrl}" alt="Kode QRIS pembayaran pesanan ${orderEsc(c.orderNumber)}">
+    <p class="qris-status" id="qris-status">Menunggu pembayaran...</p>
+    <ol class="qris-help">
+      <li>Buka aplikasi e-wallet atau m-banking (GoPay, OVO, DANA, ShopeePay, myBCA, dan lainnya), pilih Scan atau QRIS.</li>
+      <li>Arahkan kamera ke kode di atas. Nominal terisi otomatis.</li>
+      <li>Bayar dari HP yang sama? Ketuk Simpan QR, lalu di aplikasi pembayaran pilih gambar dari galeri.</li>
+    </ol>
+    <p class="qris-foot-note">Pesanan tersimpan di Akun Saya &gt; Riwayat Pesanan. Halaman ini berubah sendiri begitu pembayaran masuk.</p>`);
+}
+function closeQrisSheet() {
+  const c = qrisCtx;
+  stopQrisPoll();
+  qrisCtx = null;
+  document.getElementById('qris-overlay').classList.remove('open');
+  if (c && c.state !== 'paid') { try { refreshOrdersView(); } catch (_) {} }
+}
+
+// Simpan QR: lembar bagikan bawaan HP (ada pilihan Simpan Gambar), atau unduh biasa kalau tidak didukung
+async function qrisSave() {
+  const c = qrisCtx; if (!c || !c.blob) return;
+  const name = `QRIS-${c.orderNumber || 'Zenoot'}.png`;
+  try {
+    const file = new File([c.blob], name, { type: 'image/png' });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      await navigator.share({ files: [file], title: 'QRIS Zenoot' });
+      return;
+    }
+  } catch (e) {
+    if (e && e.name === 'AbortError') return;   // pembeli menutup lembar bagikan
+  }
+  try {
+    const url = URL.createObjectURL(c.blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = name;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 4000);
+    showToast('Gambar QR disimpan. Cek folder Unduhan atau Galeri', 3200);
+  } catch (_) {
+    showToast('Tahan gambar QR lalu pilih Simpan ke Foto', 3500);
+  }
+}
+
+// Cek status pesanan. manual = true: beri kabar kalau belum ada pembayaran.
+async function qrisCheckNow(manual) {
+  const c = qrisCtx;
+  if (!c || c.state !== 'waiting' || c.checking) return;
+  c.checking = true;
+  try {
+    const { data, error } = await sb.from('orders').select('status,payment_status').eq('id', c.orderId).maybeSingle();
+    if (qrisCtx !== c) return;
+    if (error || !data) { if (manual) showToast('Status belum bisa diperiksa, coba lagi', 2500); return; }
+    if (data.payment_status === 'paid') { qrisPaid(); return; }
+    if (data.status && data.status !== 'menunggu_pembayaran') {
+      stopQrisPoll(); c.state = 'closed';
+      qrisSetBody('<div class="oa-box err">Pesanan ini sudah tidak menunggu pembayaran. Buka Akun Saya &gt; Riwayat Pesanan untuk melihat statusnya.</div>');
+      qrisSetFooter(false, false, true);
+      return;
+    }
+    if (Date.now() >= c.expiresAt) { qrisExpired(); return; }
+    if (manual) showToast('Belum ada pembayaran masuk', 2200);
+  } catch (_) {
+    if (manual) showToast('Koneksi bermasalah, coba lagi', 2500);
+  } finally {
+    c.checking = false;
+  }
+}
+function qrisPaid() {
+  const c = qrisCtx; if (!c) return;
+  stopQrisPoll(); c.state = 'paid';
+  qrisSetBody(`
+    <div class="qris-paid">
+      <div class="qris-paid-mark">&#10003;</div>
+      <h3>Pembayaran diterima</h3>
+      <p>Pesanan ${orderEsc(c.orderNumber)} sedang disiapkan penjual. Terima kasih sudah berbelanja di Zenoot.</p>
+    </div>`);
+  qrisSetFooter(false, false, true);
+  showToast('Pembayaran diterima', 3000);
+  try { refreshOrdersView(); } catch (_) {}
+}
+function qrisExpired() {
+  const c = qrisCtx; if (!c) return;
+  stopQrisPoll(); c.state = 'expired';
+  qrisSetBody('<div class="oa-box err">Kode QR ini sudah kedaluwarsa. Buka Akun Saya &gt; Riwayat Pesanan untuk melihat pesananmu.</div>');
+  qrisSetFooter(false, false, true);
+}
+function startQrisPoll() {
+  const c = qrisCtx; if (!c) return;
+  stopQrisPoll();
+  c.poll = setInterval(() => qrisCheckNow(false), 4000);
+}
+function stopQrisPoll() {
+  if (qrisCtx && qrisCtx.poll) { clearInterval(qrisCtx.poll); qrisCtx.poll = null; }
+}
+// Pembeli kembali dari aplikasi bank atau e-wallet: cek langsung (timer bisa tertahan saat halaman di latar belakang)
+document.addEventListener('visibilitychange', () => { if (!document.hidden && qrisCtx && qrisCtx.state === 'waiting') qrisCheckNow(false); });
 
 // ===================== CATEGORIES (filter toko) =====================
 async function loadCategories() {
@@ -5040,7 +5295,7 @@ const FOOTER_PAY_DIR = '';
 // snap = kode metode di Midtrans (enabled_payments). Metode dengan on:true DAN snap terisi tampil sebagai pilihan di checkout.
 // snap:null (mis. BSI, OVO, SeaBank) = belum dipetakan: tetap tampil di logo footer dan bisa dipilih lewat "Metode lain" di halaman Midtrans.
 const FOOTER_PAYMENTS = [
-  { n: 'QRIS',         f: 'qris.png',         w: 328, h: 56, on: true, g: 'qr', snap: 'other_qris', sub: 'Scan dengan e-wallet atau m-banking apa pun. Bayar dari HP yang sama? Simpan gambar QR lalu buka di aplikasi.' },   // QRIS generik Midtrans (other_qris, penerbit GoPay). Server (midtrans-create) memakai gopay hanya kalau other_qris ditolak Midtrans
+  { n: 'QRIS',         f: 'qris.png',         w: 328, h: 56, on: true, g: 'qr', snap: 'other_qris', sub: 'Scan dengan e-wallet atau m-banking apa pun. Dari HP yang sama: ketuk Simpan QR, lalu pilih gambar dari galeri di menu scan aplikasi.' },   // QRIS: server (midtrans-create) membuat QR lewat Core API (acquirer GoPay), toko menampilkan kartu QR sendiri; kalau gagal, halaman Snap (other_qris, lalu gopay)
   { n: 'BCA',          f: 'bca.png',          w: 180, h: 56, on: false, g: 'va', snap: 'bca_va' },
   { n: 'BRI',          f: 'bri.png',          w: 148, h: 56, on: true, g: 'va', snap: 'bri_va' },
   { n: 'BNI',          f: 'bni.png',          w: 193, h: 56, on: true, g: 'va', snap: 'bni_va' },
@@ -5048,7 +5303,7 @@ const FOOTER_PAYMENTS = [
   { n: 'CIMB Niaga',   f: 'cimb.png',          w: 213, h: 56, on: true, g: 'va', snap: 'cimb_va' },
   { n: 'PermataBank',  f: 'permata-bank.png', w: 226, h: 56, on: true, g: 'va', snap: 'permata_va' },
   { n: 'BSI',          f: 'bsi-logo.png',     w: 70,  h: 47, on: true, d: 22, g: 'va', snap: 'bsi_va', sub: 'Bayar lewat aplikasi BYOND by BSI' },
-  { n: 'SeaBank',      f: 'seabank.png',      w: 104, h: 144, on: true, d: 34, g: 'va', snap: null },
+  { n: 'SeaBank',      f: 'seabank.png',      w: 104, h: 144, on: true, d: 34, g: 'va', snap: 'seabank_va' },
   { n: 'Danamon',      f: 'danamon.png',      w: 147, h: 56, on: true, g: 'va', snap: 'danamon_va' },
   { n: 'GoPay',        f: 'gopay.png',        w: 258, h: 56, on: true, g: 'ew', snap: 'gopay' },
   { n: 'OVO',          f: 'ovo.png',          w: 136, h: 53, on: false, g: 'ew', snap: null },
