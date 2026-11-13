@@ -2437,31 +2437,22 @@ async function submitOrderReviews() {
   refreshOrdersView();
 }
 
-// Beli Lagi: isi pesanan lama dimasukkan ke keranjang dengan harga dan stok TERBARU; varian yang sudah habis atau dihapus dilewati.
+// Beli Lagi: membuka HALAMAN PRODUK (bukan langsung memasukkan ke keranjang), jadi pembeli bisa memilih varian lagi
+// dan melihat produk lain di toko. Kalau pesanan berisi beberapa produk, yang dibuka produk pertama yang stoknya masih ada.
 function buyAgain(orderId) {
   const o = orderRegistry.get(orderId);
   if (!o) { showToast('Muat ulang daftar pesanan dulu'); return; }
   const items = Array.isArray(o.items) ? o.items : [];
-  let added = 0, skipped = 0;
+  const found = [];
   items.forEach(s => {
-    const p = products.find(x => x.id === s.productId) || products.find(x => x.name === s.name);
-    let v = p && (p.variants || []).find(x => x.id === s.variantId);
-    if (!v && p) v = (p.variants || []).find(x => x.color_name === s.color && x.size === s.size);   // pesanan lama tanpa variantId
-    const stock = v ? (Number(v.stock) || 0) : 0;
-    if (!p || !v || v.is_active === false || stock < 1) { skipped++; return; }
-    const want = Math.max(1, Math.round(Number(s.qty)) || 1);
-    const key = `${p.id}-${v.id}`;
-    const ex = cart.find(i => i.key === key);
-    if (ex) { ex.qty = Math.min(ex.qty + want, stock); ex.stock = stock; }
-    else cart.push({ key, productId: p.id, variantId: v.id, name: p.name, price: v.price, color: v.color_name, size: v.size, qty: Math.min(want, stock), image: p.image_url, stock });
-    added++;
+    const p = products.find(x => x.id === s.productId) || products.find(x => x.name === s.name);   // pesanan lama tanpa productId: cocokkan nama
+    if (p && !found.includes(p)) found.push(p);
   });
-  if (!added) { showToast('Produk di pesanan ini sedang tidak tersedia', 3200); return; }
-  updateCartUI();
-  persistCart();
+  const inStock = p => (p.variants || []).some(v => v.is_active !== false && (Number(v.stock) || 0) > 0);
+  const target = found.find(inStock) || found[0];   // produk yang sedang habis tetap dibuka (halamannya menunjukkan stok habis)
   closeSidePanel();
-  openCart();
-  if (skipped) showToast(skipped + ' produk tidak tersedia dan dilewati', 3400);
+  if (!target) { showToast('Produk dari pesanan ini sudah tidak dijual. Lihat produk lainnya di toko.', 3800); return; }
+  openProduct(target.id);
 }
 
 // Halaman "Pesanan Saya": semua pesanan dengan tab status dan pelacakan resi
