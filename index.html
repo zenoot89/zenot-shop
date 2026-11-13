@@ -573,7 +573,18 @@
     .order-act.danger{color:#a83232;border-color:#e0b8b8}
     .order-act:disabled{opacity:.5;cursor:default}
     .order-act.solid{background:var(--ink);color:#fff;border-color:var(--ink)}
-    .order-review-note{font-size:11.5px;color:var(--muted);margin-top:8px}
+    .order-review-note{font-size:11.5px;color:var(--muted);margin-top:8px;text-align:right}
+    .order-act-row.end{justify-content:flex-end}
+    .order-act.sm{flex:none;min-width:112px;padding:9px 18px;font-size:13px}
+    .order-prod{display:flex;gap:12px;align-items:flex-start;margin:12px 0 0}
+    .order-thumb{width:64px;height:64px;border-radius:8px;background:#f0ede8;object-fit:cover;flex-shrink:0;display:block}
+    .order-prod-info{flex:1;min-width:0}
+    .order-prod-name{font-size:13px;font-weight:600;line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+    .order-prod-var{font-size:11.5px;color:var(--muted);margin-top:3px}
+    .order-prod-qty{font-size:12px;color:var(--muted);flex-shrink:0}
+    .order-sum{display:flex;justify-content:space-between;align-items:baseline;margin-top:10px;font-size:12px;color:var(--sec)}
+    .side-panel-actions{display:flex;align-items:center;gap:6px}
+    .side-panel-acc{display:flex;align-items:center;justify-content:center}
     .rv-note{font-size:12.5px;color:var(--sec);line-height:1.5;padding:14px 0 2px}
     .rv-item{padding:16px 0;border-bottom:1px solid var(--border)}
     .rv-prod{display:flex;align-items:center;gap:12px}
@@ -1058,7 +1069,12 @@ document.addEventListener('click',function(e){var a=e.target.closest&&e.target.c
 <div class="side-panel" id="side-panel">
   <div class="drawer-header">
     <p class="side-panel-title" id="side-panel-title">Wishlist</p>
-    <button class="drawer-close" onclick="closeSidePanel()">✕</button>
+    <div class="side-panel-actions">
+      <button class="drawer-close side-panel-acc" id="side-panel-acc" onclick="renderAccountDetail()" aria-label="Akun dan alamat" style="display:none">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/></svg>
+      </button>
+      <button class="drawer-close" onclick="closeSidePanel()">✕</button>
+    </div>
   </div>
   <div class="side-panel-body" id="side-panel-body"></div>
 </div>
@@ -2037,6 +2053,7 @@ function renderFooterBelanja() {}
 function openSidePanel(title, bodyHtml) {
   toggleDrawer(false);
   document.getElementById('side-panel-title').textContent = title;
+  const accBtn = document.getElementById('side-panel-acc'); if (accBtn) accBtn.style.display = 'none';   // ikon akun hanya untuk Akun Saya
   document.getElementById('side-panel-body').innerHTML = bodyHtml;
   document.getElementById('side-panel').classList.add('open');
   document.getElementById('panel-scrim').classList.add('open');
@@ -2245,7 +2262,6 @@ function trackParcel(btn) {
 const orderRegistry = new Map();   // id pesanan -> data pesanan yang sedang tampil (diisi orderCardHTML)
 function orderCardHTML(o) {
     const date = new Date(o.created_at).toLocaleDateString('id-ID', {day:'numeric',month:'short',year:'numeric'});
-    const lines = (o.items||[]).map(i=>`${i.name} (${i.color}, ${i.size}) x${i.qty}`).join('\n');
     // Tanpa nomor resi kurir, pembeli melihat kurir pilihannya dan nomor pesanan sebagai referensi (resi buatan sendiri tidak bisa dilacak di situs kurir).
     const kurirNama = o.courier || o.shipping_service || '';
     // Pesanan Selesai: tanpa resi dan alamat di kartu; tombolnya Nilai / Lihat Penilaian / Beli Lagi (lihat orderDoneActionsHTML)
@@ -2277,8 +2293,8 @@ function orderCardHTML(o) {
         <span class="order-item-date">${date}${o.order_number ? ' · ' + orderEsc(o.order_number) : ''}</span>
         ${orderStatusBadge(o.status)}
       </div>
-      <div class="order-item-lines">${lines}</div>
-      <div class="order-item-total">${fRp(o.total)}</div>
+      ${orderItemsHTML(o)}
+      <div class="order-sum"><span>${orderQtyTotal(o)} produk</span><span class="order-item-total">${fRp(o.total)}</span></div>
       ${(o.status === 'dibatalkan' || isDone) ? '' : shipTo}
       ${resiBlock}
       ${aksiBlock}
@@ -2323,9 +2339,9 @@ async function attachOrderReviews(list) {
 }
 function orderDoneActionsHTML(o) {
   const st = orderReviewState(o);
-  const again = `<button type="button" class="order-act" onclick="buyAgain('${o.id}')">Beli Lagi</button>`;
-  const see = `<button type="button" class="order-act" onclick="openReviewSheet('${o.id}','view')">Lihat Penilaian</button>`;
-  const rate = `<button type="button" class="order-act solid" onclick="openReviewSheet('${o.id}','rate')">Nilai</button>`;
+  const again = `<button type="button" class="order-act sm" onclick="buyAgain('${o.id}')">Beli Lagi</button>`;
+  const see = `<button type="button" class="order-act sm" onclick="openReviewSheet('${o.id}','view')">Lihat Penilaian</button>`;
+  const rate = `<button type="button" class="order-act sm solid" onclick="openReviewSheet('${o.id}','rate')">Nilai</button>`;
   let row = again, note = '';
   if (st.canRate) {
     row = again + rate;
@@ -2333,7 +2349,59 @@ function orderDoneActionsHTML(o) {
   } else if (st.hasAny) {
     row = see + again;
   }
-  return `<div class="order-actions"><div class="order-act-row">${row}</div>${note ? `<div class="order-review-note">${note}</div>` : ''}</div>`;
+  return `<div class="order-actions"><div class="order-act-row end">${row}</div>${note ? `<div class="order-review-note">${note}</div>` : ''}</div>`;
+}
+
+// Foto varian yang dibeli: foto varian (warna) yang sama kalau ada, kalau tidak foto utama produk. Produk sudah dihapus: kotak abu.
+function orderItemPhoto(i) {
+  const list = (typeof products !== 'undefined') ? products : [];
+  const p = list.find(x => x.id === i.productId) || list.find(x => x.name === i.name);
+  if (!p) return '';
+  const vs = p.variants || [];
+  const v = vs.find(x => x.id === i.variantId && x.image_url) || vs.find(x => x.color_name === i.color && x.image_url);
+  return (v && v.image_url) || (p.image_urls && p.image_urls[0]) || p.image_url || '';
+}
+function orderItemsHTML(o) {
+  return (Array.isArray(o.items) ? o.items : []).map(i => {
+    const url = orderItemPhoto(i);
+    const variant = [i.color, i.size].filter(Boolean).join(', ');
+    return `<div class="order-prod">${url ? `<img class="order-thumb" src="${orderEsc(url)}" alt="" loading="lazy">` : '<div class="order-thumb"></div>'}
+      <div class="order-prod-info"><div class="order-prod-name">${orderEsc(i.name || 'Produk')}</div>${variant ? `<div class="order-prod-var">${orderEsc(variant)}</div>` : ''}</div>
+      <div class="order-prod-qty">x${Number(i.qty) || 1}</div></div>`;
+  }).join('');
+}
+function orderQtyTotal(o) { return (Array.isArray(o.items) ? o.items : []).reduce((n, i) => n + (Number(i.qty) || 1), 0); }
+function orderEmptyHTML() {
+  return `<div class="side-panel-empty" style="padding:30px 0 6px">Belum ada pesanan.</div>
+    <button type="button" class="wish-empty-cta" style="display:block;width:100%;font-family:inherit" onclick="closeSidePanel();goAllProducts()">Jelajahi Produk</button>`;
+}
+
+// Akun Saya langsung menampilkan riwayat pesanan. Profil, alamat, dan Keluar ada di balik ikon akun di baris judul.
+async function renderAccountDetail() {
+  const p = buyerProfile || {};
+  const initial = (p.name || buyerUser.email || '?')[0].toUpperCase();
+  openSidePanel('Akun & Alamat', `
+    <div class="acc-profile">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px">
+        <div style="width:44px;height:44px;border-radius:50%;background:var(--ink);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:600;flex-shrink:0">${orderEsc(initial)}</div>
+        <div><p style="font-weight:600">${orderEsc(p.name || '(belum diisi)')}</p><p style="font-size:12px;color:var(--muted)">${orderEsc(buyerUser.email)}</p></div>
+      </div>
+      <div style="border:1px solid var(--border);border-radius:8px;padding:14px;margin-bottom:14px;cursor:pointer" onclick="renderAddressList()">
+        <p style="font-size:11px;color:var(--muted);text-transform:uppercase;margin-bottom:8px">Alamat</p>
+        <div id="acc-default-addr-preview" style="font-size:13px;color:var(--muted)">Memuat...</div>
+        <span style="display:inline-block;margin-top:10px;font-size:13px;font-weight:600;color:var(--ink)">Kelola Alamat →</span>
+      </div>
+      <button style="width:100%;padding:12px;background:none;border:1px solid var(--border);border-radius:8px;cursor:pointer;color:var(--muted)" onclick="doBuyerLogout()">Keluar</button>
+      <button style="width:100%;padding:12px;margin-top:10px;background:none;border:none;cursor:pointer;color:var(--ink);font:inherit;font-weight:600" onclick="renderAccountProfile()">← Kembali ke Pesanan</button>
+    </div>`);
+  loadBuyerAddresses().then(() => {
+    const el = document.getElementById('acc-default-addr-preview');
+    if (!el) return;
+    const def = buyerAddresses.find(a=>a.is_default) || buyerAddresses[0];
+    el.innerHTML = def
+      ? `<strong>${orderEsc(def.recipient_name)}</strong> (${orderEsc(def.label)})<br/>${orderEsc(def.address_detail)}, ${orderEsc(def.district)}, ${orderEsc(def.city)}, ${orderEsc(def.province)}`
+      : 'Belum ada alamat tersimpan.';
+  });
 }
 
 let reviewCtx = null;   // { orderId, mode: 'rate'|'view', ratings: {productId: n}, texts: {productId: str}, busy }
@@ -2480,7 +2548,7 @@ async function renderMyOrders(reload) {
   const tabs = `<div class="order-tabs">${MY_ORDER_TABS.map(([k, l]) =>
     `<button type="button" class="order-tab${myOrdersFilter === k ? ' active' : ''}" onclick="setMyOrdersFilter('${k}')">${l}${counts[k] ? ' (' + counts[k] + ')' : ''}</button>`).join('')}</div>`;
   const list = myOrdersFilter === 'semua' ? myOrdersCache : myOrdersCache.filter(o => o.status === myOrdersFilter);
-  el.innerHTML = tabs + (list.length ? list.map(orderCardHTML).join('') : `<div class="side-panel-empty" style="padding:30px 0">Belum ada pesanan di sini.</div>`);
+  el.innerHTML = !myOrdersCache.length ? orderEmptyHTML() : tabs + (list.length ? list.map(orderCardHTML).join('') : `<div class="side-panel-empty" style="padding:30px 0">Belum ada pesanan di sini.</div>`);
 }
 function setMyOrdersFilter(k) { myOrdersFilter = k; renderMyOrders(false); }
 // Setelah ubah / batalkan pesanan: segarkan tampilan yang sedang terbuka (Pesanan Saya atau Akun Saya)
@@ -2490,41 +2558,12 @@ function refreshOrdersView() {
 }
 
 async function renderAccountProfile() {
-  const p = buyerProfile || {};
-  const initial = (p.name || buyerUser.email || '?')[0].toUpperCase();
-  openSidePanel('Akun Saya', `
-    <div class="acc-profile">
-      <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px">
-        <div style="width:44px;height:44px;border-radius:50%;background:var(--ink);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:600;flex-shrink:0">${initial}</div>
-        <div><p style="font-weight:600">${p.name || '(belum diisi)'}</p><p style="font-size:12px;color:var(--muted)">${buyerUser.email}</p></div>
-      </div>
-      <div style="border:1px solid var(--border);border-radius:8px;padding:14px;margin-bottom:14px;cursor:pointer" onclick="renderAddressList()">
-        <p style="font-size:11px;color:var(--muted);text-transform:uppercase;margin-bottom:8px">Alamat</p>
-        <div id="acc-default-addr-preview" style="font-size:13px;color:var(--muted)">Memuat...</div>
-        <span style="display:inline-block;margin-top:10px;font-size:13px;font-weight:600;color:var(--ink)">Kelola Alamat →</span>
-      </div>
-      <button style="width:100%;padding:12px;background:none;border:1px solid var(--border);border-radius:8px;cursor:pointer;color:var(--muted)" onclick="doBuyerLogout()">Keluar</button>
-      <div style="margin-top:24px;padding-top:18px;border-top:1px solid var(--border)">
-        <p style="font-size:12px;color:var(--muted);text-transform:uppercase;margin-bottom:8px">Riwayat Pesanan</p>
-        <div id="order-history-render"><div class="loading-state" style="padding:20px 0">Memuat...</div></div>
-      </div>
-    </div>`);
-  loadBuyerAddresses().then(() => {
-    const el = document.getElementById('acc-default-addr-preview');
-    if (!el) return;
-    const def = buyerAddresses.find(a=>a.is_default) || buyerAddresses[0];
-    el.innerHTML = def
-      ? `<strong>${def.recipient_name}</strong> (${def.label})<br/>${def.address_detail}, ${def.district}, ${def.city}, ${def.province}`
-      : 'Belum ada alamat tersimpan.';
-  });
+  openSidePanel('Akun Saya', `<div id="order-history-render"><div class="loading-state" style="padding:40px 0">Memuat...</div></div>`);
+  const accBtn = document.getElementById('side-panel-acc'); if (accBtn) accBtn.style.display = '';
   const orders = await loadOrderHistory();
   const el = document.getElementById('order-history-render');
-  if (!el) return;
-  if (!orders.length) {
-    el.innerHTML = `<div class="side-panel-empty" style="padding:20px 0">Belum ada pesanan.</div>`;
-    return;
-  }
-  el.innerHTML = orders.map(orderCardHTML).join('');
+  if (!el) return;   // panel sudah diganti saat menunggu data
+  el.innerHTML = orders.length ? orders.map(orderCardHTML).join('') : orderEmptyHTML();
 }
 
 async function doGoogleAuth() {
@@ -2678,7 +2717,7 @@ async function renderAddressList() {
   body.innerHTML = `
     <button class="btn-primary" style="margin-bottom:16px" onclick="openAddressForm()">+ Tambah Alamat Baru</button>
     ${listHtml}
-    <button style="width:100%;padding:10px;background:none;border:1px solid var(--border);border-radius:8px;cursor:pointer;color:var(--muted);margin-top:8px" onclick="renderAccountProfile()">← Kembali ke Akun</button>
+    <button style="width:100%;padding:10px;background:none;border:1px solid var(--border);border-radius:8px;cursor:pointer;color:var(--muted);margin-top:8px" onclick="renderAccountDetail()">← Kembali ke Akun</button>
   `;
 }
 
