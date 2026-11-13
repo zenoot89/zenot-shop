@@ -572,6 +572,25 @@
     .order-act.primary{width:100%;background:var(--ink);color:#fff;border-color:var(--ink);padding:12px;font-size:13.5px}
     .order-act.danger{color:#a83232;border-color:#e0b8b8}
     .order-act:disabled{opacity:.5;cursor:default}
+    .order-act.solid{background:var(--ink);color:#fff;border-color:var(--ink)}
+    .order-review-note{font-size:11.5px;color:var(--muted);margin-top:8px}
+    .rv-note{font-size:12.5px;color:var(--sec);line-height:1.5;padding:14px 0 2px}
+    .rv-item{padding:16px 0;border-bottom:1px solid var(--border)}
+    .rv-prod{display:flex;align-items:center;gap:12px}
+    .rv-thumb{width:48px;height:48px;border-radius:8px;background:#f0ede8 center/cover no-repeat;flex-shrink:0}
+    .rv-prod-name{font-size:13px;font-weight:600;line-height:1.35}
+    .rv-prod-var{font-size:11.5px;color:var(--muted);margin-top:2px}
+    .rv-stars{display:flex;gap:4px;margin:12px 0 8px}
+    .rv-stars button{background:none;border:none;font-size:28px;line-height:1;cursor:pointer;color:#d9d6cf;padding:0 2px;font-family:inherit}
+    .rv-stars button.on{color:#f0a500}
+    .rv-stars-static{color:#f0a500;font-size:14px;letter-spacing:1px;margin:10px 0 4px}
+    .rv-text{width:100%;min-height:76px;padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;font-family:inherit;font-size:13px;color:var(--ink);resize:vertical;box-sizing:border-box}
+    .rv-text:focus{outline:none;border-color:var(--ink)}
+    .rv-done{font-size:13px;color:var(--sec);line-height:1.5;white-space:pre-line}
+    .rv-date{font-size:11px;color:var(--muted);margin-top:4px}
+    .rv-reply,.review-reply{margin-top:8px;padding:10px 12px;border-radius:8px;background:#f6f4ef;font-size:12.5px;color:var(--sec);line-height:1.5}
+    .rv-reply b,.review-reply b{display:block;font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);margin-bottom:3px}
+    .review-reply p{margin:0;white-space:pre-line}
     .paym-grp{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding:16px 0 2px}
     .cart-empty{text-align:center;padding:72px 28px 24px}
     .cart-empty svg{width:46px;height:46px;stroke:#c9c1b5;fill:none;stroke-width:1.5;margin-bottom:22px}
@@ -1283,6 +1302,21 @@ document.addEventListener('click',function(e){var a=e.target.closest&&e.target.c
     <div class="ongkir-sheet-body" id="pay-method-body"></div>
     <div class="ongkir-sheet-footer" id="pay-method-footer" style="display:none">
       <button id="pay-method-confirm" onclick="confirmPayOrder()" disabled>Pilih metode pembayaran</button>
+    </div>
+  </div>
+</div>
+
+<div class="ongkir-sheet-overlay" id="review-overlay" onclick="if(event.target===this)closeReviewSheet()">
+  <div class="ongkir-sheet">
+    <div class="ongkir-sheet-header">
+      <span id="review-sheet-title">Nilai Produk</span>
+      <button class="ongkir-sheet-close" onclick="closeReviewSheet()" aria-label="Tutup">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="ongkir-sheet-body" id="review-sheet-body"></div>
+    <div class="ongkir-sheet-footer" id="review-sheet-footer" style="display:none">
+      <button id="review-sheet-submit" onclick="submitOrderReviews()" disabled>Kirim Penilaian</button>
     </div>
   </div>
 </div>
@@ -2214,7 +2248,9 @@ function orderCardHTML(o) {
     const lines = (o.items||[]).map(i=>`${i.name} (${i.color}, ${i.size}) x${i.qty}`).join('\n');
     // Tanpa nomor resi kurir, pembeli melihat kurir pilihannya dan nomor pesanan sebagai referensi (resi buatan sendiri tidak bisa dilacak di situs kurir).
     const kurirNama = o.courier || o.shipping_service || '';
-    const resiBlock = (o.resi && o.status !== 'dibatalkan') ? trackingBlockHTML(o)
+    // Pesanan Selesai: tanpa resi dan alamat di kartu; tombolnya Nilai / Lihat Penilaian / Beli Lagi (lihat orderDoneActionsHTML)
+    const isDone = o.status === 'selesai';
+    const resiBlock = isDone ? '' : (o.resi && o.status !== 'dibatalkan') ? trackingBlockHTML(o)
       : (o.status === 'dikirim' ? `<div class="order-wait">Pesananmu sudah dikirim${kurirNama ? ' lewat ' + orderEsc(kurirNama) : ''}. Nomor pesanan <b>${orderEsc(o.order_number || '')}</b> bisa kamu sebutkan kalau butuh bantuan soal pengiriman.</div>`
       : (o.status === 'diproses' ? `<div class="order-wait">Pembayaran diterima. Pesananmu sedang disiapkan penjual.</div>` : ''));
 
@@ -2224,7 +2260,7 @@ function orderCardHTML(o) {
     const unpaid = o.status === 'menunggu_pembayaran' && o.payment_status !== 'paid';
     const canPay = payOnlineEnabled() && unpaid;
     const canChangeAddr = canPay && !!o.midtrans_order_id;   // pesanan lewat WhatsApp (belum pernah memulai bayar online) alamatnya diurus lewat admin
-    const aksiBlock = unpaid ? `
+    const aksiBlock = isDone ? orderDoneActionsHTML(o) : unpaid ? `
       <div class="order-actions">
         ${canPay ? `<button class="order-act primary" onclick="openOrderPay('${o.id}')">Bayar Sekarang</button>` : ''}
         <div class="order-act-row">
@@ -2243,11 +2279,189 @@ function orderCardHTML(o) {
       </div>
       <div class="order-item-lines">${lines}</div>
       <div class="order-item-total">${fRp(o.total)}</div>
-      ${o.status === 'dibatalkan' ? '' : shipTo}
+      ${(o.status === 'dibatalkan' || isDone) ? '' : shipTo}
       ${resiBlock}
       ${aksiBlock}
     </div>`;
 
+}
+
+// ===================== PENILAIAN PESANAN & BELI LAGI =====================
+// Pesanan Selesai punya tiga kondisi tombol:
+//  1) sudah dinilai            -> [Lihat Penilaian] [Beli Lagi]
+//  2) belum dinilai, < 10 hari -> [Beli Lagi] [Nilai]  (+ "Nilai sebelum <tanggal>")
+//  3) belum dinilai, > 10 hari -> [Beli Lagi]
+// 10 hari dihitung dari orders.completed_at (diisi trigger database saat Seller Center menandai Selesai).
+// Batas ini dijaga lagi di server (fungsi submit_order_review), bukan hanya di tombol.
+const REVIEW_WINDOW_MS = 10 * 86400000;
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+function orderReviewProducts(o) {   // satu baris per produk (varian berbeda dari produk yang sama dihitung satu)
+  const seen = new Map();
+  (Array.isArray(o.items) ? o.items : []).forEach(i => {
+    if (i && typeof i.productId === 'string' && UUID_RE.test(i.productId) && !seen.has(i.productId)) seen.set(i.productId, i);
+  });
+  return [...seen.values()];
+}
+function orderReviewState(o) {
+  const prods = orderReviewProducts(o);
+  const revs = Array.isArray(o._reviews) ? o._reviews : [];
+  const rated = new Set(revs.map(r => r.product_id));
+  const doneAt = o.completed_at ? Date.parse(o.completed_at) : NaN;
+  const deadline = Number.isFinite(doneAt) ? doneAt + REVIEW_WINDOW_MS : NaN;
+  const open = Number.isFinite(deadline) && Date.now() <= deadline;
+  const allRated = prods.length > 0 && prods.every(i => rated.has(i.productId));
+  return { prods, revs, rated, deadline, open, allRated, hasAny: revs.length > 0, canRate: prods.length > 0 && open && !allRated };
+}
+async function attachOrderReviews(list) {
+  list.forEach(o => { o._reviews = []; });
+  const ids = list.filter(o => o.status === 'selesai').map(o => o.id);
+  if (!ids.length) return;
+  try {
+    const { data } = await sb.from('reviews').select('*').in('order_id', ids);
+    (data || []).forEach(r => { const o = list.find(x => x.id === r.order_id); if (o) o._reviews.push(r); });
+  } catch (_) { /* tanpa data ulasan: tombol Nilai tetap muncul, server yang menolak kalau sudah dinilai */ }
+}
+function orderDoneActionsHTML(o) {
+  const st = orderReviewState(o);
+  const again = `<button type="button" class="order-act" onclick="buyAgain('${o.id}')">Beli Lagi</button>`;
+  const see = `<button type="button" class="order-act" onclick="openReviewSheet('${o.id}','view')">Lihat Penilaian</button>`;
+  const rate = `<button type="button" class="order-act solid" onclick="openReviewSheet('${o.id}','rate')">Nilai</button>`;
+  let row = again, note = '';
+  if (st.canRate) {
+    row = again + rate;
+    note = 'Nilai sebelum ' + new Date(st.deadline).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
+  } else if (st.hasAny) {
+    row = see + again;
+  }
+  return `<div class="order-actions"><div class="order-act-row">${row}</div>${note ? `<div class="order-review-note">${note}</div>` : ''}</div>`;
+}
+
+let reviewCtx = null;   // { orderId, mode: 'rate'|'view', ratings: {productId: n}, texts: {productId: str}, busy }
+function openReviewSheet(orderId, mode) {
+  const o = orderRegistry.get(orderId);
+  if (!o) { showToast('Muat ulang daftar pesanan dulu'); return; }
+  const st = orderReviewState(o);
+  if (mode === 'rate' && !st.canRate) { showToast(st.open ? 'Semua produk sudah dinilai' : 'Batas waktu menilai sudah lewat'); refreshOrdersView(); return; }
+  reviewCtx = { orderId, mode, ratings: {}, texts: {}, busy: false };
+  renderReviewSheet();
+}
+function closeReviewSheet() { reviewCtx = null; document.getElementById('review-overlay').classList.remove('open'); }
+function reviewStarsHTML(pid, n) {
+  let h = '';
+  for (let i = 1; i <= 5; i++) h += `<button type="button" class="${i <= n ? 'on' : ''}" onclick="setReviewStar('${pid}',${i})" aria-label="${i} bintang">${i <= n ? '★' : '☆'}</button>`;
+  return h;
+}
+function reviewProductHead(i) {
+  const p = (typeof products !== 'undefined' ? products : []).find(x => x.id === i.productId);
+  const img = p && p.image_url ? ` style="background-image:url('${orderEsc(p.image_url)}')"` : '';
+  const variant = [i.color, i.size].filter(Boolean).join(', ');
+  return `<div class="rv-prod"><div class="rv-thumb"${img}></div><div><div class="rv-prod-name">${orderEsc(i.name || (p && p.name) || 'Produk')}</div>${variant ? `<div class="rv-prod-var">${orderEsc(variant)}</div>` : ''}</div></div>`;
+}
+function reviewDoneHTML(r) {
+  const n = Math.max(0, Math.min(5, Number(r.rating) || 0));
+  const d = r.created_at ? new Date(r.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) : '';
+  return `<div class="rv-stars-static">${'★'.repeat(n)}${'☆'.repeat(5 - n)}</div>
+    ${r.comment ? `<div class="rv-done">${orderEsc(r.comment)}</div>` : ''}
+    ${d ? `<div class="rv-date">${d}</div>` : ''}
+    ${r.seller_reply ? `<div class="rv-reply"><b>Balasan penjual</b>${orderEsc(r.seller_reply)}</div>` : ''}`;
+}
+function renderReviewSheet() {
+  if (!reviewCtx) return;
+  const o = orderRegistry.get(reviewCtx.orderId);
+  if (!o) { closeReviewSheet(); return; }
+  const st = orderReviewState(o);
+  const byProduct = new Map(st.revs.map(r => [r.product_id, r]));
+  const rateMode = reviewCtx.mode === 'rate';
+  document.getElementById('review-sheet-title').textContent = rateMode ? 'Nilai Produk' : 'Penilaianmu';
+  let html = '';
+  if (rateMode) {
+    html += `<p class="rv-note">Pesanan ${orderEsc(o.order_number || '')}. Nilai sebelum ${new Date(st.deadline).toLocaleDateString('id-ID', { day: 'numeric', month: 'long' })}. Penilaian tidak bisa diubah setelah dikirim.</p>`;
+  }
+  let shown = 0;
+  st.prods.forEach(i => {
+    const r = byProduct.get(i.productId);
+    if (!rateMode && !r) return;
+    shown++;
+    if (r) html += `<div class="rv-item">${reviewProductHead(i)}${reviewDoneHTML(r)}</div>`;
+    else {
+      const pid = i.productId;
+      html += `<div class="rv-item">${reviewProductHead(i)}
+        <div class="rv-stars" id="rv-stars-${pid}">${reviewStarsHTML(pid, reviewCtx.ratings[pid] || 0)}</div>
+        <textarea class="rv-text" maxlength="1000" placeholder="Ceritakan kualitas, ukuran, dan bahannya (boleh dikosongkan)" oninput="setReviewText('${pid}',this.value)">${orderEsc(reviewCtx.texts[pid] || '')}</textarea></div>`;
+    }
+  });
+  if (!shown) html += `<p class="rv-note">Belum ada penilaian untuk pesanan ini.</p>`;
+  document.getElementById('review-sheet-body').innerHTML = html;
+  const foot = document.getElementById('review-sheet-footer');
+  foot.style.display = rateMode ? '' : 'none';
+  updateReviewSubmit();
+  document.getElementById('review-overlay').classList.add('open');
+}
+function setReviewStar(pid, n) {
+  if (!reviewCtx) return;
+  reviewCtx.ratings[pid] = n;
+  const el = document.getElementById('rv-stars-' + pid);
+  if (el) el.innerHTML = reviewStarsHTML(pid, n);
+  updateReviewSubmit();
+}
+function setReviewText(pid, v) { if (reviewCtx) reviewCtx.texts[pid] = v; }
+function updateReviewSubmit() {
+  const btn = document.getElementById('review-sheet-submit');
+  if (!btn || !reviewCtx) return;
+  const n = Object.values(reviewCtx.ratings).filter(v => v >= 1).length;
+  btn.disabled = reviewCtx.busy || n < 1;
+  btn.textContent = reviewCtx.busy ? 'Mengirim...' : (n < 1 ? 'Pilih bintang dulu' : (n > 1 ? 'Kirim ' + n + ' Penilaian' : 'Kirim Penilaian'));
+}
+async function submitOrderReviews() {
+  const c = reviewCtx;
+  if (!c || c.busy) return;
+  const o = orderRegistry.get(c.orderId);
+  if (!o) return;
+  const rated = new Set((o._reviews || []).map(r => r.product_id));
+  const todo = orderReviewProducts(o).filter(i => c.ratings[i.productId] >= 1 && !rated.has(i.productId));
+  if (!todo.length) { showToast('Pilih bintang dulu'); return; }
+  c.busy = true; updateReviewSubmit();
+  let ok = 0, errMsg = '';
+  for (const i of todo) {
+    try {
+      const { error } = await sb.rpc('submit_order_review', {
+        p_order_id: o.id, p_product_id: i.productId,
+        p_rating: c.ratings[i.productId], p_comment: (c.texts[i.productId] || '').trim()
+      });
+      if (error) errMsg = error.message || 'Gagal mengirim penilaian'; else ok++;
+    } catch (_) { errMsg = 'Koneksi bermasalah, coba lagi'; }
+  }
+  if (reviewCtx === c) closeReviewSheet();
+  if (ok) showToast(ok > 1 ? ok + ' penilaian terkirim, terima kasih!' : 'Penilaian terkirim, terima kasih!', 2600);
+  if (errMsg) { if (ok) setTimeout(() => showToast(errMsg, 4500), 2700); else showToast(errMsg, 4500); }
+  refreshOrdersView();
+}
+
+// Beli Lagi: isi pesanan lama dimasukkan ke keranjang dengan harga dan stok TERBARU; varian yang sudah habis atau dihapus dilewati.
+function buyAgain(orderId) {
+  const o = orderRegistry.get(orderId);
+  if (!o) { showToast('Muat ulang daftar pesanan dulu'); return; }
+  const items = Array.isArray(o.items) ? o.items : [];
+  let added = 0, skipped = 0;
+  items.forEach(s => {
+    const p = products.find(x => x.id === s.productId) || products.find(x => x.name === s.name);
+    let v = p && (p.variants || []).find(x => x.id === s.variantId);
+    if (!v && p) v = (p.variants || []).find(x => x.color_name === s.color && x.size === s.size);   // pesanan lama tanpa variantId
+    const stock = v ? (Number(v.stock) || 0) : 0;
+    if (!p || !v || v.is_active === false || stock < 1) { skipped++; return; }
+    const want = Math.max(1, Math.round(Number(s.qty)) || 1);
+    const key = `${p.id}-${v.id}`;
+    const ex = cart.find(i => i.key === key);
+    if (ex) { ex.qty = Math.min(ex.qty + want, stock); ex.stock = stock; }
+    else cart.push({ key, productId: p.id, variantId: v.id, name: p.name, price: v.price, color: v.color_name, size: v.size, qty: Math.min(want, stock), image: p.image_url, stock });
+    added++;
+  });
+  if (!added) { showToast('Produk di pesanan ini sedang tidak tersedia', 3200); return; }
+  updateCartUI();
+  persistCart();
+  closeSidePanel();
+  openCart();
+  if (skipped) showToast(skipped + ' produk tidak tersedia dan dilewati', 3400);
 }
 
 // Halaman "Pesanan Saya": semua pesanan dengan tab status dan pelacakan resi
@@ -3664,7 +3878,7 @@ function shareProduct() {
 
 // ===================== REVIEWS =====================
 async function loadReviews(productId) {
-  const { data } = await sb.from('reviews').select('*').eq('product_id', productId);
+  const { data } = await sb.from('reviews').select('*').eq('product_id', productId).order('created_at', { ascending: false });
   const reviews = data || [];
   const avg = reviews.length ? (reviews.reduce((s,r)=>s+r.rating,0)/reviews.length).toFixed(1) : null;
   
@@ -3675,33 +3889,19 @@ async function loadReviews(productId) {
     ${reviews.map(r=>`
       <div class="review-item">
         <div class="review-header">
-          <span class="review-name">${r.buyer_name}</span>
+          <span class="review-name">${orderEsc(r.buyer_name)}</span>
           <span class="review-stars">${'★'.repeat(r.rating)}${'☆'.repeat(5-r.rating)}</span>
         </div>
-        <p class="review-comment">${r.comment||''}</p>
+        <p class="review-comment">${orderEsc(r.comment||'')}</p>
+        ${r.seller_reply ? `<div class="review-reply"><b>Balasan penjual</b><p>${orderEsc(r.seller_reply)}</p></div>` : ''}
       </div>`).join('')}
   ` : '';
   reviewRating = 0;
   return reviews;
 }
 
-function setReviewStar(n) {
-  reviewRating = n;
-  for(let i=1;i<=5;i++) {
-    const el = document.getElementById(`rstar-${i}`);
-    if(el) { el.textContent = i<=n?'★':'☆'; el.classList.toggle('active',i<=n); }
-  }
-}
-
-async function submitReview(productId) {
-  const name = document.getElementById('review-name').value.trim();
-  const comment = document.getElementById('review-comment').value.trim();
-  if (!name || !reviewRating) { showToast('Isi nama dan bintang dulu'); return; }
-  const { error } = await sb.from('reviews').insert({product_id:productId,buyer_name:name,rating:reviewRating,comment});
-  if (error) { showToast('Gagal kirim ulasan'); return; }
-  showToast('Ulasan terkirim! ✓');
-  await loadReviews(productId);
-}
+// Ulasan hanya dikirim lewat fungsi server submit_order_review (dari tombol Nilai di Pesanan Saya):
+// server memeriksa pesanan milik pembeli, status Selesai, dan batas 10 hari sejak pesanan selesai.
 
 // ===================== CART =====================
 // ===================== PANEL PILIH VARIAN (ala marketplace) =====================
@@ -4897,7 +5097,9 @@ async function loadOrderHistory() {
   if (!buyerUser) return [];
   const { data } = await sb.from('orders').select('*').eq('user_id', buyerUser.id).order('created_at', {ascending:false});
   gaReportPaidOrders(data);
-  return data || [];
+  const list = data || [];
+  await attachOrderReviews(list);
+  return list;
 }
 
 // Pembatalan dikerjakan server (order-cancel): pembayaran Midtrans yang masih menunggu (nomor VA atau QR) ikut dimatikan,
