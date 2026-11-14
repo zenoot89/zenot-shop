@@ -208,6 +208,9 @@
     #controls.show{display:block}
     .catalog-heading{font-family:'Source Serif 4',serif;font-size:26px;font-weight:600;margin-bottom:10px}
     .catalog-meta-row{padding:14px 0 20px;border-bottom:1px solid var(--border);margin-bottom:20px;font-size:13px;color:var(--sec)}
+    .catalog-cats{display:flex;gap:8px;flex-wrap:wrap;flex:0 0 100%;margin:4px 0 2px}
+    .catalog-cat{display:inline-flex;align-items:center;height:40px;padding:0 22px;border:1.5px solid var(--ink);background:#fff;color:var(--ink);font-family:'Montserrat',sans-serif;font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;text-decoration:none}
+    .catalog-cat:hover,.catalog-cat:active{background:var(--ink);color:#fff}
 
     /* ===== VOUCHER PROMO POPUP ===== */
     .promo-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:710;align-items:center;justify-content:center;padding:20px}
@@ -1102,6 +1105,7 @@ document.addEventListener('click',function(e){var a=e.target.closest&&e.target.c
 <!-- CONTROLS (tersembunyi di awal, cuma muncul saat buyer klik "Semua Koleksi") -->
 <div class="controls" id="controls">
   <h2 class="catalog-heading" id="catalog-heading">Semua Produk</h2>
+  <nav class="catalog-cats" id="catalog-cats" aria-label="Kategori utama" style="display:none"></nav>
   <div class="catalog-meta-row">
     <span id="catalog-count">0 produk</span>
   </div>
@@ -1849,6 +1853,7 @@ function renderProducts() {
     headEl.textContent = q.trim() ? 'Hasil Pencarian'
       : (activeFilter !== 'all' ? (activeFilter + (gName ? ' ' + gName : '')) : (gName ? 'Semua ' + gName : 'Semua Produk'));
   }
+  renderCatalogCats(catalogAll && activeGender === 'all' && activeFilter === 'all' && !q.trim());   // kategori utama hanya di tampilan Semua Produk
   if (!filtered.length) {
     grid.innerHTML = '<div class="empty-state"><p>Produk tidak ditemukan.</p></div>';
     return;
@@ -2402,6 +2407,21 @@ async function renderAccountDetail() {
       ? `<strong>${orderEsc(def.recipient_name)}</strong> (${orderEsc(def.label)})<br/>${orderEsc(def.address_detail)}, ${orderEsc(def.district)}, ${orderEsc(def.city)}, ${orderEsc(def.province)}`
       : 'Belum ada alamat tersimpan.';
   });
+}
+
+// Kategori utama di halaman Semua Produk. Tautannya DIAMBIL dari footer (blok ZSEO-NAV buatan build-static.py): selalu sama persis
+// dan selalu halaman kategori yang benar-benar ada. Ini tautan biasa (bukan filter di halaman), jadi tiap klik membuka halaman
+// /kategori/... dan tercatat di Google Analytics sebagai page_view, sama seperti klik dari footer.
+function renderCatalogCats(show) {
+  const box = document.getElementById('catalog-cats');
+  if (!box) return;
+  if (!show) { box.style.display = 'none'; return; }
+  if (!box.dataset.built) {
+    const heads = document.querySelectorAll('.footer-col-belanja .fb-head');
+    box.innerHTML = [...heads].map(a => `<a class="catalog-cat" href="${orderEsc(a.getAttribute('href') || '')}" title="${orderEsc(a.getAttribute('title') || '')}">${orderEsc(a.textContent.trim())}</a>`).join('');
+    if (heads.length) box.dataset.built = '1';
+  }
+  box.style.display = box.children.length ? '' : 'none';
 }
 
 let reviewCtx = null;   // { orderId, mode: 'rate'|'view', ratings: {productId: n}, texts: {productId: str}, busy }
