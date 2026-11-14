@@ -714,11 +714,9 @@ def category_page(n, ctx):
             for i, p in enumerate(prods)]},
         {'@type': 'BreadcrumbList', 'itemListElement': crumbs_ld}]}
     first = imgs_cache[prods[0]['id']]
-    intro = ('Pilih %d model %s dari Zenoot, brand rajut dari Bandung. Semua produk dikirim ke seluruh Indonesia.'
-             % (len(prods), h1.lower()))
     body = (site_header(ctx['nav_nodes']) + '<main class="wrap"><nav class="crumbs" aria-label="Breadcrumb">%s</nav>'
-            '<h1>%s</h1><p class="note" style="margin-bottom:6px">%s</p>%s<div class="grid" style="margin-top:14px">%s</div></main>'
-            % ('<span class="sep">›</span>'.join(crumbs_html), esc(h1), esc(intro), chips,
+            '<h1>%s</h1>%s<div class="grid" style="margin-top:14px">%s</div></main>'
+            % ('<span class="sep">›</span>'.join(crumbs_html), esc(h1), chips,
                ''.join(card(p, slugs, imgs_cache) for p in prods)) + site_footer(ctx['foot_nodes']))
     page = shell(title, desc, url, body, ld, og_image=first[0][0] if first else '', og_alt=first[0][1] if first else '')
     return url, page
