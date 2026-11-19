@@ -559,6 +559,8 @@
     .paym-emoji{font-size:20px}
     .paym-wallets{display:flex;align-items:center;flex-wrap:wrap;gap:6px 12px;margin-top:8px}
     .paym-wallets img{height:13px;width:auto;max-width:56px;object-fit:contain}
+    .paym-qr img{height:17px;max-width:76px}
+    .paym-more{font-size:12px;color:var(--muted);white-space:nowrap}
     .paym-note{font-size:12.5px;color:var(--sec);line-height:1.5;padding:14px 0 2px}
     .qris-img{display:block;width:100%;max-width:360px;height:auto;margin:16px auto 10px;border-radius:6px;border:1px solid var(--border)}
     .qris-status{text-align:center;font-size:13px;font-weight:600;margin:4px 0 12px;color:var(--ink)}
@@ -4654,13 +4656,13 @@ function payInfo(c) {
   return { name: payLabel(m), sub: m.subShort ? m.subShort : m.sub ? m.sub : m.g === 'va' ? 'Bayar lewat ATM, m-banking, atau internet banking' : (m.g === 'qr' ? 'Scan dengan e-wallet atau m-banking apa pun' : 'Bayar lewat aplikasi'), logo: FOOTER_PAY_DIR + (m.lf || m.f) };
 }
 let payOrderCtx = null;   // null = memilih metode untuk checkout; { orderId, sel } = memilih metode untuk pesanan yang sudah dibuat (Pesanan Saya)
-const QRIS_WALLETS = ['gopay.png', 'ovo.png', 'dana.png', 'shopeepay.png'];   // logo di bawah pilihan QRIS (tampil bila QRIS aktif)
+const QRIS_WALLETS = ['bri.png', 'bca.png', 'gopay.png'];   // logo di bawah pilihan QRIS (tampil bila QRIS aktif), diikuti tulisan "+ lainnya"
 function openPayMethodSheet() { payOrderCtx = null; renderPayMethodSheet(); }
 function renderPayMethodSheet() {
   const inOrder = !!payOrderCtx;
   const cur = inOrder ? payOrderCtx.sel : (payChoiceValid(payChoice) ? payChoice : null);
   const ms = payChoices();
-  const walletsHtml = `<span class="paym-wallets">${QRIS_WALLETS.map(f => `<img src="${FOOTER_PAY_DIR}${f}" alt="">`).join('')}</span>`;
+  const walletsHtml = `<span class="paym-wallets paym-qr">${QRIS_WALLETS.map(f => `<img src="${FOOTER_PAY_DIR}${f}" alt="">`).join('')}<span class="paym-more">+ lainnya</span></span>`;
   const opt = (id, logoHtml, title, sub, extra) => `<button class="paym-opt${cur === id ? ' sel' : ''}" onclick="selectPayMethod('${id}')">${logoHtml}<span class="paym-opt-main"><div class="paym-opt-title">${title}</div>${sub ? `<div class="paym-opt-sub">${sub}</div>` : ''}${extra || ''}</span><span class="paym-radio"></span></button>`;
   const logo = m => (m.lf || m.f) ? `<span class="paym-logo"><img src="${FOOTER_PAY_DIR}${m.lf || m.f}" alt="" style="max-height:${Math.max(22, Number(m.d) || 22)}px"></span>` : `<span class="paym-logo"><b style="font-size:12px">${chatEsc(m.n)}</b></span>`;
   const grp = (title, arr) => arr.length ? `<div class="paym-grp">${title}</div>${arr.join('')}` : '';
@@ -4669,8 +4671,8 @@ function renderPayMethodSheet() {
     const o = orderRegistry.get(payOrderCtx.orderId);
     html += `<p class="paym-note">Pesanan ${orderEsc(o ? o.order_number || '' : '')}${o ? ' &middot; <b>' + fRp(o.total) + '</b>' : ''}. Pilih metode pembayaran. Pembayaran sebelumnya untuk pesanan ini otomatis dibatalkan.</p>`;
   }
-  html += grp('E-Wallet', ms.filter(m => m.g === 'ew').map(m => opt(m.snap, logo(m), payLabel(m), 'Bayar lewat aplikasi')));
-  html += grp('QRIS', ms.filter(m => m.g === 'qr').map(m => opt(m.snap, logo(m), payLabel(m), m.sub || 'Scan dengan e-wallet atau m-banking apa pun', walletsHtml)));
+  html += grp('E-Wallet', ms.filter(m => m.g === 'ew').map(m => opt(m.snap, logo(m), payLabel(m), m.sub || 'Bayar lewat aplikasi')));
+  html += grp('QRIS', ms.filter(m => m.g === 'qr').map(m => opt(m.snap, logo(m), payLabel(m), '', walletsHtml)));
   html += grp('Virtual Account', ms.filter(m => m.g === 'va').map(m => opt(m.snap, logo(m), payLabel(m), m.sub || '')));
   html += grp('Kartu Kredit / Debit', ms.filter(m => m.g === 'cc').map(m => opt(m.snap, logo(m), payLabel(m), m.sub || '', `<span class="paym-wallets"><img src="${FOOTER_PAY_DIR}${m.f}" alt="Visa, Mastercard, JCB" style="height:18px;max-width:none"></span>`)));
   const more = [];
@@ -5655,7 +5657,7 @@ const FOOTER_PAYMENTS = [
   { n: 'Danamon',      f: 'danamon.png',      w: 147, h: 56, on: false, g: 'va', snap: 'danamon_va' },   // 12 Nov 2026: dinonaktifkan
   { n: 'Kartu Kredit / Debit', f: 'kartu.png', w: 279, h: 56, on: true, g: 'cc', snap: 'credit_card', lf: 'kartu-ikon.png', subShort: 'Visa, Mastercard, dan JCB', sub: 'Visa, Mastercard, dan JCB. Dikonfirmasi lewat verifikasi 3D Secure dari bank penerbit' },
   { n: 'GoPay',        f: 'gopay.png',        w: 258, h: 56, on: true, g: 'ew', snap: 'gopay' },
-  { n: 'OVO',          f: 'ovo.png',          w: 136, h: 53, on: true, g: 'ew', snap: null },   // 19 Nov 2026: OVO Aggregator disetujui Midtrans; tampil di footer, dipilih lewat "Metode lain" di halaman Midtrans (snap belum dipetakan)
+  { n: 'OVO',          f: 'ovo.png',          w: 136, h: 53, on: true, g: 'ew', snap: 'ovo', sub: 'Konfirmasi di aplikasi OVO dalam 55 detik' },   // 19 Nov 2026: OVO Aggregator disetujui Midtrans; kode Snap resmi 'ovo' (harus ada juga di PAY_CODES midtrans-create); transaksi OVO kedaluwarsa 65 detik
   { n: 'DANA',         f: 'dana.png',         w: 175, h: 54, on: false, g: 'ew', snap: 'dana' },
   { n: 'ShopeePay',    f: 'shopeepay.png',    w: 153, h: 64, on: false, d: 20, g: 'ew', snap: 'shopeepay' }
 ];
