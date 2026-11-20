@@ -1023,7 +1023,7 @@
     .pdp-pick .modal-color-btn.has-photo.active{border:2px solid var(--ink)}
     .modal-thumbs:empty{display:none}
     @media(max-width:899px){
-      .pdp-gallery .modal-carousel-wrap{aspect-ratio:1/1;max-height:46vh}   /* HP pendek: foto utama tidak menelan seluruh layar */
+      .pdp-gallery .modal-carousel-wrap{aspect-ratio:auto;width:100%;height:clamp(66vw,46vh,100vw)}   /* tinggi foto utama dibatasi 46% layar (min 66% lebar, maks persegi); lebar tetap penuh */
       .modal-title{font-family:'Karla','Inter',sans-serif;font-weight:600;font-size:16px;line-height:1.3;text-transform:none;letter-spacing:0}
       /* Tata letak ringkas (HP): foto utama, judul, harga, dan baris Warna muat satu layar tanpa scroll, seperti Shopee */
       .pdp-info{padding:12px 16px 8px}
@@ -5735,7 +5735,7 @@ const FOOTER_PAYMENTS = [
   { n: 'Kartu Kredit / Debit', f: 'kartu.png', w: 279, h: 56, on: true, g: 'cc', snap: 'credit_card', lf: 'kartu-ikon.png', subShort: 'Visa, Mastercard, dan JCB', sub: 'Visa, Mastercard, dan JCB. Dikonfirmasi lewat verifikasi 3D Secure dari bank penerbit' },
   { n: 'GoPay',        f: 'gopay.png',        w: 258, h: 56, on: true, g: 'ew', snap: 'gopay' },
   { n: 'OVO',          f: 'ovo.png',          w: 136, h: 53, on: true, g: 'ew', snap: 'ovo', sub: 'Konfirmasi di aplikasi OVO dalam 55 detik' },   // 19 Nov 2026: OVO Aggregator disetujui Midtrans; kode Snap resmi 'ovo' (harus ada juga di PAY_CODES midtrans-create); transaksi OVO kedaluwarsa 65 detik
-  { n: 'DANA',         f: 'dana.png',         w: 175, h: 54, on: false, g: 'ew', snap: 'dana' },
+  { n: 'DANA',         f: 'dana.png',         w: 175, h: 54, on: true, g: 'ew', snap: 'dana' },   // DANA Aggregator disetujui Midtrans (email 20 Nov 2026); kode 'dana' sudah ada di PAY_CODES midtrans-create
   { n: 'ShopeePay',    f: 'shopeepay.png',    w: 153, h: 64, on: false, d: 20, g: 'ew', snap: 'shopeepay' }
 ];
 
