@@ -1036,6 +1036,17 @@
       .pdp-pick .modal-colors{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;padding-bottom:2px}
       .pdp-pick .modal-colors::-webkit-scrollbar{display:none}
       .pdp-pick .modal-colors .modal-color-btn{flex-shrink:0}
+      /* Baris harga: harga, harga coret, dan pil -X% selalu satu baris. Ukuran huruf mengecil mengikuti lebar layar
+         (sebelumnya tetap 22px/15px sehingga harga 6 digit seperti Rp 109.000 membuat pil turun ke baris kedua). */
+      .modal-price-left{gap:8px}
+      .modal-price-final{font-size:clamp(18px,5.4vw,22px);white-space:nowrap}
+      .pdp-price-orig{font-size:clamp(12px,3.6vw,15px);white-space:nowrap}
+      .modal-price-left .pdp-disc-pill{flex-shrink:0;padding:0 7px 0 5px;gap:3px}
+      .modal-price-left .modal-voucher-badge{flex-basis:100%}   /* badge voucher (muncul setelah varian dipilih) selalu di baris sendiri */
+      .modal-price-left.tight .pdp-disc-pill svg{display:none}   /* harga 7 digit: ikon tiket disembunyikan, tinggal -X% */
+    }
+    @media(max-width:340px){
+      .modal-price-left .pdp-disc-pill svg{display:none}   /* HP sangat sempit */
     }
     /* Android: satu geseran = satu foto (tanpa melompati foto) */
     .is-android .modal-carousel{overscroll-behavior-x:contain}
@@ -3798,6 +3809,7 @@ function updateModalPrice(v) {
   }
   if (priceLeft) {
     priceLeft.classList.toggle('has-disc', hasDisc);
+    priceLeft.classList.toggle('tight', hasDisc && (fRp(v.price).length + fRp(v.original_price).length) >= 22);   // contoh: Rp 1.250.000 + Rp 2.500.000
     if (hasDisc) { priceLeft.setAttribute('role', 'button'); priceLeft.setAttribute('tabindex', '0'); priceLeft.setAttribute('aria-label', 'Rincian harga'); }
     else { priceLeft.removeAttribute('role'); priceLeft.removeAttribute('tabindex'); priceLeft.removeAttribute('aria-label'); }
   }
