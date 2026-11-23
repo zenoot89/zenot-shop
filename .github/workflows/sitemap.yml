@@ -48,7 +48,7 @@ jobs:
         continue-on-error: true
         run: |
           python3 - <<'PY'
-          import hashlib, html, io, json, os, re, sys, urllib.parse, urllib.request
+          import hashlib, html, io, json, os, re, shutil, sys, urllib.parse, urllib.request
           from PIL import Image, ImageOps
 
           SITE = 'https://zenoot.web.id'
@@ -226,6 +226,25 @@ jobs:
               else:
                   skipped += 1
           print('Halaman bagikan: %d dibuat/diubah, %d tetap, %d foto gagal' % (made, skipped, img_fail))
+
+          # Bersihkan halaman bagikan milik produk yang sudah dihapus atau diarsipkan (folder p/<8 hex> yang
+          # kodenya tidak ada lagi di daftar produk aktif). Pengaman: hanya jalan kalau daftar produk valid dan
+          # tidak kosong (kalau tidak, skrip sudah berhenti di atas), tidak jalan kalau daftar mencapai batas
+          # unduhan (1000), hanya menyentuh folder berkode 8 heksadesimal, dan hanya menghapus folder yang isinya
+          # cuma index.html dan og.jpg (file buatan skrip ini).
+          removed = 0
+          if seen and len(data) < 1000 and os.path.isdir('p'):
+              for name in sorted(os.listdir('p')):
+                  d = os.path.join('p', name)
+                  if not os.path.isdir(d) or not re.fullmatch(r'[0-9a-f]{8}', name) or name in seen:
+                      continue
+                  if set(os.listdir(d)) <= {'index.html', 'og.jpg'}:
+                      shutil.rmtree(d)
+                      removed += 1
+                      print('Halaman bagikan dihapus (produk sudah tidak aktif):', name)
+                  else:
+                      print('Dilewati, isi folder tidak dikenal:', d)
+          print('Halaman bagikan dibersihkan: %d' % removed)
           PY
 
       - name: Simpan kalau ada perubahan
