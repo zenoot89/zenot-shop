@@ -1082,7 +1082,7 @@ document.addEventListener('click',function(e){var a=e.target.closest&&e.target.c
     <button class="hamburger-btn" onclick="toggleDrawer(true)" aria-label="Menu">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
     </button>
-    <a href="#" class="logo logo-img" aria-label="Zenoot Knitwear" onclick="goHome();return false"><img src="zenoot-shop-logo-black.png" alt="Zenoot Knitwear" width="1000" height="235" decoding="async"></a>
+    <a href="#" class="logo logo-img" aria-label="Zenoot Knitwear" onclick="goHome();return false"><img src="img/zenoot-shop-logo-black.png" alt="Zenoot Knitwear" width="1000" height="235" decoding="async"></a>
     <div class="header-right">
       <button class="icon-btn" id="header-cart-btn" onclick="openCart()" aria-label="Keranjang" style="position:relative">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 8h12l-1 12H7L6 8z"/><path d="M9 8V6a3 3 0 016 0v2"/></svg>
@@ -1186,7 +1186,7 @@ document.addEventListener('click',function(e){var a=e.target.closest&&e.target.c
   <div class="footer-inner">
     <div class="footer-grid">
       <div class="footer-brand-col">
-        <img class="footer-logo" src="zenoot-shop-logo-black.png" alt="Zenoot Shop" width="1000" height="235" decoding="async" onerror="this.replaceWith(Object.assign(document.createElement('p'),{className:'footer-brand-name',textContent:'ZENOOT'}))">
+        <img class="footer-logo" src="img/zenoot-shop-logo-black.png" alt="Zenoot Shop" width="1000" height="235" decoding="async" onerror="this.replaceWith(Object.assign(document.createElement('p'),{className:'footer-brand-name',textContent:'ZENOOT'}))">
         <p class="footer-tagline-text">Rajutan yang tetap nyaman dipakai seharian, dari kerja sampai jalan-jalan.</p>
         <div class="footer-pay" id="footer-pay"></div>
       </div>
@@ -5527,7 +5527,7 @@ async function openQrisSheet(q) {
     if (!ctx.qr && ctx.qrImage) { const rd = await qrisReadImage(ctx.qrImage); ctx.qr = rd.text; qrImg = rd.img; }
     if (!ctx.qr && !qrImg) throw new Error('QR kosong');
     try { if (document.fonts && document.fonts.load) { await Promise.race([document.fonts.load(`600 40px ${QRIS_FONT}`), new Promise(r => setTimeout(r, 1200))]); } } catch (_) {}
-    const [imgQris, imgLogo] = await Promise.all([qrisLoadImg(FOOTER_PAY_DIR + 'qris.png'), qrisLoadImg('zenoot-shop-logo-black.png')]);
+    const [imgQris, imgLogo] = await Promise.all([qrisLoadImg(FOOTER_PAY_DIR + 'qris.png'), qrisLoadImg('img/zenoot-shop-logo-black.png')]);
     const canvas = document.createElement('canvas');
     drawQrisCard(canvas, { qr: ctx.qr, qrImg, amount: ctx.amount, orderNumber: ctx.orderNumber, expiresAt: ctx.expiresAt, imgQris, imgLogo });
     ctx.dataUrl = canvas.toDataURL('image/png');
@@ -5726,8 +5726,8 @@ async function loadFooterSocial() {
 // Logo bank/dompet besar dari repo resmi veritrans/logo milik Midtrans; BSI, SeaBank, OVO, DANA, ShopeePay dari file yang dikirim pemilik toko.
 // d = tinggi tampil (px), bawaan 18. Logo yang bentuknya menumpuk (SeaBank) dibuat lebih tinggi supaya teksnya terbaca.
 // w/h = ukuran asli file (untuk mencegah layout bergeser saat gambar dimuat).
-// File logo ada di akar repo. Kalau nanti dipindah ke folder pay/, cukup ubah FOOTER_PAY_DIR jadi 'pay/'.
-const FOOTER_PAY_DIR = '';
+// File logo ada di folder img/ (lihat FOOTER_PAY_DIR). Ikon identitas (favicon, apple-touch-icon, icon-192, icon-512) tetap di akar repo.
+const FOOTER_PAY_DIR = 'img/';
 // g = kelompok di daftar pilihan checkout (ew = e-wallet, qr = QRIS, va = virtual account, cc = kartu kredit/debit).
 // lf = ikon khusus untuk daftar pilihan (kalau f terlalu lebar untuk kotak logo kecil).
 // subShort = keterangan singkat untuk baris di layar Checkout (satu baris); sub = keterangan lengkap di daftar pilihan metode.
