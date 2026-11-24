@@ -131,6 +131,19 @@ export function rapikanDeskripsi(raw) {
 // ================================
 
 
+// Jaring pengaman Google (Profil Bisnis menyembunyikan produk dengan deskripsi > 1.000 karakter):
+// kalau lebih panjang dari batas, potong di batas kalimat terakhir. Hanya untuk feed.tsv; web dan feed-meta.xml tetap utuh.
+const MAX_DESC_GOOGLE = 980;
+export function potongUntukGoogle(desc, max = MAX_DESC_GOOGLE) {
+  const s = String(desc ?? '');
+  if (s.length <= max) return s;
+  const head = s.slice(0, max);
+  const end = Math.max(head.lastIndexOf('. '), head.lastIndexOf('! '), head.lastIndexOf('? '));
+  if (end >= max * 0.5) return head.slice(0, end + 1).trim();           // potong rapi di akhir kalimat
+  const sp = head.lastIndexOf(' ');                                      // tidak ada batas kalimat yang pantas: potong di kata terakhir
+  return (sp > 0 ? head.slice(0, sp) : head.slice(0, max - 1)).replace(/[\s,;:]+$/, '') + '…';
+}
+
 // Deskripsi persis seperti di web: baris baru & bullet dipertahankan (hanya HTML dibuang). Dipakai untuk feed XML.
 export function deskripsiAsli(raw, max = 5000) {
   let s = String(raw ?? '').replace(/^[ \t]*\|.*\|[ \t]*$/gm, '')
@@ -263,7 +276,7 @@ export function buildFeed(products) {
         id: stableId(v),
         item_group_id: p.id,
         title: clean([p.name, color].filter(Boolean).join(' - '), 150),
-        description: desc,
+        description: potongUntukGoogle(desc),
         availability: Number(v.stock) > 0 ? 'in stock' : 'out of stock',
         condition: 'new',
         price: money(onSale ? original : price),
