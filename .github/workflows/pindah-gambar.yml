@@ -1,0 +1,138 @@
+name: Pindahkan gambar ke folder img (sekali jalan)
+
+# Cara pakai: tab Actions > "Pindahkan gambar ke folder img (sekali jalan)" > Run workflow.
+# Hanya jalan manual. Aman dijalankan ulang: kalau tidak ada lagi yang perlu dipindah, tidak ada commit.
+# Yang dipindah: semua file .png di akar repo KECUALI ikon identitas (apple-touch-icon.png, icon-192.png,
+# icon-512.png). Ikon itu dan favicon.ico tetap di akar karena alamatnya dipakai manifest, halaman produk
+# dan kategori, gambar pratinjau, serta pencarian ikon otomatis oleh browser dan Google.
+# Semua perubahan (pindah file + alamat di index.html dan bio/index.html) masuk dalam SATU commit,
+# jadi situs tidak pernah berada di keadaan setengah pindah. Kalau ada pemeriksaan yang gagal, tidak ada
+# yang di-commit.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: sitemap          # satu antrean dengan workflow sitemap, supaya tidak bentrok saat mengubah index.html
+  cancel-in-progress: false
+
+jobs:
+  pindah:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Ambil kode repo
+        uses: actions/checkout@v4
+
+      - name: Pindahkan file dan perbarui alamat gambar
+        run: |
+          python3 - <<'PY'
+          import glob, os, re, sys
+
+          KEEP = {'apple-touch-icon.png', 'icon-192.png', 'icon-512.png'}
+          DEST = 'img'
+
+          def fail(msg):
+              print('GAGAL:', msg)
+              sys.exit(1)
+
+          move = sorted(f for f in glob.glob('*.png') if f not in KEEP)
+          if not move:
+              print('Tidak ada file .png di akar yang perlu dipindah. Selesai tanpa perubahan.')
+              sys.exit(0)
+
+          for f in move:
+              if os.path.exists(os.path.join(DEST, f)):
+                  fail('%s sudah ada di folder %s/, tidak ditimpa' % (f, DEST))
+
+          # --- perbarui alamat di kode (setiap pola harus cocok persis sebanyak yang diharapkan) ---
+          def edit(path, pairs):
+              s = open(path, encoding='utf-8').read()
+              for old, new, n in pairs:
+                  c = s.count(old)
+                  if c != n:
+                      fail('%s: pola tidak cocok (ditemukan %d, seharusnya %d): %s' % (path, c, n, old[:70]))
+                  s = s.replace(old, new)
+              open(path, 'w', encoding='utf-8').write(s)
+
+          LOGO = 'zenoot-shop-logo-black.png'
+          if LOGO in move:
+              edit('index.html', [
+                  ("const FOOTER_PAY_DIR = '';", "const FOOTER_PAY_DIR = '%s/';" % DEST, 1),
+                  ('src="%s"' % LOGO, 'src="%s/%s"' % (DEST, LOGO), 2),
+                  ("qrisLoadImg('%s')" % LOGO, "qrisLoadImg('%s/%s')" % (DEST, LOGO), 1),
+              ])
+              edit('bio/index.html', [('../%s' % LOGO, '../%s/%s' % (DEST, LOGO), 1)])
+          else:
+              edit('index.html', [("const FOOTER_PAY_DIR = '';", "const FOOTER_PAY_DIR = '%s/';" % DEST, 1)])
+
+          # --- pindahkan file ---
+          # komentar penjelas di index.html (opsional: kalau tulisannya sudah berbeda, dilewati tanpa masalah)
+          OLDC = "// File logo ada di akar repo. Kalau nanti dipindah ke folder pay/, cukup ubah FOOTER_PAY_DIR jadi 'pay/'."
+          NEWC = "// File logo ada di folder %s/ (lihat FOOTER_PAY_DIR). Ikon identitas (favicon, apple-touch-icon, icon-192, icon-512) tetap di akar repo." % DEST
+          t = open('index.html', encoding='utf-8').read()
+          if OLDC in t:
+              open('index.html', 'w', encoding='utf-8').write(t.replace(OLDC, NEWC))
+
+          os.makedirs(DEST, exist_ok=True)
+          for f in move:
+              os.rename(f, os.path.join(DEST, f))
+          print('Dipindah ke %s/: %s' % (DEST, ', '.join(move)))
+
+          # --- pemeriksaan: setiap gambar yang dipanggil kode harus ada di tempat barunya ---
+          idx = open('index.html', encoding='utf-8').read()
+          need = set()
+          for line in idx.splitlines():
+              if re.match(r"\s*\{ n: '", line) and re.search(r"\bon:\s*true", line):
+                  for key in ('f', 'lf'):
+                      m = re.search(r"\b%s:\s*'([^']+\.png)'" % key, line)
+                      if m:
+                          need.add(DEST + '/' + m.group(1))
+              if line.startswith('const QRIS_WALLETS'):
+                  for n in re.findall(r"'([^']+\.png)'", line):
+                      need.add(DEST + '/' + n)
+          need.add(DEST + '/qris.png')
+          if LOGO in move:
+              need.add(DEST + '/' + LOGO)
+          missing = sorted(p for p in need if not os.path.exists(p))
+          if missing:
+              fail('gambar dipanggil kode tapi tidak ada: ' + ', '.join(missing))
+
+          # file yang dipindah tidak boleh masih dipanggil dengan alamat lama di file lain
+          skip_dirs = ('.git', 'p', 'produk', 'kategori', DEST)
+          bad = []
+          for root, dirs, files in os.walk('.'):
+              dirs[:] = [d for d in dirs if d not in skip_dirs]
+              for fn in files:
+                  if not fn.endswith(('.html', '.js', '.json', '.py', '.mjs', '.yml', '.xml', '.css')):
+                      continue
+                  if fn.startswith('wilayah-') or fn == 'pindah-gambar.yml':
+                      continue
+                  path = os.path.join(root, fn)
+                  for i, ln in enumerate(open(path, encoding='utf-8', errors='ignore'), 1):
+                      for f in move:
+                          for m in re.finditer(r'(?<![A-Za-z0-9_-])' + re.escape(f), ln):
+                              before = ln[:m.start()]
+                              ok = before.endswith(DEST + '/') or 'FOOTER_PAY_DIR' in ln \
+                                   or re.match(r"\s*\{ n: '", ln) or ln.startswith('const QRIS_WALLETS')
+                              if not ok:
+                                  bad.append('%s:%d %s' % (path, i, ln.strip()[:100]))
+          if bad:
+              fail('masih ada alamat lama:\n  ' + '\n  '.join(bad))
+          print('Pemeriksaan lulus: %d gambar ditemukan di tempat baru.' % len(need))
+          PY
+
+      - name: Simpan dalam satu commit
+        run: |
+          git add -A
+          if git diff --cached --quiet; then
+            echo "Tidak ada perubahan untuk disimpan."
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git commit -m "Pindahkan logo pembayaran dan logo toko ke folder img"
+            git pull --rebase --autostash
+            git push
+          fi
